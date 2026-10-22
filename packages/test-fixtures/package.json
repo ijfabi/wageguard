@@ -1,0 +1,25 @@
+{
+  "name": "@wageguard/test-fixtures",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Golden correctness scenarios, synthetic demo data and deterministic benchmark workloads. Kept strictly separate.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@wageguard/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:evidence": "vitest run --reporter=default --reporter=json --outputFile.json=../../benchmarks/test-reports/test-fixtures.json"
+  },
+  "dependencies": {
+    "@wageguard/award-rules": "workspace:*",
+    "@wageguard/calculation-engine": "workspace:*",
+    "@wageguard/domain": "workspace:*"
+  }
+}

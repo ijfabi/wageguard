@@ -1,0 +1,44 @@
+{
+  "benchmark": "F-offset-table-equivalence",
+  "status": "COMPLETED",
+  "reason": null,
+  "environment": {
+    "runId": "equivalence-2026-10-22T11-40-08-075Z-5716ab",
+    "timestampUtc": "2026-10-22T11:40:08.075Z",
+    "git": {
+      "commitSha": null,
+      "dirty": null,
+      "note": "git unavailable or not a repository; see sourceTreeSha256"
+    },
+    "sourceTreeSha256": "e6a1edb67dd7de6e774487eee98f9d534bfd6550b9fa727565250ac78aff9b91",
+    "environment": "local-developer-workstation",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26200",
+      "arch": "x64"
+    },
+    "cpu": {
+      "model": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "logicalCores": 20
+    },
+    "memory": {
+      "totalBytes": 16849256448,
+      "freeBytesAtStart": 3555266560
+    },
+    "node": "v24.22.1",
+    "dockerVersion": "Docker version 29.9.1, build dfc520d",
+    "postgresVersion": null
+  },
+  "configuration": {
+    "seed": 20260706,
+    "shifts": 10000,
+    "payPeriods": 1000
+  },
+  "results": {
+    "optimisedSha256": "47091c253eaf7d87b02cf63da5afd7a8543df5d04aa669bff757c205e8e1195e",
+    "directSha256": "47091c253eaf7d87b02cf63da5afd7a8543df5d04aa669bff757c205e8e1195e",
+    "identical": true
+  },
+  "errorCount": 0,
+  "exitStatus": 0
+}

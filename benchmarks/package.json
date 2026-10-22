@@ -1,0 +1,24 @@
+{
+  "name": "@wageguard/benchmarks",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reproducible benchmarks and evaluations. Every run records its environment and raw measurements.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "engine": "node --expose-gc --conditions=@wageguard/source --import tsx scripts/engine.ts",
+    "correctness": "node --conditions=@wageguard/source --import tsx scripts/correctness.ts",
+    "api": "node --conditions=@wageguard/source --import tsx scripts/not-executed.ts api",
+    "database": "node --conditions=@wageguard/source --import tsx scripts/not-executed.ts database",
+    "reliability": "node --conditions=@wageguard/source --import tsx scripts/not-executed.ts reliability",
+    "equivalence": "node --conditions=@wageguard/source --import tsx scripts/verify-offset-equivalence.ts",
+    "report": "node --conditions=@wageguard/source --import tsx scripts/report.ts",
+    "resume-metrics": "node --conditions=@wageguard/source --import tsx scripts/resume-metrics.ts"
+  },
+  "dependencies": {
+    "@wageguard/award-rules": "workspace:*",
+    "@wageguard/calculation-engine": "workspace:*",
+    "@wageguard/domain": "workspace:*",
+    "@wageguard/test-fixtures": "workspace:*"
+  }
+}

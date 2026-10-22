@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/domain/tsconfig.build.json" },
+    { "path": "packages/award-rules/tsconfig.build.json" },
+    { "path": "packages/calculation-engine/tsconfig.build.json" }
+  ]
+}

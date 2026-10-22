@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
+  },
+  "include": ["src", "src/**/*.json"],
+  "references": [
+    { "path": "../domain/tsconfig.build.json" },
+    { "path": "../award-rules/tsconfig.build.json" },
+    { "path": "../calculation-engine/tsconfig.build.json" }
+  ]
+}

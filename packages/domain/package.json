@@ -1,0 +1,29 @@
+{
+  "name": "@wageguard/domain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WageGuard domain primitives: Money, local time, intervals, employment and shift models. No framework dependencies.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@wageguard/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:evidence": "vitest run --coverage --reporter=default --reporter=json --outputFile.json=../../benchmarks/test-reports/domain.json",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "decimal.js": "10.6.0",
+    "luxon": "3.7.2"
+  },
+  "devDependencies": {
+    "@types/luxon": "3.7.6"
+  }
+}

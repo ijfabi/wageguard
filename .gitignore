@@ -1,0 +1,18 @@
+node_modules/
+dist/
+coverage/
+.next/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+playwright-report/
+test-results/
+uploads/
+# Full copies of retrieved source documents are kept locally for verification only (Commonwealth
+# copyright). Hashes and the clause excerpts we rely on are committed in docs/award-sources/.
+docs/award-sources/**/*-retrieved-*.html
+docs/award-sources/**/*-retrieved-*.pdf
+docs/award-sources/**/*-retrieved-*.txt

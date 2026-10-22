@@ -1,0 +1,36 @@
+{
+  "benchmark": "Benchmark B: audit API performance (k6)",
+  "status": "NOT_EXECUTED",
+  "reason": "The REST API (Phase 2) has not been implemented yet, and the Docker daemon was not running on the benchmark machine.",
+  "environment": {
+    "runId": "api-2026-10-22T11-40-09-872Z-b6ab43",
+    "timestampUtc": "2026-10-22T11:40:09.872Z",
+    "git": {
+      "commitSha": null,
+      "dirty": null,
+      "note": "git unavailable or not a repository; see sourceTreeSha256"
+    },
+    "sourceTreeSha256": "e6a1edb67dd7de6e774487eee98f9d534bfd6550b9fa727565250ac78aff9b91",
+    "environment": "local-developer-workstation",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26200",
+      "arch": "x64"
+    },
+    "cpu": {
+      "model": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "logicalCores": 20
+    },
+    "memory": {
+      "totalBytes": 16849256448,
+      "freeBytesAtStart": 3639070720
+    },
+    "node": "v24.22.1",
+    "dockerVersion": "Docker version 29.9.1, build dfc520d",
+    "postgresVersion": null
+  },
+  "configuration": {},
+  "results": null,
+  "errorCount": 0,
+  "exitStatus": 0
+}

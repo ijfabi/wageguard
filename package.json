@@ -1,0 +1,46 @@
+{
+  "name": "wageguard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Independent, deterministic Australian payroll verification (General Retail Industry Award 2020, MA000004).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json && pnpm -r --if-present typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r --if-present test",
+    "test:coverage": "pnpm -r --if-present test:coverage",
+    "test:evidence": "pnpm -r --if-present test:evidence",
+    "benchmark:engine": "pnpm --filter @wageguard/benchmarks engine",
+    "benchmark:equivalence": "pnpm --filter @wageguard/benchmarks equivalence",
+    "benchmark:correctness": "pnpm --filter @wageguard/benchmarks correctness",
+    "benchmark:api": "pnpm --filter @wageguard/benchmarks api",
+    "benchmark:database": "pnpm --filter @wageguard/benchmarks database",
+    "benchmark:reliability": "pnpm --filter @wageguard/benchmarks reliability",
+    "benchmark:report": "pnpm --filter @wageguard/benchmarks report",
+    "resume:metrics": "pnpm --filter @wageguard/benchmarks resume-metrics",
+    "clean": "pnpm -r --if-present clean"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "@vitest/coverage-v8": "5.0.5",
+    "eslint": "10.13.0",
+    "eslint-config-prettier": "10.1.8",
+    "fast-check": "4.10.2",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

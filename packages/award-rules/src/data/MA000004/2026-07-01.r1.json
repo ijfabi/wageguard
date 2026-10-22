@@ -1,0 +1,351 @@
+{
+  "schemaVersion": 1,
+  "awardCode": "MA000004",
+  "awardTitle": "General Retail Industry Award 2020",
+  "version": "MA000004/2026-07-01/r1",
+  "effective": {
+    "basis": "FIRST_FULL_PAY_PERIOD_ON_OR_AFTER",
+    "from": "2026-07-01",
+    "until": null
+  },
+  "source": {
+    "documentTitle": "General Retail Industry Award 2020 [MA000004], Fair Work Commission consolidated modern award",
+    "url": "https://awards.fairwork.gov.au/MA000004.html",
+    "consolidatedAsAt": "2026-07-01",
+    "retrievedOn": "2026-10-22",
+    "documentSha256": "688bd46a5fbd7bbfddcdb66c50968d8018be9b0ffcd2939fcf849a80bcb62824",
+    "variationRefs": ["PR799280", "PR799285", "PR799443"]
+  },
+  "supportedScope": {
+    "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+    "employmentTypes": ["CASUAL", "PART_TIME"],
+    "timeZonePrefix": "Australia/",
+    "notes": [
+      "Adult employees (21 years or over) only; junior rates (cl. 17.2) are not modelled.",
+      "Non-shiftworkers only; Part 6 shiftwork rates (cl. 25) are not modelled.",
+      "Ordinary hours within the standard span of hours in cl. 15.1 Table 2 only; the cl. 15.2 exceptions (newsagencies, video shops, extended trading to 11 pm) are not modelled.",
+      "Overtime, public holidays, minimum engagement top-ups and the cl. 16.6 break-between-work-periods rate are detected and returned as REVIEW_REQUIRED, never calculated.",
+      "Allowances (cl. 19) and leave are outside scope."
+    ]
+  },
+  "classifications": [
+    {
+      "code": "RETAIL_EMPLOYEE_LEVEL_1",
+      "title": "Retail Employee Level 1",
+      "minimumHourlyRate": "27.81",
+      "minimumWeeklyRate": "1056.80",
+      "sources": [
+        {
+          "clause": "17.1",
+          "table": "Table 4—Minimum rates",
+          "excerpt": "An employer must pay an adult employee (other than an apprentice) the minimum hourly rate specified in column 3 or for a full-time employee the minimum weekly rate specified in column 2 ... Retail Employee Level 1 | 1056.80 | 27.81"
+        }
+      ]
+    }
+  ],
+  "rateRules": [
+    {
+      "id": "MA000004.ORD.WEEKDAY",
+      "description": "Ordinary hours Monday to Friday, 7.00 am to 6.00 pm",
+      "category": "ORDINARY",
+      "status": "ENABLED",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": {
+        "kind": "WEEKLY_WINDOW",
+        "days": ["MON", "TUE", "WED", "THU", "FRI"],
+        "from": "07:00",
+        "to": "18:00"
+      },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "100", "CASUAL": "125" },
+      "casualLoadingIncluded": true,
+      "precedence": 10,
+      "sources": [
+        {
+          "clause": "15.1",
+          "table": "Table 2—Span of hours",
+          "excerpt": "Ordinary hours may be worked by an employee on the day specified in column 1 during the span of ordinary hours specified in column 2 of Table 2—Span of hours. ... Monday to Friday, inclusive | 7.00 am – 9.00 pm"
+        },
+        {
+          "clause": "11.1",
+          "excerpt": "An employer must pay a casual employee for each hour worked a loading of 25% on top of the minimum hourly rate otherwise applicable under clause 17—Minimum rates."
+        },
+        {
+          "clause": "Schedule B",
+          "table": "B.1.1 and B.2.1",
+          "excerpt": "B.1.1 Full-time and part-time adult employees other than shiftworkers ... Ordinary hours 100% ... Retail Employee Level 1 27.81; B.2.1 Casual adult employees other than shiftworkers ... Ordinary hours 125% ... Retail Employee Level 1 34.76"
+        }
+      ],
+      "verification": {
+        "status": "TRANSCRIBED_FROM_SOURCE",
+        "humanReview": "PENDING",
+        "notes": "Window ends at 6.00 pm because Table 12 applies a penalty to ordinary hours Monday to Friday after 6.00 pm."
+      }
+    },
+    {
+      "id": "MA000004.PEN.WEEKDAY_AFTER_6PM",
+      "description": "Ordinary hours Monday to Friday after 6.00 pm (to the 9.00 pm end of the span of hours)",
+      "category": "PENALTY",
+      "status": "ENABLED",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": {
+        "kind": "WEEKLY_WINDOW",
+        "days": ["MON", "TUE", "WED", "THU", "FRI"],
+        "from": "18:00",
+        "to": "21:00"
+      },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "125", "CASUAL": "150" },
+      "casualLoadingIncluded": true,
+      "precedence": 20,
+      "sources": [
+        {
+          "clause": "22.1",
+          "table": "Table 12—Penalty rates",
+          "excerpt": "Time of ordinary hours worked | Full-time and part-time employees % of minimum hourly rate | Casual employees % of minimum hourly rate (inclusive of casual loading) ... Monday to Friday—after 6.00 pm | 125% | 150%"
+        },
+        {
+          "clause": "15.1",
+          "table": "Table 2—Span of hours",
+          "excerpt": "Monday to Friday, inclusive | 7.00 am – 9.00 pm"
+        }
+      ],
+      "verification": { "status": "TRANSCRIBED_FROM_SOURCE", "humanReview": "PENDING" }
+    },
+    {
+      "id": "MA000004.PEN.SATURDAY",
+      "description": "Ordinary hours on Saturday, 7.00 am to 6.00 pm",
+      "category": "PENALTY",
+      "status": "ENABLED",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": { "kind": "WEEKLY_WINDOW", "days": ["SAT"], "from": "07:00", "to": "18:00" },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "125", "CASUAL": "150" },
+      "casualLoadingIncluded": true,
+      "precedence": 20,
+      "sources": [
+        {
+          "clause": "22.1",
+          "table": "Table 12—Penalty rates",
+          "excerpt": "Saturday—all ordinary hours | 125% | 150%"
+        },
+        { "clause": "15.1", "table": "Table 2—Span of hours", "excerpt": "Saturday | 7.00 am – 6.00 pm" }
+      ],
+      "verification": { "status": "TRANSCRIBED_FROM_SOURCE", "humanReview": "PENDING" }
+    },
+    {
+      "id": "MA000004.PEN.SUNDAY",
+      "description": "Ordinary hours on Sunday, 9.00 am to 6.00 pm",
+      "category": "PENALTY",
+      "status": "ENABLED",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": { "kind": "WEEKLY_WINDOW", "days": ["SUN"], "from": "09:00", "to": "18:00" },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "150", "CASUAL": "175" },
+      "casualLoadingIncluded": true,
+      "precedence": 20,
+      "sources": [
+        {
+          "clause": "22.1",
+          "table": "Table 12—Penalty rates",
+          "excerpt": "Sunday – all ordinary hours | 150% | 175%"
+        },
+        { "clause": "15.1", "table": "Table 2—Span of hours", "excerpt": "Sunday | 9.00 am – 6.00 pm" }
+      ],
+      "verification": { "status": "TRANSCRIBED_FROM_SOURCE", "humanReview": "PENDING" }
+    },
+    {
+      "id": "MA000004.PH.ALL_ORDINARY",
+      "description": "All ordinary hours on a public holiday",
+      "category": "PUBLIC_HOLIDAY",
+      "status": "DISABLED",
+      "disabledReason": "Public holiday dates differ by state and territory and substitution rules apply (cl. 32). WageGuard has no verified public holiday calendar, and cl. 22.2 allows an alternative arrangement by agreement, so hours on a declared public holiday are returned as REVIEW_REQUIRED.",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": { "kind": "PUBLIC_HOLIDAY" },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "225", "CASUAL": "250" },
+      "casualLoadingIncluded": true,
+      "precedence": 100,
+      "sources": [
+        {
+          "clause": "22.1",
+          "table": "Table 12—Penalty rates",
+          "excerpt": "Public holiday – all ordinary hours | 225% | 250%"
+        }
+      ],
+      "verification": { "status": "TRANSCRIBED_FROM_SOURCE", "humanReview": "PENDING" }
+    },
+    {
+      "id": "MA000004.OT.MON_SAT_FIRST_3H",
+      "description": "Overtime Monday to Saturday, first 3 hours (reference only)",
+      "category": "OVERTIME",
+      "status": "DISABLED",
+      "disabledReason": "Overtime is not calculated: identifying overtime minutes depends on guaranteed-hours agreements and variations (cl. 10.5, 10.6), span exceptions (cl. 15.2) and the order in which daily overtime hours accrue (cl. 21.2(b)). Possible overtime is returned as REVIEW_REQUIRED.",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": { "kind": "OVERTIME", "trigger": "Monday to Saturday—first 3 hours" },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "150", "CASUAL": "175" },
+      "casualLoadingIncluded": true,
+      "precedence": 200,
+      "sources": [
+        {
+          "clause": "21.2(c)",
+          "table": "Table 11—Overtime rates",
+          "excerpt": "Monday to Saturday—first 3 hours | 150% | 175%"
+        }
+      ],
+      "verification": { "status": "TRANSCRIBED_FROM_SOURCE", "humanReview": "PENDING" }
+    },
+    {
+      "id": "MA000004.OT.MON_SAT_AFTER_3H",
+      "description": "Overtime Monday to Saturday, after 3 hours (reference only)",
+      "category": "OVERTIME",
+      "status": "DISABLED",
+      "disabledReason": "Overtime is not calculated in this engine version; see MA000004.OT.MON_SAT_FIRST_3H.",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": { "kind": "OVERTIME", "trigger": "Monday to Saturday—after 3 hours" },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "200", "CASUAL": "225" },
+      "casualLoadingIncluded": true,
+      "precedence": 200,
+      "sources": [
+        {
+          "clause": "21.2(c)",
+          "table": "Table 11—Overtime rates",
+          "excerpt": "Monday to Saturday—after 3 hours | 200% | 225%"
+        }
+      ],
+      "verification": { "status": "TRANSCRIBED_FROM_SOURCE", "humanReview": "PENDING" }
+    },
+    {
+      "id": "MA000004.OT.SUNDAY",
+      "description": "Overtime on Sunday (reference only)",
+      "category": "OVERTIME",
+      "status": "DISABLED",
+      "disabledReason": "Overtime is not calculated in this engine version; see MA000004.OT.MON_SAT_FIRST_3H.",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": { "kind": "OVERTIME", "trigger": "Sunday" },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "200", "CASUAL": "225" },
+      "casualLoadingIncluded": true,
+      "precedence": 200,
+      "sources": [
+        { "clause": "21.2(c)", "table": "Table 11—Overtime rates", "excerpt": "Sunday | 200% | 225%" }
+      ],
+      "verification": { "status": "TRANSCRIBED_FROM_SOURCE", "humanReview": "PENDING" }
+    },
+    {
+      "id": "MA000004.OT.PUBLIC_HOLIDAY",
+      "description": "Overtime on a public holiday (reference only)",
+      "category": "OVERTIME",
+      "status": "DISABLED",
+      "disabledReason": "Overtime is not calculated in this engine version; see MA000004.OT.MON_SAT_FIRST_3H.",
+      "appliesTo": {
+        "classifications": ["RETAIL_EMPLOYEE_LEVEL_1"],
+        "employmentTypes": ["PART_TIME", "CASUAL"]
+      },
+      "when": { "kind": "OVERTIME", "trigger": "Public holiday" },
+      "percentOfMinimumHourlyRate": { "PART_TIME": "250", "CASUAL": "275" },
+      "casualLoadingIncluded": true,
+      "precedence": 200,
+      "sources": [
+        { "clause": "21.2(c)", "table": "Table 11—Overtime rates", "excerpt": "Public holiday | 250% | 275%" }
+      ],
+      "verification": { "status": "TRANSCRIBED_FROM_SOURCE", "humanReview": "PENDING" }
+    }
+  ],
+  "constraints": {
+    "minimumEngagement": {
+      "CASUAL": {
+        "minutes": 180,
+        "description": "Minimum daily engagement of a casual employee (1.5 hours only in the school-student circumstances of cl. 11.3).",
+        "sources": [
+          {
+            "clause": "11.2",
+            "excerpt": "The minimum daily engagement of a casual employee is 3 hours, or 1.5 hours’ in the circumstances set out in clause 11.3."
+          }
+        ]
+      },
+      "PART_TIME": {
+        "minutes": 180,
+        "description": "Minimum daily engagement of a part-time employee.",
+        "sources": [
+          {
+            "clause": "10.9",
+            "excerpt": "The minimum daily engagement for a part-time employee is 3 consecutive hours."
+          }
+        ]
+      }
+    },
+    "maxOrdinaryPerDay": {
+      "minutes": 540,
+      "description": "Maximum ordinary hours per day (up to 11 on one day per week by roster under cl. 15.5).",
+      "sources": [
+        {
+          "clause": "15.4",
+          "excerpt": "Subject to clause 15.5, the maximum number of ordinary hours that can be worked on any day is 9."
+        },
+        {
+          "clause": "15.5",
+          "excerpt": "An employer may roster an employee to work up to 11 ordinary hours on one day per week."
+        }
+      ]
+    },
+    "casualWeeklyOrdinary": {
+      "minutes": 2280,
+      "description": "Casual overtime threshold: hours in excess of 38 ordinary hours per week (or averaged over a roster cycle).",
+      "sources": [
+        {
+          "clause": "21.2(a)",
+          "excerpt": "Casual employee | Overtime is payable for hours worked: (i) in excess of 38 ordinary hours per week or, if the casual employee works in accordance with a roster, in excess of 38 ordinary hours per week averaged over the course of the roster cycle; or (ii) outside the span of ordinary hours (excluding shiftwork), subject to clause 15.2; or (iii) in excess of 11 hours on one day of the week and in excess of 9 hours on any other day of the week."
+        }
+      ]
+    },
+    "minimumBreakBetweenWorkDays": {
+      "minutes": 720,
+      "description": "Minimum break between finishing work on one day and starting on the next (10 hours by agreement under cl. 16.6(d)).",
+      "sources": [
+        {
+          "clause": "16.6(a)",
+          "excerpt": "An employee must have a minimum break of 12 hours between when the employee finishes work on one day and starts work on the next."
+        },
+        {
+          "clause": "16.6(b)",
+          "excerpt": "If an employee starts work again without having had 12 hours off work, the employer must pay the employee for each hour worked at the rate of 200% of the employee’s minimum hourly rate until the employee has a break of 12 consecutive hours."
+        }
+      ]
+    },
+    "mealBreakRequiredAfter": {
+      "minutes": 300,
+      "description": "An employer cannot require more than 5 hours of work without a meal break. Informational: it does not change the calculated pay.",
+      "sources": [
+        {
+          "clause": "16.5(c)",
+          "excerpt": "An employer cannot require an employee: ... (c) to work more than 5 hours without taking a meal break."
+        }
+      ]
+    }
+  },
+  "roundingPolicy": {
+    "hourlyRate": { "decimalPlaces": 2, "mode": "HALF_UP" },
+    "lineAmount": { "decimalPlaces": 2, "mode": "HALF_UP" },
+    "aggregation": "ROUND_PER_RULE_LINE_PER_PERIOD",
+    "rationale": "The award does not prescribe a rounding method. Rounding each hourly rate to cents half-up reproduces every Level 1 dollar rate published in Schedule B (B.1.1, B.2.1). Each pay line (rate × hours for one rule over the pay period) is then rounded once to cents, half-up. Employers may round at other stages, so reconciliation applies an explicit rounding tolerance."
+  }
+}
