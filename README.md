@@ -81,6 +81,10 @@ pnpm resume:metrics         # docs/resume-evidence/
 
 [Architecture](docs/architecture.md) · [Rules engine](docs/rules-engine.md) · [Award sources](docs/award-sources.md) · [Testing strategy](docs/testing-strategy.md) · [Performance](docs/performance.md) · [Security](docs/security.md) · [Known limitations](docs/known-limitations.md) · [ADRs](docs/adr/) · [Checklist](docs/implementation-checklist.md)
 
+## Licence
+
+Copyright (c) 2026 ijfabi. All rights reserved. The code is published for viewing and evaluation only; see [LICENSE](LICENSE).
+
 ## Roadmap
 
 1. **Phase 2.** PostgreSQL and Prisma persistence, NestJS REST API with OpenAPI, authentication, object-level authorisation, immutable audit snapshots, idempotency keys, Testcontainers integration tests.
