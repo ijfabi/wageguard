@@ -1,0 +1,299 @@
+// WageGuard persistence model. See docs/data-model.md.
+//
+// Ownership: every user-owned row carries user_id, and child rows reference their parent through
+// a composite (id, user_id) foreign key, so the database itself refuses to attach a shift, payslip
+// or audit to another user's employment. Constraints that Prisma cannot express (the shift-overlap
+// exclusion constraint and the completed-audit immutability trigger) are in the migrations.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EmploymentType {
+  CASUAL
+  PART_TIME
+  FULL_TIME
+}
+
+enum AwardCoverage {
+  CONFIRMED
+  UNSURE
+}
+
+enum EnterpriseAgreement {
+  NONE
+  APPLIES
+  UNSURE
+}
+
+enum AgeBand {
+  ADULT_21_PLUS
+  UNDER_21
+  UNSURE
+}
+
+enum ShiftworkerStatus {
+  NO
+  YES
+  UNSURE
+}
+
+enum BreakKind {
+  UNPAID_MEAL
+  PAID_REST
+}
+
+enum PayslipLineCategory {
+  HOURS_WORKED
+  OVERTIME
+  ALLOWANCE
+  LEAVE
+  OTHER
+}
+
+enum AuditStatus {
+  COMPLETED
+}
+
+enum FindingStatus {
+  MATCHED
+  POTENTIAL_UNDERPAYMENT
+  POTENTIAL_OVERPAYMENT
+  INCOMPLETE_DATA
+  UNSUPPORTED_SCENARIO
+  REVIEW_REQUIRED
+}
+
+enum CalculationStatus {
+  CALCULATED
+  REVIEW_REQUIRED
+  UNSUPPORTED_SCENARIO
+  INCOMPLETE_DATA
+}
+
+enum AuditEventType {
+  REGISTERED
+  LOGIN_SUCCEEDED
+  LOGIN_FAILED
+  LOGGED_OUT
+  SHIFTS_IMPORTED
+  AUDIT_CREATED
+  REPORT_EXPORTED
+  ACCOUNT_DELETED
+}
+
+model User {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  email        String   @unique @db.VarChar(254)
+  passwordHash String   @map("password_hash") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  sessions    Session[]
+  employments Employment[]
+  shifts      Shift[]
+  payslips    Payslip[]
+  audits      Audit[]
+  events      AuditEvent[]
+
+  @@map("users")
+}
+
+/// Server-side session. Only the SHA-256 of the random token is stored.
+model Session {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  tokenHash  String   @unique @map("token_hash") @db.Char(64)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Employment {
+  id                        String              @id @default(uuid(7)) @db.Uuid
+  userId                    String              @map("user_id") @db.Uuid
+  label                     String              @db.VarChar(100)
+  awardCode                 String              @map("award_code") @db.VarChar(20)
+  classificationCode        String              @map("classification_code") @db.VarChar(100)
+  employmentType            EmploymentType      @map("employment_type")
+  timeZone                  String              @map("time_zone") @db.VarChar(64)
+  awardCoverage             AwardCoverage       @map("award_coverage")
+  enterpriseAgreement       EnterpriseAgreement @map("enterprise_agreement")
+  ageBand                   AgeBand             @map("age_band")
+  shiftworker               ShiftworkerStatus
+  /// Part-time only: { "MON": 360, ... } guaranteed minutes per weekday (cl. 10.5(a)).
+  partTimeGuaranteedMinutes Json?               @map("part_time_guaranteed_minutes")
+  createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shifts   Shift[]
+  payslips Payslip[]
+  audits   Audit[]
+
+  @@unique([id, userId])
+  @@index([userId, createdAt])
+  @@map("employments")
+}
+
+model Shift {
+  id                    String   @id @default(uuid(7)) @db.Uuid
+  userId                String   @map("user_id") @db.Uuid
+  employmentId          String   @map("employment_id") @db.Uuid
+  /// Wall-clock values exactly as entered (source of truth for recalculation).
+  startLocal            String   @map("start_local") @db.Char(16)
+  endLocal              String   @map("end_local") @db.Char(16)
+  startUtcOffsetMinutes Int?     @map("start_utc_offset_minutes") @db.SmallInt
+  endUtcOffsetMinutes   Int?     @map("end_utc_offset_minutes") @db.SmallInt
+  /// Local date the shift starts on: pay-period attribution.
+  startDate             DateTime @map("start_date") @db.Date
+  /// Resolved UTC instants, used for overlap protection and range queries.
+  startAt               DateTime @map("start_at") @db.Timestamptz(3)
+  endAt                 DateTime @map("end_at") @db.Timestamptz(3)
+  version               Int      @default(1)
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employment Employment   @relation(fields: [employmentId, userId], references: [id, userId], onDelete: Cascade)
+  breaks     ShiftBreak[]
+
+  @@index([employmentId, startDate])
+  @@index([userId, startAt])
+  @@map("shifts")
+}
+
+model ShiftBreak {
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  shiftId               String    @map("shift_id") @db.Uuid
+  position              Int       @db.SmallInt
+  kind                  BreakKind
+  startLocal            String    @map("start_local") @db.Char(16)
+  endLocal              String    @map("end_local") @db.Char(16)
+  startUtcOffsetMinutes Int?      @map("start_utc_offset_minutes") @db.SmallInt
+  endUtcOffsetMinutes   Int?      @map("end_utc_offset_minutes") @db.SmallInt
+
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, position])
+  @@map("shift_breaks")
+}
+
+model Payslip {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  employmentId String   @map("employment_id") @db.Uuid
+  periodStart  DateTime @map("period_start") @db.Date
+  periodEnd    DateTime @map("period_end") @db.Date
+  grossPay     Decimal  @map("gross_pay") @db.Decimal(14, 2)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employment Employment    @relation(fields: [employmentId, userId], references: [id, userId], onDelete: Cascade)
+  lines      PayslipLine[]
+  audits     Audit[]
+
+  @@unique([id, userId])
+  @@index([employmentId, periodStart])
+  @@map("payslips")
+}
+
+model PayslipLine {
+  id          String              @id @default(uuid(7)) @db.Uuid
+  payslipId   String              @map("payslip_id") @db.Uuid
+  position    Int                 @db.SmallInt
+  category    PayslipLineCategory
+  description String              @db.VarChar(200)
+  amount      Decimal             @db.Decimal(14, 2)
+
+  payslip Payslip @relation(fields: [payslipId], references: [id], onDelete: Cascade)
+
+  @@unique([payslipId, position])
+  @@map("payslip_lines")
+}
+
+/// A completed audit is an immutable snapshot (enforced by a trigger). It stores everything needed
+/// to reproduce and explain the result without reading the (mutable) shifts and payslips again.
+model Audit {
+  id                 String            @id @default(uuid(7)) @db.Uuid
+  userId             String            @map("user_id") @db.Uuid
+  employmentId       String            @map("employment_id") @db.Uuid
+  payslipId          String            @map("payslip_id") @db.Uuid
+  idempotencyKey     String            @map("idempotency_key") @db.VarChar(100)
+  requestHash        String            @map("request_hash") @db.Char(64)
+  status             AuditStatus
+  periodStart        DateTime          @map("period_start") @db.Date
+  periodEnd          DateTime          @map("period_end") @db.Date
+  findingStatus      FindingStatus     @map("finding_status")
+  calculationStatus  CalculationStatus @map("calculation_status")
+  expectedAmount     Decimal?          @map("expected_amount") @db.Decimal(14, 2)
+  reportedAmount     Decimal           @map("reported_amount") @db.Decimal(14, 2)
+  difference         Decimal?          @db.Decimal(14, 2)
+  shiftCount         Int               @map("shift_count")
+  ruleSetVersion     String?           @map("rule_set_version") @db.VarChar(64)
+  ruleSetFingerprint String?           @map("rule_set_fingerprint") @db.Char(64)
+  engineVersion      String            @map("engine_version") @db.VarChar(20)
+  inputHash          String            @map("input_hash") @db.Char(64)
+  inputSnapshot      Json              @map("input_snapshot")
+  payslipSnapshot    Json              @map("payslip_snapshot")
+  result             Json
+  reconciliation     Json
+  calculatedAt       DateTime          @map("calculated_at") @db.Timestamptz(3)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employment Employment     @relation(fields: [employmentId, userId], references: [id, userId], onDelete: NoAction)
+  payslip    Payslip        @relation(fields: [payslipId, userId], references: [id, userId], onDelete: NoAction)
+  findings   AuditFinding[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt(sort: Desc), id])
+  @@index([userId, findingStatus, createdAt(sort: Desc)])
+  @@map("audits")
+}
+
+model AuditFinding {
+  id             String        @id @default(uuid(7)) @db.Uuid
+  auditId        String        @map("audit_id") @db.Uuid
+  position       Int           @db.SmallInt
+  code           String        @db.VarChar(100)
+  scope          String        @db.VarChar(20)
+  status         FindingStatus
+  explanation    String        @db.Text
+  expectedAmount Decimal?      @map("expected_amount") @db.Decimal(14, 2)
+  reportedAmount Decimal?      @map("reported_amount") @db.Decimal(14, 2)
+  difference     Decimal?      @db.Decimal(14, 2)
+  shiftIds       String[]      @map("shift_ids")
+  clauseRefs     String[]      @map("clause_refs")
+  evidenceRefs   String[]      @map("evidence_refs")
+  nextStep       String        @map("next_step") @db.Text
+
+  audit Audit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+
+  @@unique([auditId, position])
+  @@map("audit_findings")
+}
+
+/// Log of security-relevant actions. Contains no payslip contents, passwords or tokens.
+model AuditEvent {
+  id         String         @id @default(uuid(7)) @db.Uuid
+  userId     String?        @map("user_id") @db.Uuid
+  type       AuditEventType
+  occurredAt DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  metadata   Json           @default("{}")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt])
+  @@map("audit_events")
+}

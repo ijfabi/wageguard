@@ -10,7 +10,7 @@
     "node": ">=24.0.0 <25"
   },
   "scripts": {
-    "build": "tsc -b tsconfig.build.json",
+    "build": "tsc -b tsconfig.build.json && pnpm --filter @wageguard/api build",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --if-present typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",

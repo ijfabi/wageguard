@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T12:02:16.313Z",
+  "generatedAt": "2026-10-22T12:59:29.233Z",
   "metrics": [
     {
       "id": "engine-throughput-10k",
@@ -55,10 +55,10 @@
       "resumeSuitability": "Suitable only as 'agreement on a defined supported scenario set'; never as legal accuracy.",
       "value": "21/21",
       "verification": "MEASURED",
-      "sourceFile": "benchmarks/results/correctness-2026-10-22T12-01-43-607Z-4b134d.json",
-      "commitSha": "4b0551265d6847e8e8a8e466ebbf504d625b505e",
+      "sourceFile": "benchmarks/results/correctness-2026-10-22T12-59-18-696Z-463d67.json",
+      "commitSha": null,
       "sourceTreeSha256": "d70e7d3a3a38e4aea24d0efd9856e7b226286c3ab56d70359f064040e136e129",
-      "date": "2026-10-22T12:01:43.607Z",
+      "date": "2026-10-22T12:59:18.696Z",
       "environment": "local-developer-workstation; 13th Gen Intel(R) Core(TM) i7-13650HX; win32 10.0.26200; Node v24.22.1"
     },
     {
@@ -70,10 +70,10 @@
       "resumeSuitability": "Suitable only as 'agreement on a defined supported scenario set'; never as legal accuracy.",
       "value": "10/10",
       "verification": "MEASURED",
-      "sourceFile": "benchmarks/results/correctness-2026-10-22T12-01-43-607Z-4b134d.json",
-      "commitSha": "4b0551265d6847e8e8a8e466ebbf504d625b505e",
+      "sourceFile": "benchmarks/results/correctness-2026-10-22T12-59-18-696Z-463d67.json",
+      "commitSha": null,
       "sourceTreeSha256": "d70e7d3a3a38e4aea24d0efd9856e7b226286c3ab56d70359f064040e136e129",
-      "date": "2026-10-22T12:01:43.607Z",
+      "date": "2026-10-22T12:59:18.696Z",
       "environment": "local-developer-workstation; 13th Gen Intel(R) Core(TM) i7-13650HX; win32 10.0.26200; Node v24.22.1"
     },
     {
@@ -85,10 +85,10 @@
       "resumeSuitability": "Suitable as evidence of explicit unsupported-scenario handling.",
       "value": "11/11",
       "verification": "MEASURED",
-      "sourceFile": "benchmarks/results/correctness-2026-10-22T12-01-43-607Z-4b134d.json",
-      "commitSha": "4b0551265d6847e8e8a8e466ebbf504d625b505e",
+      "sourceFile": "benchmarks/results/correctness-2026-10-22T12-59-18-696Z-463d67.json",
+      "commitSha": null,
       "sourceTreeSha256": "d70e7d3a3a38e4aea24d0efd9856e7b226286c3ab56d70359f064040e136e129",
-      "date": "2026-10-22T12:01:43.607Z",
+      "date": "2026-10-22T12:59:18.696Z",
       "environment": "local-developer-workstation; 13th Gen Intel(R) Core(TM) i7-13650HX; win32 10.0.26200; Node v24.22.1"
     },
     {
@@ -100,25 +100,25 @@
       "resumeSuitability": "Suitable with care; coverage is not evidence of legal correctness.",
       "value": 93.12,
       "verification": "MEASURED",
-      "sourceFile": "benchmarks/results/correctness-2026-10-22T12-01-43-607Z-4b134d.json",
-      "commitSha": "4b0551265d6847e8e8a8e466ebbf504d625b505e",
+      "sourceFile": "benchmarks/results/correctness-2026-10-22T12-59-18-696Z-463d67.json",
+      "commitSha": null,
       "sourceTreeSha256": "d70e7d3a3a38e4aea24d0efd9856e7b226286c3ab56d70359f064040e136e129",
-      "date": "2026-10-22T12:01:43.607Z",
+      "date": "2026-10-22T12:59:18.696Z",
       "environment": "local-developer-workstation; 13th Gen Intel(R) Core(TM) i7-13650HX; win32 10.0.26200; Node v24.22.1"
     },
     {
       "id": "automated-tests",
       "name": "Automated tests passing",
       "unit": "tests passed / total",
-      "workload": "Unit, property-based and golden tests across workspace packages",
+      "workload": "Unit, property-based, golden and API integration tests (real PostgreSQL via Testcontainers) across workspace packages",
       "methodology": "Vitest JSON reports in benchmarks/test-reports/ (pnpm test:evidence).",
       "resumeSuitability": "Suitable as a count; mention property-based testing explicitly.",
-      "value": "217/217",
+      "value": "287/287",
       "verification": "MEASURED",
-      "sourceFile": "benchmarks/test-reports/award-rules.json, benchmarks/test-reports/calculation-engine.json, benchmarks/test-reports/domain.json, benchmarks/test-reports/test-fixtures.json",
+      "sourceFile": "benchmarks/test-reports/api-contracts.json, benchmarks/test-reports/api.json, benchmarks/test-reports/award-rules.json, benchmarks/test-reports/calculation-engine.json, benchmarks/test-reports/domain.json, benchmarks/test-reports/test-fixtures.json",
       "commitSha": null,
       "sourceTreeSha256": null,
-      "date": "2026-10-22T12:00:53.212Z",
+      "date": "2026-10-22T12:59:07.031Z",
       "environment": "local test run (see vitest reports)"
     },
     {

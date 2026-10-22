@@ -4,7 +4,7 @@
 
 WageGuard is an independent Australian payroll verification tool. It calculates the award minimum gross pay for supported shifts using deterministic, versioned rules taken from the official award text. It then compares that figure with a payslip and explains every dollar, or says plainly when a situation is outside what it can verify.
 
-> **Status: in development.** The calculation engine, rule system, reconciliation, tests and engine benchmarks are implemented and verified. The API, database, authentication and web UI are not built yet; see [the checklist](docs/implementation-checklist.md). WageGuard is informational and is not legal advice.
+> **Status: in development.** The calculation engine, rule system, reconciliation, engine benchmarks, and the REST API with PostgreSQL persistence and authentication are implemented and tested. The web UI is not built yet; see [the checklist](docs/implementation-checklist.md). WageGuard is informational and is not legal advice.
 
 ## What works today
 
@@ -49,7 +49,7 @@ All measurements are synthetic, from one developer workstation (Intel i7-13650HX
 | Engine throughput, 10,000 synthetic shifts (median of 10 repetitions)                | 32,588 shifts/s (commit `4b05512`; range 32,358–34,453 across non-outlier runs) | `benchmarks/results/engine-2026-10-22T12-01-59-466Z-3bf2ea.json` |
 | Runtime reduction from profiling-led optimisation (same workload, identical outputs) | 85.3% (2,088 ms → 307 ms)                                                       | [ADR 0007](docs/adr/0007-offset-table-optimisation.md)           |
 | Golden scenarios (10 hand-derived reference calculations + 11 correct refusals)      | 21 / 21                                                                         | `benchmarks/results/correctness-*.json`                          |
-| Automated tests (unit, property-based, golden)                                       | 217 passing                                                                     | `benchmarks/test-reports/`                                       |
+| Automated tests (unit, property-based, golden, API integration on real PostgreSQL)   | 287 passing                                                                     | `benchmarks/test-reports/`                                       |
 | Calculation engine coverage                                                          | 98.6% lines, 93.1% branches                                                     | Benchmark D record                                               |
 
 The golden expectations are derived from the award's published Schedule B rates and **have not been reviewed by a payroll professional**. These figures show agreement on a small, defined scenario set, not legal accuracy.
@@ -75,7 +75,15 @@ pnpm benchmark:report       # benchmarks/reports/summary.md
 pnpm resume:metrics         # docs/resume-evidence/
 ```
 
-`docker compose up -d` starts PostgreSQL and Redis for the upcoming API (see `.env.example`). There are no demo credentials yet, because authentication is not implemented.
+Run the full stack (PostgreSQL, migrations, API on http://localhost:3001):
+
+```bash
+docker compose up --build
+curl http://localhost:3001/api/v1/health
+# OpenAPI 3.1 document: http://localhost:3001/api/v1/openapi.json
+```
+
+There is no seeded demo account yet. Register any synthetic email through `POST /api/v1/auth/register`. The full API is documented in [docs/api.md](docs/api.md).
 
 ## Documentation
 
@@ -87,7 +95,7 @@ Copyright (c) 2026 ijfabi. All rights reserved. The code is published for viewin
 
 ## Roadmap
 
-1. **Phase 2.** PostgreSQL and Prisma persistence, NestJS REST API with OpenAPI, authentication, object-level authorisation, immutable audit snapshots, idempotency keys, Testcontainers integration tests.
+1. **Phase 2 (done).** PostgreSQL and Prisma persistence, NestJS REST API with OpenAPI, authentication, object-level authorisation, immutable audit snapshots, idempotency keys, Testcontainers integration tests.
 2. **Phase 3.** Next.js UI: employment setup, shift entry, CSV import, payslip entry, audit dashboard and explanations, Playwright E2E.
 3. **Phase 4.** PDF reports, OpenTelemetry, security tests, container scanning.
 4. **Phase 5.** API, database and reliability benchmarks (B, C, E).

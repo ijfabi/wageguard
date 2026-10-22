@@ -14,6 +14,8 @@ export default defineConfig(
       "**/.next/**",
       "**/*.d.ts",
       "benchmarks/results/**",
+      "benchmarks/test-reports/**",
+      "**/src/generated/**",
     ],
   },
   js.configs.recommended,
@@ -32,6 +34,8 @@ export default defineConfig(
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
+      // NestJS modules are decorated classes whose content lives in the decorator.
+      "@typescript-eslint/no-extraneous-class": ["error", { allowWithDecorator: true }],
       "no-console": "error",
     },
   },
@@ -59,6 +63,17 @@ export default defineConfig(
     files: ["**/*.test.ts", "**/*.spec.ts", "**/test/**/*.ts"],
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
+    },
+  },
+  {
+    // HTTP integration tests: supertest types response bodies as `any`; the assertions themselves
+    // validate those bodies. Application source keeps the full strict rule set.
+    files: ["apps/*/test/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
     },
   },
   {

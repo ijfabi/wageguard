@@ -1,38 +1,50 @@
 # Security and threat model
 
-Status: initial model, written before the API exists. The controls marked **Planned** are design commitments for Phase 2 and later, not implemented features.
+OWASP ASVS is used as the engineering checklist. This page lists only controls that exist and are tested, plus clearly labelled gaps.
 
 ## Assets
 
 - Employee personal and pay data: shifts, payslip amounts, employment details.
-- Authentication material: passwords and session cookies.
-- Integrity of rule sets and completed audit snapshots, since a tampered rule silently changes every result.
-- Uploaded files (CSV now; PDF possibly later).
+- Authentication material: password hashes and session tokens.
+- Integrity of rule sets and completed audit snapshots, since tampering silently changes results.
+- Uploaded files (CSV timesheets).
 
 ## Trust boundaries
 
-Browser → API (untrusted input), API → PostgreSQL, API → Redis/BullMQ, CI → container registry and AWS (optional).
+Browser → API (untrusted input) → PostgreSQL. CI → GitHub-hosted runners. Redis is provisioned but not yet used.
 
 ## Threats and controls
 
-| Threat (STRIDE)                                       | Control                                                                                                                                   | Status                                         |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Tampering with rule data                              | Zod schema plus semantic validation; SHA-256 fingerprints of published rule sets checked at load and in CI; deep-frozen at runtime        | Implemented                                    |
-| Tampering with calculation inputs or results          | Input snapshot hash and rule-set fingerprint stored with each result; completed audits immutable                                          | Hash implemented; storage planned              |
-| Malformed or hostile input (injection, huge payloads) | Strict Zod schemas (unknown keys rejected), string length caps, at most 200 shifts and 10 breaks per period; Prisma parameterised queries | Engine limits implemented; HTTP limits planned |
-| Spoofing (account takeover)                           | Maintained auth library with argon2id hashing, HTTP-only Secure SameSite cookies, rate-limited login                                      | Planned                                        |
-| Broken object-level authorisation                     | Every repository query scoped by owner `userId`; cross-user tests                                                                         | Planned                                        |
-| Repudiation                                           | Audit log of sensitive actions (login, export, deletion)                                                                                  | Planned                                        |
-| Information disclosure in logs                        | Structured logging with redaction of payslip amounts, tokens and personal fields                                                          | Planned                                        |
-| CSV upload abuse                                      | Size cap, row cap, strict column schema, no formula evaluation, not stored after parsing unless the user chooses                          | Planned                                        |
-| Denial of service                                     | Rate limiting, request size limits, bounded engine work per request                                                                       | Partially (engine bounds)                      |
-| Supply chain                                          | Exact version pins, lockfile, `pnpm audit` in CI, gitleaks secret scan; container scanning planned                                        | Partially                                      |
-| Misleading output (product safety)                    | `REVIEW_REQUIRED` and `UNSUPPORTED_SCENARIO` instead of guesses; no green "verified" state for unreviewed rules                           | Implemented in engine                          |
+| Threat (STRIDE)                              | Control                                                                                                                                                                                 | Status and evidence                                                                                            |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Spoofing: credential stuffing or brute force | argon2id (m=19 MiB, t=2, p=1); stricter auth rate limit; identical message and similar timing for unknown email and bad password                                                        | Implemented; `auth.test.ts`, `platform.test.ts` (429)                                                          |
+| Spoofing: session theft                      | 256-bit random tokens, only SHA-256 stored; HttpOnly, SameSite=Strict, Secure plus `__Host-` in production; server-side revocation; fixed TTL                                           | Implemented; `auth.test.ts` (stolen cookie fails after logout, expired session rejected)                       |
+| CSRF                                         | SameSite=Strict, plus a global origin guard (`Origin` allow-list and `Sec-Fetch-Site`)                                                                                                  | Implemented; `platform.test.ts`                                                                                |
+| Broken object-level authorisation            | Every query scoped by `user_id`; 404 for others' resources; composite ownership FKs; ownership-immutable triggers                                                                       | Implemented; `security.test.ts` covers every object route, list leakage, cross-user writes and database bypass |
+| Tampering with rule data                     | Zod plus semantic validation; SHA-256 fingerprints checked at load and in CI; deep-frozen at runtime                                                                                    | Implemented                                                                                                    |
+| Tampering with completed audits              | Immutable snapshot plus a trigger blocking UPDATE and DELETE; deletion only via transaction-local flag in account deletion                                                              | Implemented; `audits.test.ts`                                                                                  |
+| Duplicate or replayed audit submissions      | `Idempotency-Key` with a unique index; request-hash check                                                                                                                               | Implemented; 10-way concurrency test                                                                           |
+| Injection                                    | Prisma parameterised queries; strict Zod schemas (unknown keys rejected); allow-listed sort keys; validated cursors                                                                     | Implemented; `security.test.ts` (SQL and script payloads, sort, filter and cursor injection)                   |
+| Malformed or hostile CSV                     | 256 KiB body cap, 500-row cap, 1 KiB record cap, exact header, every cell pattern-validated (formula payloads rejected), all or nothing                                                 | Implemented; `shifts.test.ts` (11 malformed cases)                                                             |
+| Denial of service                            | Rate limits; JSON body cap 512 KiB; bounded engine work (at most 200 shifts and 10 breaks); page size at most 100                                                                       | Implemented                                                                                                    |
+| Information disclosure in errors             | Single error body; 500s are generic with details only in logs; framework header removed                                                                                                 | Implemented; `platform.test.ts`                                                                                |
+| Information disclosure in logs               | Bodies never logged; cookie and authorization headers redacted; query strings dropped; event metadata holds ids and codes only                                                          | Implemented; `auth.test.ts` checks events contain no email                                                     |
+| Clickjacking and content injection           | helmet: CSP `default-src 'none'; frame-ancestors 'none'`, `nosniff`, `X-Frame-Options`                                                                                                  | Implemented                                                                                                    |
+| Repudiation                                  | `audit_events`: register, login success and failure, logout, import, audit created, report export, account deletion                                                                     | Implemented                                                                                                    |
+| Supply chain                                 | Exact version pins and lockfile; `pnpm audit --audit-level high` in CI; gitleaks secret scan over full history; Trivy image scan (fixable HIGH/CRITICAL); actions pinned to commit SHAs | Implemented in CI                                                                                              |
+| Secrets                                      | Environment only; `.env` git-ignored; startup validation reports variable names, never values                                                                                           | Implemented                                                                                                    |
+| Data deletion                                | `DELETE /auth/me` with password re-entry removes all owned rows, including audits                                                                                                       | Implemented; `security.test.ts`                                                                                |
+| Misleading output                            | `REVIEW_REQUIRED` and `UNSUPPORTED_SCENARIO` instead of guesses; no `MATCHED` for partial calculations                                                                                  | Implemented in engine and API                                                                                  |
+
+## Known gaps
+
+- **Email enumeration.** Registration reveals whether an email exists (`409 EMAIL_TAKEN`). This is mitigated by the auth rate limit; there is no email verification flow.
+- **Rate-limit scope.** Rate-limit state is in process memory: correct for one instance only.
+- **Encryption at rest.** This depends on the hosting platform (for example RDS encryption), and no uploaded files are stored. Nothing is deployed yet.
+- **No MFA, password reset or account lockout.** Brute force is slowed by rate limiting only.
+- **Frontend controls.** CSP and other browser-side controls for the web app will be defined in Phase 3.
 
 ## Rules for this repository
 
 - Synthetic data only. Never commit or load real employee data.
-- Secrets live in environment variables (`.env` is git-ignored; `.env.example` holds placeholders).
 - No calculation path calls an external service or an AI provider.
-
-OWASP ASVS will be used as the checklist when the API is built (Phase 2). The required security test cases (BOLA, malformed CSV, oversized files, cross-user access, duplicate and concurrent audits, invalid dates, injection) are tracked in the [checklist](implementation-checklist.md).

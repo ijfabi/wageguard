@@ -1,0 +1,24 @@
+{
+  "name": "@wageguard/api-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zod request/response contracts for the WageGuard REST API. Single source of truth for the API, the web client and the OpenAPI document.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@wageguard/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:evidence": "vitest run --reporter=default --reporter=json --outputFile.json=../../benchmarks/test-reports/api-contracts.json"
+  },
+  "dependencies": {
+    "@wageguard/calculation-engine": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

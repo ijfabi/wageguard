@@ -13,17 +13,20 @@ flowchart LR
   end
   fixtures["@wageguard/test-fixtures<br/>golden scenarios, workload generator"]
   bench["benchmarks<br/>A, D, F (+ B, C, E planned)"]
-  api["apps/api (NestJS): PLANNED Phase 2"]
+  contracts["@wageguard/api-contracts<br/>Zod request/response schemas"]
+  api["apps/api (NestJS)<br/>identity, employments, shifts,<br/>payslips, audits, rules, health"]
   web["apps/web (Next.js): PLANNED Phase 3"]
-  db[("PostgreSQL: PLANNED")]
+  db[("PostgreSQL 17<br/>constraints + triggers")]
 
   rules --> domain
   engine --> domain
   engine -->|RuleSetResolver port| rules
   fixtures --> engine
   bench --> fixtures
+  contracts --> engine
+  api --> contracts
   api --> engine
-  api --> db
+  api -->|Prisma 7 + pg adapter| db
   web --> api
 ```
 

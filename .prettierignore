@@ -5,4 +5,5 @@ node_modules
 pnpm-lock.yaml
 benchmarks/results
 benchmarks/test-reports
+**/src/generated
 docs/award-sources/*.html

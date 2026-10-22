@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/coverage
+**/.next
+.git
+.github
+.env
+.env.*
+docs/award-sources/**/*-retrieved-*
+benchmarks/results
+benchmarks/reports
+benchmarks/test-reports
+test-results

@@ -1,4 +1,5 @@
-# Local development services. Application containers (api, web) are added in Phase 2/3.
+# Local stack: `docker compose up --build` starts PostgreSQL and Redis, applies database
+# migrations, then starts the API on http://localhost:3001 (OpenAPI at /api/v1/openapi.json).
 # Credentials here are for local development only; never reuse them elsewhere.
 name: wageguard
 
@@ -31,6 +32,36 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://wageguard:${POSTGRES_PASSWORD:-wageguard-local-only}@postgres:5432/wageguard
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://wageguard:${POSTGRES_PASSWORD:-wageguard-local-only}@postgres:5432/wageguard
+      ALLOWED_ORIGINS: http://localhost:3000
+      # Browsers treat http://localhost as a secure context, so Secure cookies work locally.
+      COOKIE_SECURE: "true"
+    ports:
+      - "127.0.0.1:3001:3001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
 volumes:
   postgres-data:

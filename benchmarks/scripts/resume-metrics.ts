@@ -248,7 +248,8 @@ const metrics: Metric[] = [
       id: "automated-tests",
       name: "Automated tests passing",
       unit: "tests passed / total",
-      workload: "Unit, property-based and golden tests across workspace packages",
+      workload:
+        "Unit, property-based, golden and API integration tests (real PostgreSQL via Testcontainers) across workspace packages",
       methodology: "Vitest JSON reports in benchmarks/test-reports/ (pnpm test:evidence).",
       resumeSuitability: "Suitable as a count; mention property-based testing explicitly.",
     },
@@ -338,10 +339,10 @@ const bullets = [
       `Built a golden evaluation suite of payroll scenarios derived from the General Retail Industry Award's published rates; the engine matches ${v["golden-reference"]} hand-derived reference calculations in the defined supported scope and correctly refuses ${v["unsupported-correctly-rejected"]} out-of-scope or review-required cases rather than guessing (expected values not yet reviewed by a payroll professional).`,
   ),
   bullet(
-    "Wrote [COUNT] automated tests including property-based tests, with [BRANCH COVERAGE]% branch coverage of the calculation engine.",
+    "Wrote [COUNT] automated tests including property-based and database integration tests, with [BRANCH COVERAGE]% branch coverage of the calculation engine.",
     ["automated-tests", "engine-branch-coverage"],
     (v) =>
-      `Wrote ${(v["automated-tests"] ?? "").split("/")[0] ?? ""} automated unit, property-based (fast-check) and golden tests, reaching ${v["engine-branch-coverage"]}% branch coverage on the pure calculation engine.`,
+      `Wrote ${(v["automated-tests"] ?? "").split("/")[0] ?? ""} automated unit, property-based (fast-check), golden and PostgreSQL-backed API integration tests, reaching ${v["engine-branch-coverage"]}% branch coverage on the pure calculation engine.`,
   ),
   bullet(
     "Optimised PostgreSQL audit queries, reducing p95 retrieval latency by [MEASURED PERCENT] on a [DATASET SIZE]-record dataset.",
