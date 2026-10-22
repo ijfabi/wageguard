@@ -38,7 +38,9 @@ Measured on the same machine, workload and repetitions (`benchmarks/reports/summ
 
 | Measure at 10,000 shifts | Baseline       | Optimised       | Change       |
 | ------------------------ | -------------- | --------------- | ------------ |
-| Median total time        | 2,088 ms       | 289 ms          | 86.1% faster |
-| Median throughput        | 4,763 shifts/s | 34,453 shifts/s | +623%        |
+| Median total time        | 2,088 ms       | 307 ms          | 85.3% faster |
+| Median throughput        | 4,763 shifts/s | 32,588 shifts/s | +584%        |
+
+These are the latest commit-traceable run (`4b05512`). Optimised runs on this machine ranged from 32,358 to 34,453 shifts/s, with one outlier under transient load; see [performance](../performance.md#run-to-run-variability-10000-shifts-all-runs-kept).
 
 Memory cost is a few small arrays per zone per year touched.

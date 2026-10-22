@@ -1,0 +1,269 @@
+{
+  "benchmark": "A-engine-throughput",
+  "status": "COMPLETED",
+  "reason": null,
+  "environment": {
+    "runId": "engine-2026-10-22T12-01-53-590Z-66d780",
+    "timestampUtc": "2026-10-22T12:01:53.590Z",
+    "git": {
+      "commitSha": "4b0551265d6847e8e8a8e466ebbf504d625b505e",
+      "dirty": true,
+      "note": null
+    },
+    "sourceTreeSha256": "d70e7d3a3a38e4aea24d0efd9856e7b226286c3ab56d70359f064040e136e129",
+    "environment": "local-developer-workstation",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26200",
+      "arch": "x64"
+    },
+    "cpu": {
+      "model": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "logicalCores": 20
+    },
+    "memory": {
+      "totalBytes": 16849256448,
+      "freeBytesAtStart": 2802601984
+    },
+    "node": "v24.22.1",
+    "dockerVersion": "Docker version 29.9.1, build dfc520d",
+    "postgresVersion": null
+  },
+  "configuration": {
+    "label": "optimised-offset-table",
+    "engineVersion": "0.1.0",
+    "workloadGeneratorVersion": "1",
+    "seed": 20260706,
+    "sizes": [
+      100,
+      1000,
+      10000
+    ],
+    "warmupRepetitions": 3,
+    "measuredRepetitions": 10,
+    "ruleSet": "MA000004/2026-07-01/r1",
+    "scope": "Isolated calculation engine in a single Node.js process. Excludes HTTP, JSON parsing of requests, and database access."
+  },
+  "results": [
+    {
+      "shifts": 100,
+      "payPeriods": 10,
+      "repetitionTotalMs": {
+        "count": 10,
+        "min": 4.8542999999999665,
+        "max": 5.713800000000049,
+        "mean": 5.258310000000006,
+        "median": 5.2327999999999975,
+        "p95": 5.713800000000049,
+        "p99": 5.713800000000049,
+        "stddev": 0.24437504623474074
+      },
+      "shiftsPerSecond": {
+        "count": 10,
+        "min": 17501.4876264481,
+        "max": 20600.292524153985,
+        "mean": 19054.28997693926,
+        "median": 18853.339869157804,
+        "p95": 20600.292524153985,
+        "p99": 20600.292524153985,
+        "stddev": 880.5632666986343
+      },
+      "perPayPeriodMs": {
+        "count": 10,
+        "min": 0.42910000000000537,
+        "max": 0.7343000000000188,
+        "mean": 0.5222900000000038,
+        "median": 0.5040000000000191,
+        "p95": 0.7343000000000188,
+        "p99": 0.7343000000000188,
+        "stddev": 0.08346902885369704
+      },
+      "cpuUtilisationPercent": {
+        "count": 10,
+        "min": 0,
+        "max": 1297.818429021701,
+        "mean": 245.96068336238872,
+        "median": 0,
+        "p95": 1297.818429021701,
+        "p99": 1297.818429021701,
+        "stddev": 519.5209753198418
+      },
+      "heapUsedDeltaBytes": {
+        "count": 10,
+        "min": 5972112,
+        "max": 6230128,
+        "mean": 6016100.8,
+        "median": 5986712,
+        "p95": 6230128,
+        "p99": 6230128,
+        "stddev": 77712.53697341532
+      },
+      "peakRssBytes": 88551424,
+      "statusCounts": {
+        "REVIEW_REQUIRED": 10
+      },
+      "errors": 0,
+      "outputSha256": "bb9505ba3fa67e65437b64cd50c47aef2c2c225e178703c09800dc9db3df6ace",
+      "rawRepetitionTotalMs": [
+        5.2328,
+        4.8543,
+        5.3041,
+        5.3366,
+        5.5139,
+        5.7138,
+        5.1599,
+        5.3355,
+        5.1051,
+        5.0271
+      ]
+    },
+    {
+      "shifts": 1000,
+      "payPeriods": 100,
+      "repetitionTotalMs": {
+        "count": 10,
+        "min": 38.14470000000006,
+        "max": 52.82910000000004,
+        "mean": 42.91661000000001,
+        "median": 41.00369999999998,
+        "p95": 52.82910000000004,
+        "p99": 52.82910000000004,
+        "stddev": 4.419898536404544
+      },
+      "shiftsPerSecond": {
+        "count": 10,
+        "min": 18928.96150038519,
+        "max": 26215.961850532276,
+        "mean": 23505.670744083094,
+        "median": 24206.334797816577,
+        "p95": 26215.961850532276,
+        "p99": 26215.961850532276,
+        "stddev": 2219.7778380342593
+      },
+      "perPayPeriodMs": {
+        "count": 100,
+        "min": 0.36560000000008586,
+        "max": 0.8627999999999929,
+        "mean": 0.527602999999998,
+        "median": 0.501700000000028,
+        "p95": 0.793399999999906,
+        "p99": 0.808400000000006,
+        "stddev": 0.10749855104026595
+      },
+      "cpuUtilisationPercent": {
+        "count": 10,
+        "min": 81.78203044336072,
+        "max": 274.8014622463123,
+        "mean": 168.54007785493891,
+        "median": 153.64467109065774,
+        "p95": 274.8014622463123,
+        "p99": 274.8014622463123,
+        "stddev": 61.12692334019119
+      },
+      "heapUsedDeltaBytes": {
+        "count": 10,
+        "min": 731248,
+        "max": 9450560,
+        "mean": 3761368,
+        "median": 3398136,
+        "p95": 9450560,
+        "p99": 9450560,
+        "stddev": 2741095.6002079006
+      },
+      "peakRssBytes": 107577344,
+      "statusCounts": {
+        "REVIEW_REQUIRED": 89,
+        "CALCULATED": 11
+      },
+      "errors": 0,
+      "outputSha256": "071a2847b7b7a3a589ab49cfaf2299abcc54ca74621311d468e1e215c5935c90",
+      "rawRepetitionTotalMs": [
+        52.8291,
+        46.2328,
+        41.3115,
+        45.0494,
+        39.665,
+        41.0037,
+        44.9114,
+        38.1447,
+        39.1284,
+        40.8901
+      ]
+    },
+    {
+      "shifts": 10000,
+      "payPeriods": 1000,
+      "repetitionTotalMs": {
+        "count": 10,
+        "min": 292.3296,
+        "max": 357.3563999999999,
+        "mean": 314.6845,
+        "median": 306.17770000000064,
+        "p95": 357.3563999999999,
+        "p99": 357.3563999999999,
+        "stddev": 19.72982248165898
+      },
+      "shiftsPerSecond": {
+        "count": 10,
+        "min": 27983.268244251405,
+        "max": 34207.962519019624,
+        "mean": 31884.480838501295,
+        "median": 32358.134657083065,
+        "p95": 34207.962519019624,
+        "p99": 34207.962519019624,
+        "stddev": 1892.994208826036
+      },
+      "perPayPeriodMs": {
+        "count": 1000,
+        "min": 0.22519999999985885,
+        "max": 0.8788999999999305,
+        "mean": 0.35708989999999924,
+        "median": 0.34400000000005093,
+        "p95": 0.484599999999773,
+        "p99": 0.6521999999999935,
+        "stddev": 0.07754825103914095
+      },
+      "cpuUtilisationPercent": {
+        "count": 10,
+        "min": 115.46452654509338,
+        "max": 168.2029749390628,
+        "mean": 142.14842041711233,
+        "median": 139.91634122125703,
+        "p95": 168.2029749390628,
+        "p99": 168.2029749390628,
+        "stddev": 16.454038698152903
+      },
+      "heapUsedDeltaBytes": {
+        "count": 10,
+        "min": 13712152,
+        "max": 26193320,
+        "mean": 23367976.8,
+        "median": 23891728,
+        "p95": 26193320,
+        "p99": 26193320,
+        "stddev": 3575135.3525364227
+      },
+      "peakRssBytes": 152498176,
+      "statusCounts": {
+        "REVIEW_REQUIRED": 856,
+        "CALCULATED": 144
+      },
+      "errors": 0,
+      "outputSha256": "47091c253eaf7d87b02cf63da5afd7a8543df5d04aa669bff757c205e8e1195e",
+      "rawRepetitionTotalMs": [
+        357.3564,
+        323.1152,
+        318.4357,
+        309.0413,
+        335.8662,
+        304.8171,
+        306.1777,
+        301.7788,
+        297.927,
+        292.3296
+      ]
+    }
+  ],
+  "errorCount": 0,
+  "exitStatus": 0
+}
