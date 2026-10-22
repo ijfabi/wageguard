@@ -9,8 +9,8 @@ Legend: [x] done and verified · [~] partially done · [ ] not started
 - [x] ESLint (strict type-checked) and Prettier, with monetary-safety lint rules
 - [x] Docker Compose for PostgreSQL and Redis (written; **not run**, Docker daemon unavailable)
 - [x] Documentation structure and ADRs
-- [x] GitHub Actions CI (format, lint, typecheck, build, coverage-gated tests, rule-set integrity, `pnpm audit`, gitleaks). **Not yet run on GitHub**; there is no remote repository.
-- [ ] git repository initialised (git is not installed on the development machine)
+- [x] GitHub Actions CI (format, lint, typecheck, build, coverage-gated tests, rule-set integrity, `pnpm audit`, gitleaks). First green run on GitHub: https://github.com/ijfabi/wageguard/actions/runs/39777538158
+- [x] git repository initialised and published (public, all rights reserved)
 
 ## Phase 1: Domain and calculation foundation
 
