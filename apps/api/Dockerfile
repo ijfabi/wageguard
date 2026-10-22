@@ -22,6 +22,10 @@ CMD ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
 # Minimal runtime: production dependencies and compiled output only, non-root user.
 FROM node:24-alpine AS runtime
 ENV NODE_ENV=production PORT=3001
+# The app only needs `node`. Package managers bundled in the base image (npm, npx, corepack, yarn)
+# are removed: they are unused at runtime and carried the only HIGH findings in the image scan.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-* \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 USER node
