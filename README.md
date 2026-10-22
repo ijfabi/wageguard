@@ -49,7 +49,7 @@ All measurements are synthetic, from one developer workstation (Intel i7-13650HX
 | Engine throughput, 10,000 synthetic shifts (median of 10 repetitions)                | 32,588 shifts/s (commit `4b05512`; range 32,358–34,453 across non-outlier runs) | `benchmarks/results/engine-2026-10-22T12-01-59-466Z-3bf2ea.json` |
 | Runtime reduction from profiling-led optimisation (same workload, identical outputs) | 85.3% (2,088 ms → 307 ms)                                                       | [ADR 0007](docs/adr/0007-offset-table-optimisation.md)           |
 | Golden scenarios (10 hand-derived reference calculations + 11 correct refusals)      | 21 / 21                                                                         | `benchmarks/results/correctness-*.json`                          |
-| Automated tests (unit, property-based, golden, API integration on real PostgreSQL)   | 287 passing                                                                     | `benchmarks/test-reports/`                                       |
+| Automated tests (unit, property-based, golden, API integration on real PostgreSQL)   | 288 passing                                                                     | `benchmarks/test-reports/`                                       |
 | Calculation engine coverage                                                          | 98.6% lines, 93.1% branches                                                     | Benchmark D record                                               |
 
 The golden expectations are derived from the award's published Schedule B rates and **have not been reviewed by a payroll professional**. These figures show agreement on a small, defined scenario set, not legal accuracy.

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { PASSWORD, signedInUser, startApp, type TestApp } from "./helpers.js";
+import { PASSWORD, fixedClock, signedInUser, startApp, type TestApp } from "./helpers.js";
 
 let t: TestApp;
 beforeAll(async () => {
@@ -127,6 +127,23 @@ describe("sessions", () => {
       data: { expiresAt: new Date(Date.now() - 1000) },
     });
     await agent.get("/api/v1/auth/me").expect(401);
+  });
+
+  it("sets a relative Max-Age so session cookies survive server/client clock skew", async () => {
+    // Regression: an absolute Expires derived from the server's clock made cookies arrive
+    // already expired whenever the clocks disagreed (here, a server clock years behind).
+    const skewed = await startApp({}, { clock: fixedClock("2020-01-01T00:00:00Z") });
+    try {
+      const agent = skewed.agent();
+      const res = await agent
+        .post("/api/v1/auth/register")
+        .send({ email: `skew-${randomUUID()}@example.test`, password: PASSWORD })
+        .expect(201);
+      expect(sessionCookie(res.headers)).toMatch(/Max-Age=43200/);
+      await agent.get("/api/v1/auth/me").expect(200);
+    } finally {
+      await skewed.close();
+    }
   });
 
   it("records security events without personal data", async () => {

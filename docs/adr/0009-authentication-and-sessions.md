@@ -22,6 +22,7 @@ The API holds personal pay data. The brief requires secure authentication with a
 **Cookie**
 
 - `HttpOnly`, `SameSite=Strict`, `Path=/`.
+- A relative `Max-Age` (the session TTL), never an absolute `Expires` computed from server time. An absolute expiry made cookies arrive already expired whenever server and client clocks disagreed; this was caught in CI, when a test with an injected clock started failing once real time passed its expiry. The database `expires_at` remains the authoritative limit.
 - `Secure` with the `__Host-` name prefix whenever `COOKIE_SECURE=true`, which is mandatory in production and refused at startup otherwise.
 
 **CSRF**

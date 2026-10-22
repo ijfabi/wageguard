@@ -77,12 +77,15 @@ export class AuthController {
   }
 
   private setSessionCookie(res: Response, session: IssuedSession): void {
+    // Relative Max-Age, not an absolute Expires: the browser times the cookie from receipt, so a
+    // wrong client clock cannot expire it early or keep it late. The database expiry
+    // (session.expiresAt) remains the authoritative server-side limit.
     res.cookie(this.config.sessionCookieName, session.token, {
       httpOnly: true,
       secure: this.config.cookieSecure,
       sameSite: "strict",
       path: "/",
-      expires: session.expiresAt,
+      maxAge: this.config.sessionTtlMs,
     });
   }
 
