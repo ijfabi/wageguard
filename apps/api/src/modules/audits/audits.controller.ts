@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Headers, Inject, Param, Post, Query, Res } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Inject,
+  Param,
+  Post,
+  Query,
+  Res,
+  StreamableFile,
+} from "@nestjs/common";
 import {
   ApiErrorCode,
   CreateAuditRequestSchema,
@@ -71,7 +82,23 @@ export class AuditsController {
     return this.audits.lines(user.id, id);
   }
 
-  /** Full evidence report (JSON). PDF export is planned for Phase 4. */
+  /** Printable evidence report built from the same immutable snapshot as the JSON report. */
+  @Get(":id/report/pdf")
+  async reportPdf(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ZodPipe(IdSchema)) id: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const pdf = await this.audits.reportPdf(user.id, id);
+    res.setHeader("Cache-Control", "no-store");
+    return new StreamableFile(pdf, {
+      type: "application/pdf",
+      disposition: `attachment; filename="wageguard-audit-${id}.pdf"`,
+      length: pdf.length,
+    });
+  }
+
+  /** Full evidence report (JSON). */
   @Get(":id/report")
   async report(
     @CurrentUser() user: AuthenticatedUser,

@@ -5,11 +5,13 @@
 | Unit                          | Vitest                              | `packages/*/test/*.test.ts`                                                                                                       | Implemented |
 | Property-based                | fast-check                          | `domain/test/{money,interval,canonical,offset-table}.test.ts`, `calculation-engine/test/properties.test.ts`                       | Implemented |
 | Golden correctness            | Vitest + evaluator                  | `test-fixtures/test/golden.test.ts`, `pnpm benchmark:correctness`                                                                 | Implemented |
-| Integration (real PostgreSQL) | Vitest + Testcontainers + Supertest | `apps/api/test/{auth,shifts,audits,platform}.test.ts`                                                                             | Implemented |
+| Integration (real PostgreSQL) | Vitest + Testcontainers + Supertest | `apps/api/test/{auth,shifts,audits,dashboard,platform,telemetry}.test.ts`                                                         | Implemented |
 | Contract                      | Vitest                              | `packages/api-contracts/test/contracts.test.ts`; OpenAPI route-parity test in `apps/api/test/platform.test.ts`                    | Implemented |
 | Security                      | Vitest + Supertest                  | `apps/api/test/security.test.ts` (BOLA, cross-user, database bypass, injection, deletion) plus security cases in the other suites | Implemented |
 | End-to-end + accessibility    | Playwright + axe-core               | `apps/web/e2e/{journey,access}.spec.ts` (real API, real PostgreSQL, production web build)                                         | Implemented |
-| Web unit                      | Vitest                              | `apps/web/src/lib/lib.test.ts`                                                                                                    | Implemented |
+| Web unit                      | Vitest                              | `apps/web/src/lib/lib.test.ts`, `packages/presentation/test`                                                                      | Implemented |
+| PDF report                    | Vitest + unpdf                      | `apps/api/test/audits.test.ts` (text extraction: wording, amounts, provenance, page breaks); `audit-pdf.test.ts`                  | Implemented |
+| Telemetry privacy             | Vitest + in-memory OTel exporters   | `apps/api/test/telemetry.test.ts`                                                                                                 | Implemented |
 
 API tests live beside the app (`apps/api/test`) rather than in a top-level `tests/` folder, so that each suite runs with the app's own Vitest configuration (decorator transform, Testcontainers global setup). Each run starts a throwaway `postgres:17.6-alpine` container and applies the real migrations, so triggers and constraints are exercised exactly as in production.
 
@@ -25,13 +27,19 @@ API tests live beside the app (`apps/api/test`) rather than in a top-level `test
 
 ## Coverage gates
 
-Every package's `vitest.config.ts` sets 90% thresholds for lines, branches, functions and statements, and `pnpm test:coverage` fails below them. The calculation engine is tracked separately and reported by Benchmark D. **Coverage is not evidence of legal correctness.**
+`pnpm test:coverage` fails below these thresholds:
+
+- `domain`, `award-rules`, `calculation-engine` and `presentation`: 90% lines, branches, functions and statements.
+- `apps/api`: 90% lines, statements and functions, and 80% branches.
+- `api-contracts`, `test-fixtures` and the web unit tests run without a gate. The web app is covered mainly by Playwright.
+
+The calculation engine's coverage is also reported by Benchmark D. **Coverage is not evidence of legal correctness.**
 
 ## Golden scenarios versus demonstration data
 
 - **Golden scenarios** (`test-fixtures/src/golden`) are correctness fixtures whose expected values were derived independently from the award's published rates. They are never edited to match engine output.
 - **Benchmark workloads** (`test-fixtures/src/workload.ts`) are synthetic, seeded and versioned, and are used only for performance.
-- **Demonstration data** for the UI will be a separate synthetic seed (Phase 3). It is not a correctness fixture.
+- **Demonstration data** for the UI comes from a separate synthetic seed (`pnpm --filter @wageguard/api seed:demo`). It is not a correctness fixture.
 
 ## Commands
 

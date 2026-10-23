@@ -1,6 +1,6 @@
 import { CreatePayslipRequestSchema, type PayslipResponse } from "@wageguard/api-contracts";
 
-import { sumMoney, toCents } from "./money";
+import { sumMoney, toCents } from "@wageguard/presentation";
 
 /**
  * The payslip form validates with the API contract schema plus one rule the server also enforces:

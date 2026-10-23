@@ -1,7 +1,7 @@
 "use client";
 
 import type { AuditDetail } from "@wageguard/api-contracts";
-import { Download, FileSearch } from "lucide-react";
+import { Download, FileJson, FileSearch } from "lucide-react";
 import Link from "next/link";
 import { use, useState } from "react";
 import { toast } from "sonner";
@@ -17,9 +17,16 @@ import { errorMessage } from "@/lib/api/client";
 import { api } from "@/lib/api/endpoints";
 import { useAudit, useAuditLines } from "@/lib/api/hooks";
 import { downloadJson } from "@/lib/download";
-import { formatDate, formatInstant, formatMinutes, formatShiftSpan, shortHash } from "@/lib/format";
-import { humaniseShiftIds } from "@/lib/humanise";
-import { formatAud, formatDifference } from "@/lib/money";
+import {
+  auditAmounts,
+  formatAud,
+  formatDate,
+  formatInstant,
+  formatMinutes,
+  formatShiftSpan,
+  humaniseShiftIds,
+  shortHash,
+} from "@wageguard/presentation";
 import { FINDING_STATUS, TONE_CLASSES, issueTitle } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
@@ -63,9 +70,16 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
                 How this was calculated
               </Link>
             </Button>
-            <Button onClick={() => void downloadReport()} disabled={downloading}>
-              <Download className="size-4" aria-hidden />
-              {downloading ? "Preparing…" : "Download report"}
+            <Button variant="outline" onClick={() => void downloadReport()} disabled={downloading}>
+              <FileJson className="size-4" aria-hidden />
+              {downloading ? "Preparing…" : "Download JSON"}
+            </Button>
+            {/* Same-origin link: the browser sends the session cookie and saves the attachment. */}
+            <Button asChild>
+              <a href={`/api/v1/audits/${a.id}/report/pdf`} download>
+                <Download className="size-4" aria-hidden />
+                Download PDF report
+              </a>
             </Button>
           </>
         }
@@ -89,33 +103,9 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
         </section>
 
         <section aria-label="Amounts" className="grid gap-4 sm:grid-cols-3">
-          <Amount
-            label="Reported pay"
-            value={formatAud(a.reportedAmount)}
-            detail={
-              a.comparisonBasis === "GROSS_PAY"
-                ? "Gross pay from your payslip"
-                : "Payslip lines for time worked"
-            }
-          />
-          <Amount
-            label="Calculated award minimum"
-            value={a.expectedAmount === null ? "Not calculated" : formatAud(a.expectedAmount)}
-            detail={
-              a.calculationStatus === "CALCULATED"
-                ? "All paid time priced"
-                : "Only the shifts WageGuard could check"
-            }
-          />
-          <Amount
-            label={a.calculationStatus === "CALCULATED" ? "Difference" : "Difference vs checked shifts"}
-            value={a.difference === null ? "—" : formatDifference(a.difference)}
-            detail={
-              a.calculationStatus === "CALCULATED"
-                ? `Rounding tolerance ${formatAud(a.roundingTolerance)}`
-                : "Not a verified overpayment: some hours were not priced"
-            }
-          />
+          {auditAmounts(a).map((amount) => (
+            <Amount key={amount.label} {...amount} />
+          ))}
         </section>
 
         {a.notes.length === 0 ? null : (

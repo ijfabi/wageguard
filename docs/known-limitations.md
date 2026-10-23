@@ -20,8 +20,13 @@ WageGuard is an informational tool, not legal advice, and it does not determine 
 
 ## Technical
 
-- **Not yet built.** PDF export (the report is JSON), OpenTelemetry and any cloud deployment.
-- **Web CSP** allows `'unsafe-inline'` scripts (Next.js bootstrap scripts); a nonce-based CSP is a planned hardening step ([ADR 0012](adr/0012-web-frontend-architecture.md)).
+- **Not yet built.** Any cloud deployment, dashboards and alerts, and tracing in the web app.
+- **PDF report.**
+  - It uses the standard PDF font, so characters outside Windows-1252 in user-entered text appear as "?".
+  - It is not tagged for screen readers; the web audit and explanation pages are the accessible version ([ADR 0014](adr/0014-pdf-evidence-report.md)).
+- **Web CSP styles.** `style-src` still allows `'unsafe-inline'`: UI libraries set inline style attributes and inject `<style>` elements. Scripts are nonce-only ([ADR 0012](adr/0012-web-frontend-architecture.md)).
+- **Every web page renders per request**, which the CSP nonce requires. No page is statically cached.
+- **OpenTelemetry packages** are pinned one release line behind the latest (0.223 / 2.12), so `pnpm install` warns about deprecated, renamed transitive packages ([ADR 0013](adr/0013-opt-in-opentelemetry.md)).
 - **Web app public holidays** must be entered per audit; DST-ambiguous shift times (the repeated hour) need the API's offset fields, which the shift form does not expose yet. See the [implementation checklist](implementation-checklist.md).
 - **API limits.** Registration reveals whether an email is already registered. There is no email verification, password reset or MFA. Rate-limit state is per process (single instance only). See [security](security.md).
 - **Idempotency keys** never expire. Audits are processed synchronously ([ADR 0010](adr/0010-audits-idempotency-and-immutability.md)).

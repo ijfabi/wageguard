@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuditReport } from "@/lib/api/hooks";
-import { formatDate, formatMinutes, formatShiftSpan, formatTime } from "@/lib/format";
-import { formatAud } from "@/lib/money";
+import { formatAud, formatDate, formatMinutes, formatShiftSpan, formatTime } from "@wageguard/presentation";
 import { issueTitle } from "@/lib/status";
 
 const SEVERITY: Readonly<Record<string, string>> = {

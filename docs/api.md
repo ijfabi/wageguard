@@ -35,7 +35,8 @@ See [ADR 0009](adr/0009-authentication-and-sessions.md).
 | GET       | `/audits`                          | Filter `findingStatus`; `sort=created_desc` or `created_asc`; cursor pagination.                                                           |
 | GET       | `/audits/:id`                      | Summary, findings, notes, assumptions, rule-set fingerprint, input hash.                                                                   |
 | GET       | `/audits/:id/lines`                | Pay lines and the shift-by-shift breakdown.                                                                                                |
-| GET       | `/audits/:id/report`               | Downloadable JSON evidence report (`Content-Disposition: attachment`). PDF is planned.                                                     |
+| GET       | `/audits/:id/report`               | Downloadable JSON evidence report (`Content-Disposition: attachment`)                                                                      |
+| GET       | `/audits/:id/report/pdf`           | The same evidence as an A4 PDF, rendered from the stored snapshot (`Cache-Control: no-store`; [ADR 0014](adr/0014-pdf-evidence-report.md)) |
 | GET       | `/rules/versions`                  | Public. Published rule sets and fingerprints.                                                                                              |
 | GET       | `/health`, `/ready`                | Public. Liveness, and readiness (database reachable).                                                                                      |
 | GET       | `/openapi.json`                    | Public.                                                                                                                                    |

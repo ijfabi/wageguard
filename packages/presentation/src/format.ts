@@ -65,9 +65,30 @@ export function formatMonth(yyyyMm: string): string {
   return `${MONTHS[Number(month) - 1] ?? ""} ${year}`;
 }
 
-/** A UTC instant shown in the viewer's locale and zone (used only for record timestamps). */
-export function formatInstant(iso: string): string {
-  return new Intl.DateTimeFormat("en-AU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
+/**
+ * A UTC instant (record timestamps only). Browsers use the viewer's zone; server-rendered output
+ * passes an explicit IANA zone, which is then named so the reader knows which clock it is.
+ */
+export function formatInstant(iso: string, timeZone?: string): string {
+  if (timeZone === undefined) {
+    return new Intl.DateTimeFormat("en-AU", { dateStyle: "medium", timeStyle: "short" }).format(
+      new Date(iso),
+    );
+  }
+  // Only numeric parts come from Intl, so the wording does not vary with the runtime's ICU data.
+  const fields = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(iso));
+  const get = (type: Intl.DateTimeFormatPartTypes): string =>
+    fields.find((p) => p.type === type)?.value ?? "";
+  const { year, month, day } = parts(`${get("year")}-${get("month")}-${get("day")}`);
+  return `${day} ${MONTHS[month - 1] ?? ""} ${year}, ${formatTime(`${get("hour")}:${get("minute")}`)} (${timeZone})`;
 }
 
 /** Shortens long identifiers (hashes, fingerprints) for display. */

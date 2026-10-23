@@ -22,6 +22,63 @@ test.describe("access control", () => {
   });
 });
 
+test.describe("without JavaScript", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("submitting the sign-in form never puts credentials in the URL", async ({ page }) => {
+    await page.goto("/sign-in");
+    await page.getByLabel("Email").fill("nobody@example.test");
+    await page.getByLabel("Password").fill("not-a-real-password-123");
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.waitForLoadState();
+    expect(page.url()).not.toContain("password");
+    expect(page.url()).not.toContain("nobody");
+  });
+});
+
+test.describe("content security policy", () => {
+  test("scripts need a per-request nonce, and the app runs without violations", async ({ page }) => {
+    // Record every CSP violation the browser reports, on every document.
+    await page.addInitScript(() => {
+      const w = window as unknown as { cspViolations: string[] };
+      w.cspViolations = [];
+      document.addEventListener("securitypolicyviolation", (e) => {
+        w.cspViolations.push(
+          `${e.violatedDirective} ${e.blockedURI} at ${e.sourceFile}:${e.lineNumber}:${e.columnNumber}`,
+        );
+      });
+    });
+    const violations = () =>
+      page.evaluate(() => (window as unknown as { cspViolations: string[] }).cspViolations);
+
+    const nonceOf = (csp: string | undefined) =>
+      /script-src 'self' 'nonce-([A-Za-z0-9+/=]+)' 'strict-dynamic'/.exec(csp ?? "")?.[1];
+    const first = await page.goto("/sign-in");
+    const csp = first?.headers()["content-security-policy"];
+    const nonce = nonceOf(csp);
+    expect(nonce, csp).toBeDefined();
+    expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
+    // Browsers hide the nonce attribute after parsing; the property keeps it.
+    const scriptNonces = await page
+      .locator("script")
+      .evaluateAll((els) => els.map((e) => (e as HTMLScriptElement).nonce));
+    expect(scriptNonces.length).toBeGreaterThan(0);
+    expect(new Set(scriptNonces)).toEqual(new Set([nonce]));
+    const second = await page.goto("/sign-in");
+    expect(nonceOf(second?.headers()["content-security-policy"])).not.toBe(nonce);
+    expect(await violations()).toEqual([]);
+
+    // Signing up needs client-side JavaScript, so this also proves the allowed scripts run.
+    await signUp(page);
+    // A fresh user has no employment yet, so this also covers each page's empty state.
+    for (const path of ["/dashboard", "/shifts/import", "/payslips/new", "/audits/new", "/settings"]) {
+      await page.goto(path);
+      await expect(page.locator("main h1")).toBeVisible();
+      expect(await violations(), path).toEqual([]);
+    }
+  });
+});
+
 /** Fails on any WCAG 2.1 A/AA violation that axe rates serious or critical. */
 async function expectAccessible(page: Page) {
   // Measure what users see: wait until any toast has finished its fade-in animation.
@@ -48,6 +105,8 @@ test.describe("accessibility (axe, WCAG 2.1 AA)", () => {
   });
 
   test("signed-in pages, including an audit", async ({ page }) => {
+    // Eleven server-rendered page states with a full axe scan each (about 33 s measured locally).
+    test.setTimeout(90_000);
     await signUp(page);
     await expectAccessible(page);
     await addCasualEmployment(page, "Accessible store");

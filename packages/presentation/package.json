@@ -1,0 +1,24 @@
+{
+  "name": "@wageguard/presentation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework-free presentation helpers shared by the web app and server-rendered reports: exact money formatting, wall-clock dates, status wording.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@wageguard/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:evidence": "vitest run --reporter=default --reporter=json --outputFile.json=../../benchmarks/test-reports/presentation.json"
+  },
+  "dependencies": {
+    "@wageguard/api-contracts": "workspace:*"
+  }
+}

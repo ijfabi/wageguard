@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { errorMessage } from "@/lib/api/client";
 import { api } from "@/lib/api/endpoints";
 import { useMe, useRuleVersions } from "@/lib/api/hooks";
-import { formatDate, formatInstant, shortHash } from "@/lib/format";
+import { formatDate, formatInstant, shortHash } from "@wageguard/presentation";
 
 const CONFIRMATION = "delete my account";
 
@@ -126,7 +126,8 @@ function DeleteAccount() {
         <Button variant="destructive">Delete account</Button>
       </DialogTrigger>
       <DialogContent>
-        <form onSubmit={(e) => void onSubmit(e)}>
+        {/* method="post" keeps the password out of the URL if submitted before hydration. */}
+        <form method="post" onSubmit={(e) => void onSubmit(e)}>
           <DialogHeader>
             <DialogTitle>Delete your account?</DialogTitle>
             <DialogDescription>

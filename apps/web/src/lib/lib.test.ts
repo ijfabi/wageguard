@@ -1,63 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { buildCsp, createNonce } from "./csp";
 import { parseDuration, toCreateEmploymentRequest, EMPTY_EMPLOYMENT_FORM } from "./employment-form";
-import { formatDate, formatMinutes, formatMonth, formatShiftSpan, formatTime, weekdayOf } from "./format";
-import { humaniseShiftIds } from "./humanise";
-import { formatAud, formatDifference, fromCents, isMoneyString, sumMoney, toCents } from "./money";
 import { PayslipFormSchema } from "./payslip-form";
 import { safeRedirect } from "./safe-redirect";
 import { ShiftFormSchema, fromShiftResponse, toShiftTimes, type ShiftFormValues } from "./shift-form";
-import { FINDING_STATUS, TONE_CLASSES, issueTitle } from "./status";
-
-describe("money", () => {
-  it("converts between strings and integer cents exactly", () => {
-    expect(toCents("862.15")).toBe(86_215n);
-    expect(toCents("-62.15")).toBe(-6_215n);
-    expect(toCents("12.5")).toBe(1_250n);
-    expect(toCents("7")).toBe(700n);
-    expect(fromCents(-5n)).toBe("-0.05");
-    expect(() => toCents("1.234")).toThrow();
-    expect(() => toCents("1e3")).toThrow();
-  });
-
-  it("adds without floating-point error", () => {
-    expect(sumMoney(["0.10", "0.20"])).toBe("0.30");
-    expect(sumMoney(["260.70", "333.76", "267.69"])).toBe("862.15");
-    expect(sumMoney(["", "1.00"])).toBe("1.00");
-  });
-
-  it("formats Australian dollars with separators and signs", () => {
-    expect(formatAud("1234567.5")).toBe("$1,234,567.50");
-    expect(formatAud("-62.15")).toBe("-$62.15");
-    expect(formatAud("0")).toBe("$0.00");
-    expect(formatDifference("1.00")).toBe("+$1.00");
-    expect(formatDifference("-0.03")).toBe("-$0.03");
-    expect(formatDifference("0.00")).toBe("$0.00");
-    expect(isMoneyString("12.50")).toBe(true);
-    expect(isMoneyString("12,50")).toBe(false);
-  });
-});
-
-describe("format", () => {
-  it("formats wall-clock dates and times without time-zone conversion", () => {
-    expect(weekdayOf("2026-07-06")).toBe("Mon");
-    expect(formatDate("2026-07-06")).toBe("Mon 6 Jul 2026");
-    expect(formatTime("00:05")).toBe("12:05 am");
-    expect(formatTime("12:00")).toBe("12:00 pm");
-    expect(formatTime("18:30")).toBe("6:30 pm");
-    expect(formatShiftSpan("2026-07-06T09:00", "2026-07-06T17:00")).toBe("Mon 6 Jul 2026, 9:00 am – 5:00 pm");
-    expect(formatShiftSpan("2026-07-10T22:00", "2026-07-11T02:00")).toBe(
-      "Fri 10 Jul 2026, 10:00 pm – Sat 11 Jul 2026, 2:00 am",
-    );
-    expect(formatMonth("2026-07")).toBe("Jul 2026");
-  });
-
-  it("formats durations", () => {
-    expect(formatMinutes(450)).toBe("7h 30m");
-    expect(formatMinutes(60)).toBe("1h");
-    expect(formatMinutes(25)).toBe("25m");
-  });
-});
+import { FINDING_STATUS, TONE_CLASSES } from "./status";
 
 describe("shift form mapping", () => {
   const base: ShiftFormValues = {
@@ -181,26 +129,33 @@ describe("safe redirect", () => {
   });
 });
 
+describe("content security policy", () => {
+  it("allows only nonce-bearing scripts in production", () => {
+    const csp = buildCsp("abc123", false);
+    expect(csp).toContain("script-src 'self' 'nonce-abc123' 'strict-dynamic'");
+    expect(csp).not.toMatch(/script-src[^;]*'unsafe-(inline|eval)'/);
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("object-src 'none'");
+  });
+
+  it("adds 'unsafe-eval' only in development", () => {
+    expect(buildCsp("n", true)).toMatch(/script-src[^;]*'unsafe-eval'/);
+  });
+
+  it("creates unpredictable 128-bit nonces", () => {
+    const nonces = new Set(Array.from({ length: 100 }, createNonce));
+    expect(nonces.size).toBe(100);
+    for (const nonce of nonces) {
+      expect(atob(nonce)).toHaveLength(16);
+    }
+  });
+});
+
 describe("status presentation", () => {
   it("never uses a green success tone, even for MATCHED", () => {
     expect(FINDING_STATUS.MATCHED.tone).toBe("info");
     for (const classes of Object.values(TONE_CLASSES)) {
       expect(classes).not.toMatch(/green|emerald|success/);
     }
-  });
-
-  it("labels known issue codes and humanises unknown ones", () => {
-    expect(issueTitle("OUTSIDE_SPAN_OF_ORDINARY_HOURS")).toBe("Work outside ordinary hours");
-    expect(issueTitle("SOMETHING_NEW")).toBe("Something new");
-  });
-});
-
-describe("humaniseShiftIds", () => {
-  it("replaces known shift ids with the shift's local times and leaves others alone", () => {
-    const shifts = [{ shiftId: "01a1-shift", localStart: "2026-07-24T17:00", localEnd: "2026-07-24T22:00" }];
-    expect(humaniseShiftIds("Shift 01a1-shift has 60 paid minute(s) outside the span.", shifts)).toBe(
-      "Shift (Fri 24 Jul 2026, 5:00 pm – 10:00 pm) has 60 paid minute(s) outside the span.",
-    );
-    expect(humaniseShiftIds("Shift other-id ended late.", shifts)).toBe("Shift other-id ended late.");
   });
 });

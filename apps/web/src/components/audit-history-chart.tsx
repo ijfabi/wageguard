@@ -15,7 +15,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatMonth } from "@/lib/format";
+import { formatMonth } from "@wageguard/presentation";
 import { FINDING_STATUS, type FindingStatus } from "@/lib/status";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 

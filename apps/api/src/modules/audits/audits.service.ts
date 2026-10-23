@@ -19,11 +19,19 @@ import { ApiError } from "../../common/api-error.js";
 import { decodeCursor, toPage } from "../../common/pagination.js";
 import { CLOCK, type Clock } from "../../infrastructure/clock.js";
 import { PrismaService } from "../../infrastructure/prisma.service.js";
+import { telemetry } from "../../infrastructure/telemetry.js";
 import { EmploymentsService } from "../employments/employments.service.js";
 import { AuditEventsService } from "../identity/audit-events.service.js";
 import { PayslipsService, toDomainPayslip, toPayslipResponse } from "../payslips/payslips.service.js";
 import { localDateColumn } from "../shifts/shift-times.js";
-import { toAuditDetail, toAuditLines, toAuditReport, toAuditSummary } from "./audit.mappers.js";
+import { renderAuditPdf } from "./audit-pdf.js";
+import {
+  toAuditDetail,
+  toAuditLines,
+  toAuditPdfInput,
+  toAuditReport,
+  toAuditSummary,
+} from "./audit.mappers.js";
 import {
   AUDIT_REPOSITORY,
   IdempotencyKeyTaken,
@@ -140,8 +148,18 @@ export class AuditsService {
     };
 
     const calculatedAt = this.clock.now();
-    const calculation = calculatePayPeriod(input, { rules: this.rules, calculatedAt });
-    const reconciliation = reconcile(calculation, domainPayslip);
+    const { calculation, reconciliation } = telemetry.measureCalculation(
+      { "wageguard.shift_count": shifts.length },
+      () => {
+        const result = calculatePayPeriod(input, { rules: this.rules, calculatedAt });
+        return { calculation: result, reconciliation: reconcile(result, domainPayslip) };
+      },
+      (r) => ({
+        "wageguard.calculation_status": r.calculation.status,
+        "wageguard.finding_status": r.reconciliation.status,
+        "wageguard.rule_set_version": r.calculation.metadata.ruleSetVersion ?? "none",
+      }),
+    );
 
     try {
       const audit = await this.audits.insert({
@@ -187,6 +205,11 @@ export class AuditsService {
         auditId: audit.id,
         findingStatus: audit.findingStatus,
       });
+      telemetry.auditCreated({
+        "wageguard.finding_status": audit.findingStatus,
+        "wageguard.calculation_status": audit.calculationStatus,
+        "wageguard.rule_set_version": audit.ruleSetVersion ?? "none",
+      });
       return { audit: toAuditDetail(audit), replayed: false };
     } catch (error: unknown) {
       if (error instanceof IdempotencyKeyTaken) {
@@ -215,8 +238,18 @@ export class AuditsService {
 
   async report(userId: string, id: string): Promise<AuditReport> {
     const audit = await this.findOwned(userId, id);
-    await this.events.record("REPORT_EXPORTED", userId, { auditId: audit.id });
+    await this.events.record("REPORT_EXPORTED", userId, { auditId: audit.id, format: "json" });
+    telemetry.reportExported("json");
     return toAuditReport(audit, this.clock.now().toString());
+  }
+
+  /** The same evidence as {@link report}, laid out as a printable PDF. */
+  async reportPdf(userId: string, id: string): Promise<Buffer> {
+    const audit = await this.findOwned(userId, id);
+    const pdf = await renderAuditPdf(toAuditPdfInput(audit, this.clock.now().toString()));
+    await this.events.record("REPORT_EXPORTED", userId, { auditId: audit.id, format: "pdf" });
+    telemetry.reportExported("pdf");
+    return pdf;
   }
 
   private async findOwned(userId: string, id: string): Promise<AuditRecord> {

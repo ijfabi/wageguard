@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import type { ReactNode } from "react";
 
 import { Providers } from "@/components/providers";
@@ -11,7 +12,12 @@ export const metadata: Metadata = {
     "Understand your pay. Verify every dollar. Independent payroll checks for Australian retail employees.",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+/**
+ * Every page renders per request: the CSP nonce set by proxy.ts can only be applied to scripts at
+ * render time, and prerendered HTML would carry no nonce and be blocked.
+ */
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  await connection();
   return (
     <html lang="en-AU">
       <body>

@@ -42,17 +42,21 @@ Legend: [x] done and verified · [~] partially done · [ ] not started
 
 - [x] Next.js 16 app: landing, sign up/in, dashboard, employment, shifts, CSV upload, payslip, audit history, audit detail, calculation explanation, settings (ADR 0012)
 - [x] `GET /payslips` and `GET /dashboard` API endpoints with integration tests
-- [x] 23 unit tests for web logic (money, formatting, form mapping, redirects, status presentation)
-- [x] Playwright E2E (8 tests): full audit journey with report download, underpayment, malformed CSV, access control, open-redirect protection, keyboard skip link
+- [x] Unit tests for web logic: 19 in `apps/web` (form mapping, redirects, CSP) and 14 in `packages/presentation` (money, formatting, status and amount wording)
+- [x] Playwright E2E (10 tests): full audit journey with PDF and JSON report download, underpayment, malformed CSV, access control, open-redirect protection, nonce CSP, credentials without JavaScript, keyboard skip link
 - [x] axe accessibility checks (WCAG 2.1 AA, serious/critical fail) across 13 page states
 - [x] Web Docker image (standalone, non-root), Compose `web` service, CI E2E job and web image scan
 - [x] README screenshots from the seeded synthetic account
 
 ## Phase 4: Engineering quality
 
-- [ ] PDF audit report
-- [ ] OpenTelemetry traces and metrics
-- [~] Container scanning (Trivy in CI) and dependency/secret scanning: done; runtime hardening review pending
+- [x] PDF audit report from the immutable snapshot (`GET /audits/:id/report/pdf`, ADR 0014), linked from the audit page
+- [x] `@wageguard/presentation`: one source for money, date and status wording in the web app and the PDF
+- [x] OpenTelemetry traces and metrics, opt-in, with privacy redaction and custom audit metrics (ADR 0013, [observability](observability.md)); verified against a local collector
+- [x] Nonce-based Content Security Policy for the web app (no `'unsafe-inline'` scripts), with E2E violation checks
+- [x] Credential forms post (never GET) if submitted before JavaScript loads; E2E test with JavaScript disabled
+- [x] Container scanning (Trivy in CI) and dependency/secret scanning
+- [ ] Unicode font and tagged (accessible) PDF; dashboards and alerts; web app tracing
 
 ## Phase 5: Benchmarking
 

@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { errorMessage } from "@/lib/api/client";
 import { useCreatePayslip, useEmployments } from "@/lib/api/hooks";
-import { isMoneyString, sumMoney, formatAud } from "@/lib/money";
+import { isMoneyString, sumMoney, formatAud } from "@wageguard/presentation";
 import { PAYSLIP_CATEGORY_LABELS, PayslipFormSchema } from "@/lib/payslip-form";
 
 export default function NewPayslipPage() {
@@ -32,15 +32,18 @@ export default function NewPayslipPage() {
   }
   if (employments.data.items.length === 0) {
     return (
-      <EmptyState
-        title="Add an employment first"
-        description="A payslip belongs to an employment."
-        action={
-          <Button asChild>
-            <Link href="/employments">Add employment</Link>
-          </Button>
-        }
-      />
+      <>
+        <PageHeader title="Enter a payslip" />
+        <EmptyState
+          title="Add an employment first"
+          description="A payslip belongs to an employment."
+          action={
+            <Button asChild>
+              <Link href="/employments">Add employment</Link>
+            </Button>
+          }
+        />
+      </>
     );
   }
   return (

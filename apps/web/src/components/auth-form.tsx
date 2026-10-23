@@ -58,7 +58,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
             : "Welcome back. Sign in to see your audits."}
         </CardDescription>
       </CardHeader>
-      <form onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} noValidate>
+      {/* method="post": if submitted before JavaScript loads, credentials must not end up in the URL. */}
+      <form method="post" onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} noValidate>
         <CardContent className="grid gap-4">
           {formError === null ? null : (
             <p

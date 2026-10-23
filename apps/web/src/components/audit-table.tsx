@@ -3,8 +3,7 @@ import Link from "next/link";
 
 import { FindingStatusBadge } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDate, formatInstant } from "@/lib/format";
-import { formatAud, formatDifference } from "@/lib/money";
+import { formatAud, formatDate, formatDifference, formatInstant } from "@wageguard/presentation";
 
 /** Audit summaries as a table; each row links to the audit detail. */
 export function AuditTable({ audits, caption }: { audits: readonly AuditSummary[]; caption: string }) {

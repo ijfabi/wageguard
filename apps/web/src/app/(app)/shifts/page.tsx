@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ApiRequestError, errorMessage } from "@/lib/api/client";
 import { useEmployments, useShifts, useUpdateShift } from "@/lib/api/hooks";
-import { formatShiftSpan, formatTime } from "@/lib/format";
+import { formatShiftSpan, formatTime } from "@wageguard/presentation";
 import { fromShiftResponse, toShiftTimes, type ShiftFormValues } from "@/lib/shift-form";
 
 export default function ShiftsPage() {

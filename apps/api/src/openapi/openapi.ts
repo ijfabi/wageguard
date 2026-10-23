@@ -41,7 +41,9 @@ export interface RouteSpec {
   readonly bodyContentType?: "application/json" | "text/csv";
   readonly query?: z.ZodObject;
   readonly headers?: Readonly<Record<string, z.ZodType>>;
-  readonly responses: Readonly<Record<number, { description: string; schema?: z.ZodType }>>;
+  readonly responses: Readonly<
+    Record<number, { description: string; schema?: z.ZodType; binary?: "application/pdf" }>
+  >;
 }
 
 const ok = (schema: z.ZodType, description = "OK") => ({ description, schema });
@@ -269,6 +271,14 @@ export const ROUTES: readonly RouteSpec[] = [
   },
   {
     method: "get",
+    path: "/audits/:id/report/pdf",
+    summary: "Downloadable evidence report (PDF, built from the same snapshot as the JSON report)",
+    tag: "audits",
+    auth: true,
+    responses: { 200: { description: "A4 PDF attachment", binary: "application/pdf" } },
+  },
+  {
+    method: "get",
     path: "/rules/versions",
     summary: "Published award rule-set versions",
     tag: "rules",
@@ -343,12 +353,17 @@ export function buildOpenApiDocument(version: string): object {
     const responses: Record<string, object> = {};
     for (const [status, response] of Object.entries(route.responses)) {
       responses[status] =
-        response.schema === undefined
-          ? { description: response.description }
-          : {
+        response.binary !== undefined
+          ? {
               description: response.description,
-              content: { "application/json": { schema: jsonSchema(response.schema, "output") } },
-            };
+              content: { [response.binary]: { schema: { type: "string", format: "binary" } } },
+            }
+          : response.schema === undefined
+            ? { description: response.description }
+            : {
+                description: response.description,
+                content: { "application/json": { schema: jsonSchema(response.schema, "output") } },
+              };
     }
     for (const [status, description] of Object.entries(COMMON_ERRORS)) {
       if (responses[status] === undefined && (route.auth || status !== "401")) {

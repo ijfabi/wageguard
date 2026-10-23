@@ -14,9 +14,11 @@ flowchart LR
   fixtures["@wageguard/test-fixtures<br/>golden scenarios, workload generator"]
   bench["benchmarks<br/>A, D, F (+ B, C, E planned)"]
   contracts["@wageguard/api-contracts<br/>Zod request/response schemas"]
-  api["apps/api (NestJS)<br/>identity, employments, shifts,<br/>payslips, audits, rules, health"]
-  web["apps/web (Next.js): PLANNED Phase 3"]
+  presentation["@wageguard/presentation<br/>money, dates, status wording"]
+  api["apps/api (NestJS)<br/>identity, employments, shifts, payslips,<br/>audits, PDF reports, dashboard, rules, health"]
+  web["apps/web (Next.js 16)"]
   db[("PostgreSQL 17<br/>constraints + triggers")]
+  otel[("OTLP collector<br/>optional")]
 
   rules --> domain
   engine --> domain
@@ -24,11 +26,18 @@ flowchart LR
   fixtures --> engine
   bench --> fixtures
   contracts --> engine
+  presentation --> contracts
   api --> contracts
+  api --> presentation
   api --> engine
   api -->|Prisma 7 + pg adapter| db
-  web --> api
+  api -.->|traces, metrics| otel
+  web --> contracts
+  web --> presentation
+  web -->|/api/v1 same-origin rewrite| api
 ```
+
+`@wageguard/presentation` holds the user-facing wording: exact money formatting, wall-clock dates, status labels and the headline amounts. The web app and the PDF report both use it, so they cannot drift apart. Telemetry is opt-in ([observability](observability.md)).
 
 Arrows point from a dependent package to its dependency. The engine depends on the `RuleSetResolver` port. `AwardRuleRegistry` implements it today, and a persistence-backed resolver can replace it without changing the engine.
 
@@ -57,6 +66,16 @@ Arrows point from a dependent package to its dependency. The engine depends on t
 | Exact money            | `Money` and `Decimal` only, with explicit rounding stages (ADR 0004) and lint bans on float helpers.                                                                         |
 | Safe under uncertainty | Unsupported or uncertain minutes are never priced (ADR 0008).                                                                                                                |
 
-## Planned modules (not yet implemented)
+## API modules
 
-Identity and authentication, employment profiles, shift and break management, award rule management, payroll calculation, payslip management, audit and reconciliation, evidence and reporting, observability, and benchmarking. These will live in `apps/api` as NestJS modules, each with application services and ports and Prisma adapters. See the [implementation checklist](implementation-checklist.md).
+`apps/api` holds the NestJS modules:
+
+- identity (sessions, account deletion, audit events);
+- employments;
+- shifts (including CSV import);
+- payslips;
+- audits (calculation, reconciliation, immutable snapshots, JSON and PDF reports);
+- dashboard;
+- rules, health and OpenAPI.
+
+Award rules are still served from the bundled registry; a database-backed rule store is not built. See the [API](api.md), the [data model](data-model.md) and the [implementation checklist](implementation-checklist.md).

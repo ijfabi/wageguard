@@ -38,9 +38,15 @@ test("a new user audits a payslip end to end and exports the report", async ({ p
   await expect(page.getByText("Ordinary hours on Saturday, 7.00 am to 6.00 pm").first()).toBeVisible();
   await page.getByRole("link", { name: "Back to audit" }).click();
 
-  // Downloadable evidence report.
+  // Downloadable evidence: printable PDF and machine-readable JSON.
+  const pdfPromise = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Download PDF report" }).click();
+  const pdf = await pdfPromise;
+  expect(pdf.suggestedFilename()).toMatch(/^wageguard-audit-[0-9a-f-]{36}\.pdf$/);
+  expect((await readFile(await pdf.path())).subarray(0, 5).toString("latin1")).toBe("%PDF-");
+
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download report" }).click();
+  await page.getByRole("button", { name: "Download JSON" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/^wageguard-audit-[0-9a-f-]{36}\.json$/);
   const report = JSON.parse(await readFile(await download.path(), "utf8")) as {

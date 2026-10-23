@@ -28,7 +28,7 @@ The web app must be secure with cookie sessions, accessible, and honest about un
 
 **No business logic in components**
 
-- These live in `src/lib`, as pure functions covered by 23 unit tests:
+- These live in `src/lib` and, since Phase 4, in `@wageguard/presentation` (shared with the PDF report), as pure functions with unit tests:
   - money arithmetic in BigInt cents, never floats;
   - wall-clock date formatting that never goes through the viewer's time zone;
   - cross-midnight shift mapping;
@@ -56,5 +56,5 @@ The web app must be secure with cookie sessions, accessible, and honest about un
 
 ## Consequences
 
-- **CSP needs `'unsafe-inline'`.** Next's inline bootstrap scripts require `script-src 'unsafe-inline'` unless a nonce-based CSP is adopted. That means a proxy that sets a per-request nonce, and fully dynamic rendering. This is recorded as a hardening follow-up.
+- **CSP (updated in Phase 4).** `proxy.ts` now sets a per-request nonce policy and the root layout renders every page per request, so `script-src` has no `'unsafe-inline'`. Zod's JIT probe would have been reported as a blocked eval, so Zod runs in `jitless` mode in the browser (`instrumentation-client.ts`). Styles still allow `'unsafe-inline'`.
 - **A loading flash.** Client-rendered authenticated pages show a loading state before data arrives. This was accepted for simplicity and correctness.

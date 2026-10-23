@@ -10,7 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboard } from "@/lib/api/hooks";
-import { formatAud } from "@/lib/money";
+import { formatAud } from "@wageguard/presentation";
 
 function Stat({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (

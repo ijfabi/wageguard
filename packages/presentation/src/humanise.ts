@@ -1,4 +1,4 @@
-import { formatShiftSpan } from "./format";
+import { formatShiftSpan } from "./format.js";
 
 /**
  * Engine messages identify shifts by id ("Shift 01a1… has 60 paid minutes…"). For people, replace

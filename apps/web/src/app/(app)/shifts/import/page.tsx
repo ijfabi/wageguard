@@ -66,15 +66,18 @@ export default function ImportShiftsPage() {
   }
   if (employments.data.items.length === 0) {
     return (
-      <EmptyState
-        title="Add an employment first"
-        description="Imported shifts are added to an employment."
-        action={
-          <Button asChild>
-            <Link href="/employments">Add employment</Link>
-          </Button>
-        }
-      />
+      <>
+        <PageHeader title="Import shifts from CSV" />
+        <EmptyState
+          title="Add an employment first"
+          description="Imported shifts are added to an employment."
+          action={
+            <Button asChild>
+              <Link href="/employments">Add employment</Link>
+            </Button>
+          }
+        />
+      </>
     );
   }
 

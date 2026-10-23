@@ -5,6 +5,7 @@
     { "path": "packages/award-rules/tsconfig.build.json" },
     { "path": "packages/calculation-engine/tsconfig.build.json" },
     { "path": "packages/api-contracts/tsconfig.build.json" },
+    { "path": "packages/presentation/tsconfig.build.json" },
     { "path": "packages/test-fixtures/tsconfig.build.json" }
   ]
 }

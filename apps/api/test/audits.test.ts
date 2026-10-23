@@ -1,6 +1,7 @@
 import { bundledRegistry } from "@wageguard/award-rules";
 import { calculatePayPeriod } from "@wageguard/calculation-engine";
 import { Instant } from "@wageguard/domain";
+import { extractText } from "unpdf";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -128,6 +129,131 @@ describe("audit workflow", () => {
     });
     expect(report.body.calculation.trace).toHaveLength(8);
     expect(await t.prisma.auditEvent.count({ where: { userId, type: "REPORT_EXPORTED" } })).toBe(1);
+  });
+
+  it("renders the evidence report as a PDF from the stored snapshot", async () => {
+    const { agent, id: userId } = await signedInUser(t);
+    const { employmentId, payslipId } = await g009(agent, "800.00");
+    const created = await agent
+      .post("/api/v1/audits")
+      .set("Idempotency-Key", "g009-report-pdf1")
+      .send({ employmentId, payslipId })
+      .expect(201);
+    const auditId = created.body.id as string;
+
+    const fetchPdf = () => agent.get(`/api/v1/audits/${auditId}/report/pdf`).responseType("blob").expect(200);
+    const res = await fetchPdf();
+    expect(res.headers["content-type"]).toBe("application/pdf");
+    expect(res.headers["content-disposition"]).toBe(`attachment; filename="wageguard-audit-${auditId}.pdf"`);
+    expect(res.headers["cache-control"]).toBe("no-store");
+    const pdf = res.body as Buffer;
+    expect(pdf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+
+    const { text } = await extractText(new Uint8Array(pdf), { mergePages: true });
+    for (const expected of [
+      "WageGuard audit report",
+      "Potential underpayment",
+      "Mon 6 Jul 2026",
+      "$800.00", // reported
+      "$862.15", // calculated minimum
+      "-$62.15", // difference
+      "$333.76", // Saturday pay line
+      created.body.ruleSetFingerprint as string,
+      created.body.inputHash as string,
+      "not legal advice",
+    ]) {
+      expect(text, expected).toContain(expected);
+    }
+    // Same snapshot, same document text: the report never re-runs the calculation.
+    const again = await extractText(new Uint8Array((await fetchPdf()).body as Buffer), { mergePages: true });
+    expect(again.text).toBe(text);
+    expect(
+      await t.prisma.auditEvent.count({
+        where: { userId, type: "REPORT_EXPORTED", metadata: { path: ["format"], equals: "pdf" } },
+      }),
+    ).toBe(2);
+  });
+
+  it("words partial and unsupported PDF reports without overstating them", async () => {
+    const { agent } = await signedInUser(t);
+    const pages = async (key: string, employmentId: string, payslipId: string) => {
+      const created = await agent
+        .post("/api/v1/audits")
+        .set("Idempotency-Key", key)
+        .send({ employmentId, payslipId })
+        .expect(201);
+      const pdf = await agent
+        .get(`/api/v1/audits/${created.body.id as string}/report/pdf`)
+        .responseType("blob")
+        .expect(200);
+      return (await extractText(new Uint8Array(pdf.body as Buffer), { mergePages: true })).text;
+    };
+
+    // Partial: Friday evening work runs past 9 pm, outside the span of ordinary hours.
+    const casual = await createEmployment(agent);
+    await createShift(agent, casual, "2026-07-06T09:00", "2026-07-06T17:00", [
+      "2026-07-06T12:00",
+      "2026-07-06T12:30",
+    ]);
+    await createShift(agent, casual, "2026-07-10T17:00", "2026-07-10T22:00");
+    const partial = await pages("pdf-partial-0001", casual, await createPayslip(agent, casual, "450.00"));
+    for (const expected of [
+      "Needs review",
+      "Difference vs checked shifts",
+      "+$189.30",
+      "Not a verified overpayment",
+      "Work outside ordinary hours",
+      "Not priced",
+    ]) {
+      expect(partial, expected).toContain(expected);
+    }
+    expect(partial).not.toContain("OUTSIDE_SPAN_OF_ORDINARY_HOURS");
+
+    // Unsupported: full-time employment is outside the supported scope, so nothing is priced.
+    const fullTime = await createEmployment(agent, { employmentType: "FULL_TIME" });
+    await createShift(agent, fullTime, "2026-07-06T09:00", "2026-07-06T13:00");
+    const unsupported = await pages(
+      "pdf-unsupported1",
+      fullTime,
+      await createPayslip(agent, fullTime, "100.00"),
+    );
+    for (const expected of ["Not calculated", "No shifts could be priced, so there are no pay lines.", "—"]) {
+      expect(unsupported, expected).toContain(expected);
+    }
+    expect(unsupported).not.toMatch(/Matches calculated minimum|underpayment/i);
+  });
+
+  it("continues long PDF tables across pages with a repeated header and numbered footers", async () => {
+    const { agent } = await signedInUser(t);
+    const employmentId = await createEmployment(agent);
+    // Two 3-hour shifts on every weekday of the fortnight: 20 shift rows.
+    for (const day of ["06", "07", "08", "09", "10", "13", "14", "15", "16", "17"]) {
+      await createShift(agent, employmentId, `2026-07-${day}T07:00`, `2026-07-${day}T10:00`);
+      await createShift(agent, employmentId, `2026-07-${day}T13:00`, `2026-07-${day}T16:00`);
+    }
+    const payslipId = await createPayslip(agent, employmentId, "2085.60");
+    const created = await agent
+      .post("/api/v1/audits")
+      .set("Idempotency-Key", "pdf-long-report1")
+      .send({ employmentId, payslipId })
+      .expect(201);
+    const pdf = await agent
+      .get(`/api/v1/audits/${created.body.id as string}/report/pdf`)
+      .responseType("blob")
+      .expect(200);
+    const { totalPages, text } = await extractText(new Uint8Array(pdf.body as Buffer));
+
+    expect(totalPages).toBeGreaterThanOrEqual(2);
+    text.forEach((page, index) => {
+      expect(page).toContain(`page ${index + 1} of ${totalPages}`);
+    });
+    expect(text.join("\n")).toContain("Fri 17 Jul 2026, 1:00 pm – 4:00 pm");
+    // The shifts table header appears on every page the table spans.
+    const withShiftRows = text.filter((page) => /Jul 2026, \d+:00 (am|pm) – /.test(page));
+    expect(withShiftRows.length).toBeGreaterThanOrEqual(2);
+    for (const page of withShiftRows) {
+      expect(page).toMatch(/Shift\s+Paid\s+Unpaid/);
+    }
   });
 
   it("rejects a payslip from a different employment", async () => {

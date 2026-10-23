@@ -7,8 +7,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEmployments, usePayslips } from "@/lib/api/hooks";
-import { formatDate } from "@/lib/format";
-import { formatAud } from "@/lib/money";
+import { formatAud, formatDate } from "@wageguard/presentation";
 
 export default function PayslipsPage() {
   const payslips = usePayslips();

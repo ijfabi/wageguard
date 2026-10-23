@@ -1,4 +1,10 @@
-import type { AuditDetail, AuditLines, AuditReport, AuditSummary } from "@wageguard/api-contracts";
+import type {
+  AuditDetail,
+  AuditLines,
+  AuditReport,
+  AuditSummary,
+  PayslipResponse,
+} from "@wageguard/api-contracts";
 import type {
   AuditFinding,
   PayPeriodCalculationResult,
@@ -8,6 +14,7 @@ import type {
 import type { Audit } from "../../generated/prisma/client.js";
 import { decimalString } from "../payslips/payslips.service.js";
 import { fromDateColumn } from "../shifts/shift-times.js";
+import type { AuditPdfInput } from "./audit-pdf.js";
 import type { AuditRecord } from "./audit.repository.js";
 
 export const REPORT_DISCLAIMER =
@@ -58,6 +65,16 @@ export function toAuditDetail(audit: AuditRecord): AuditDetail {
 export function toAuditLines(audit: Audit): AuditLines {
   const calc = result(audit);
   return { auditId: audit.id, lines: [...calc.lines], shifts: [...calc.shifts] };
+}
+
+export function toAuditPdfInput(audit: AuditRecord, generatedAt: string): AuditPdfInput {
+  return {
+    audit: toAuditDetail(audit),
+    calculation: result(audit),
+    payslip: audit.payslipSnapshot as unknown as PayslipResponse,
+    generatedAt,
+    disclaimer: REPORT_DISCLAIMER,
+  };
 }
 
 export function toAuditReport(audit: Audit, generatedAt: string): AuditReport {

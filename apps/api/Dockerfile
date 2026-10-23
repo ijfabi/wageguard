@@ -32,4 +32,5 @@ USER node
 EXPOSE 3001
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
   CMD wget -qO- http://127.0.0.1:3001/api/v1/health >/dev/null || exit 1
-CMD ["node", "--enable-source-maps", "dist/main.js"]
+# otel.js is a no-op unless OTEL_EXPORTER_OTLP_ENDPOINT is set.
+CMD ["node", "--enable-source-maps", "--import", "./dist/otel.js", "dist/main.js"]

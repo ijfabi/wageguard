@@ -16,8 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { errorMessage } from "@/lib/api/client";
 import { useCreateAudit, useEmployments, usePayslips } from "@/lib/api/hooks";
-import { formatDate } from "@/lib/format";
-import { formatAud } from "@/lib/money";
+import { formatAud, formatDate } from "@wageguard/presentation";
 
 export default function NewAuditPage() {
   const params = useSearchParams();
@@ -66,15 +65,18 @@ export default function NewAuditPage() {
   }
   if (employments.data.items.length === 0) {
     return (
-      <EmptyState
-        title="Add an employment first"
-        description="An audit compares a payslip with the shifts recorded for one employment."
-        action={
-          <Button asChild>
-            <Link href="/employments">Add employment</Link>
-          </Button>
-        }
-      />
+      <>
+        <PageHeader title="Run an audit" />
+        <EmptyState
+          title="Add an employment first"
+          description="An audit compares a payslip with the shifts recorded for one employment."
+          action={
+            <Button asChild>
+              <Link href="/employments">Add employment</Link>
+            </Button>
+          }
+        />
+      </>
     );
   }
 

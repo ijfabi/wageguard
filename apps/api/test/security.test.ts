@@ -51,6 +51,7 @@ describe("broken object-level authorisation (BOLA)", () => {
       `/api/v1/audits/${auditId}`,
       `/api/v1/audits/${auditId}/lines`,
       `/api/v1/audits/${auditId}/report`,
+      `/api/v1/audits/${auditId}/report/pdf`,
     ]) {
       const res = await mallory.agent.get(path);
       expect(res.status, path).toBe(404);

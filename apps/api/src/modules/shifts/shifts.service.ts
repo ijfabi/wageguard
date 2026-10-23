@@ -13,6 +13,7 @@ import { ApiError, type ApiIssue } from "../../common/api-error.js";
 import { decodeCursor, toPage } from "../../common/pagination.js";
 import type { Prisma } from "../../generated/prisma/client.js";
 import { PrismaService } from "../../infrastructure/prisma.service.js";
+import { telemetry } from "../../infrastructure/telemetry.js";
 import { EmploymentsService } from "../employments/employments.service.js";
 import { AuditEventsService } from "../identity/audit-events.service.js";
 import { parseShiftCsv } from "./csv-import.js";
@@ -128,6 +129,21 @@ export class ShiftsService {
    * database also rejects overlaps with existing shifts.
    */
   async importCsv(userId: string, employmentId: string, csv: string): Promise<ImportShiftsResponse> {
+    try {
+      const result = await this.importValidated(userId, employmentId, csv);
+      telemetry.shiftImport("imported");
+      return result;
+    } catch (error: unknown) {
+      telemetry.shiftImport("rejected");
+      throw error;
+    }
+  }
+
+  private async importValidated(
+    userId: string,
+    employmentId: string,
+    csv: string,
+  ): Promise<ImportShiftsResponse> {
     const employment = await this.employments.findOwned(userId, employmentId);
     const parsed = parseShiftCsv(csv);
     if (!parsed.ok) {
