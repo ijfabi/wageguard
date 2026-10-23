@@ -45,6 +45,14 @@ Browser → API (untrusted input) → PostgreSQL. CI → GitHub-hosted runners. 
 - **Web CSP.** `script-src` includes `'unsafe-inline'` because Next.js emits inline bootstrap scripts; a nonce-based CSP is planned. Other headers are strict: `frame-ancestors 'none'`, `connect-src 'self'`, `object-src 'none'`, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`.
 - **Open redirects** after sign-in are prevented by a validated `?next=` (same-site paths only; unit and E2E tested).
 
+## Dependency exceptions
+
+`pnpm audit --audit-level high` runs in CI. Each accepted advisory is listed in `pnpm-workspace.yaml` (`auditConfig.ignoreGhsas`) and justified here.
+
+| Advisory                                                                       | Package and path                                                          | Why it is accepted                                                                                                                                                                          | Revisit when                                                         |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| GHSA-vfj7-8cjw-p6xm (HIGH, denial of service via deeply nested brace patterns) | `braces` ≤ 3.0.3, via `@next/eslint-plugin-next → fast-glob → micromatch` | No patched version exists. Reachable only from the ESLint plugin at lint time, on file globs written by us, never from user input. Not present in either runtime image (Trivy scans in CI). | A patched `braces`, or a plugin release that no longer depends on it |
+
 ## Rules for this repository
 
 - Synthetic data only. Never commit or load real employee data.

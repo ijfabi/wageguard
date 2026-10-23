@@ -11,7 +11,6 @@
     "jsx": "react-jsx",
     "allowJs": false,
     "incremental": true,
-    "customConditions": [],
     "types": ["node"],
     "plugins": [{ "name": "next" }],
     "paths": { "@/*": ["./src/*"] }

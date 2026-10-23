@@ -8,3 +8,8 @@ onlyBuiltDependencies:
   - argon2
   - esbuild
   - prisma
+
+# Advisories accepted after review; each entry is justified in docs/security.md (Dependency exceptions).
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm
