@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Inject, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Post, Query } from "@nestjs/common";
 import {
   CreatePayslipRequestSchema,
   IdSchema,
+  ListPayslipsQuerySchema,
   type CreatePayslipRequest,
+  type ListPayslipsQuery,
   type PayslipResponse,
 } from "@wageguard/api-contracts";
 
@@ -20,6 +22,14 @@ export class PayslipsController {
     @Body(new ZodPipe(CreatePayslipRequestSchema)) body: CreatePayslipRequest,
   ): Promise<PayslipResponse> {
     return this.payslips.create(user.id, body);
+  }
+
+  @Get()
+  list(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query(new ZodPipe(ListPayslipsQuerySchema)) query: ListPayslipsQuery,
+  ) {
+    return this.payslips.list(user.id, query);
   }
 
   @Get(":id")

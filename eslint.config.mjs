@@ -1,6 +1,8 @@
 // @ts-check
 import js from "@eslint/js";
+import nextPlugin from "@next/eslint-plugin-next";
 import prettier from "eslint-config-prettier";
+import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
@@ -53,6 +55,18 @@ export default defineConfig(
         { object: "Math", property: "round", message: "Use Decimal rounding with an explicit RoundingMode." },
       ],
     },
+  },
+  {
+    // Web app: browser globals, Next.js rules (including Core Web Vitals) and the React Hooks rules.
+    files: ["apps/web/**/*.{ts,tsx}"],
+    languageOptions: { globals: { ...globals.browser } },
+    plugins: { "@next/next": nextPlugin, "react-hooks": reactHooks },
+    rules: {
+      ...nextPlugin.configs["core-web-vitals"].rules,
+      ...reactHooks.configs.recommended.rules,
+      "@next/next/no-html-link-for-pages": "off",
+    },
+    settings: { next: { rootDir: "apps/web" } },
   },
   {
     // Plain JavaScript config files are linted without type information.

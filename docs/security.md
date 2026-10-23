@@ -42,7 +42,8 @@ Browser → API (untrusted input) → PostgreSQL. CI → GitHub-hosted runners. 
 - **Rate-limit scope.** Rate-limit state is in process memory: correct for one instance only.
 - **Encryption at rest.** This depends on the hosting platform (for example RDS encryption), and no uploaded files are stored. Nothing is deployed yet.
 - **No MFA, password reset or account lockout.** Brute force is slowed by rate limiting only.
-- **Frontend controls.** CSP and other browser-side controls for the web app will be defined in Phase 3.
+- **Web CSP.** `script-src` includes `'unsafe-inline'` because Next.js emits inline bootstrap scripts; a nonce-based CSP is planned. Other headers are strict: `frame-ancestors 'none'`, `connect-src 'self'`, `object-src 'none'`, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`.
+- **Open redirects** after sign-in are prevented by a validated `?next=` (same-site paths only; unit and E2E tested).
 
 ## Rules for this repository
 

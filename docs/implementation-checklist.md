@@ -36,12 +36,17 @@ Legend: [x] done and verified · [~] partially done · [ ] not started
 - [x] Integration tests on real PostgreSQL via Testcontainers (63), contract tests (7)
 - [x] Security tests: BOLA, cross-user access, malformed and oversized CSV, duplicate and concurrent audits, invalid dates and DST times, injection
 - [x] API Docker image (multi-stage, non-root, health check); migrate service; Trivy scan in CI
-- [ ] Seeded synthetic demo account (planned with the frontend, Phase 3)
+- [x] Seeded synthetic demo account (`seed:demo`; password from the environment, never committed)
 
 ## Phase 3: Frontend
 
-- [ ] Next.js app: auth, dashboard, employment, shifts, CSV upload, payslip, audits, explanation, settings
-- [ ] Playwright E2E
+- [x] Next.js 16 app: landing, sign up/in, dashboard, employment, shifts, CSV upload, payslip, audit history, audit detail, calculation explanation, settings (ADR 0012)
+- [x] `GET /payslips` and `GET /dashboard` API endpoints with integration tests
+- [x] 23 unit tests for web logic (money, formatting, form mapping, redirects, status presentation)
+- [x] Playwright E2E (8 tests): full audit journey with report download, underpayment, malformed CSV, access control, open-redirect protection, keyboard skip link
+- [x] axe accessibility checks (WCAG 2.1 AA, serious/critical fail) across 13 page states
+- [x] Web Docker image (standalone, non-root), Compose `web` service, CI E2E job and web image scan
+- [x] README screenshots from the seeded synthetic account
 
 ## Phase 4: Engineering quality
 

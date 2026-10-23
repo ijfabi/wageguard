@@ -1,8 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { CreatePayslipRequest, PayslipResponse } from "@wageguard/api-contracts";
+import type { CreatePayslipRequest, ListPayslipsQuery, PayslipResponse } from "@wageguard/api-contracts";
 import { LocalDate, Money, PayPeriod, createPayslip, type Payslip as DomainPayslip } from "@wageguard/domain";
 
 import { ApiError } from "../../common/api-error.js";
+import { decodeCursor, toPage } from "../../common/pagination.js";
 import type { Payslip, PayslipLine } from "../../generated/prisma/client.js";
 import { PrismaService } from "../../infrastructure/prisma.service.js";
 import { EmploymentsService } from "../employments/employments.service.js";
@@ -55,6 +56,29 @@ export class PayslipsService {
 
   async get(userId: string, id: string): Promise<PayslipResponse> {
     return toPayslipResponse(await this.findOwned(userId, id));
+  }
+
+  /** Newest first (keyset pagination on created_at, id). */
+  async list(userId: string, query: ListPayslipsQuery) {
+    const cursor = decodeCursor(query.cursor);
+    const rows = await this.prisma.payslip.findMany({
+      where: {
+        userId,
+        ...(query.employmentId === undefined ? {} : { employmentId: query.employmentId }),
+        ...(cursor === null
+          ? {}
+          : {
+              OR: [
+                { createdAt: { lt: new Date(cursor.k) } },
+                { createdAt: new Date(cursor.k), id: { lt: cursor.id } },
+              ],
+            }),
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: query.limit + 1,
+      include: { lines: true },
+    });
+    return toPage(rows, query.limit, (r) => ({ k: r.createdAt.toISOString(), id: r.id }), toPayslipResponse);
   }
 
   async findOwned(userId: string, id: string): Promise<PayslipRow> {

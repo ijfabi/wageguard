@@ -11,6 +11,7 @@ import { CLOCK, systemClock, type Clock } from "./infrastructure/clock.js";
 import { loggerOptions } from "./infrastructure/logging.js";
 import { PrismaService } from "./infrastructure/prisma.service.js";
 import { AuditsModule } from "./modules/audits/audits.module.js";
+import { DashboardModule } from "./modules/dashboard/dashboard.module.js";
 import { EmploymentsModule } from "./modules/employments/employments.module.js";
 import { HealthController } from "./modules/health/health.controller.js";
 import { AuthGuard } from "./modules/identity/auth.guard.js";
@@ -55,6 +56,7 @@ export class AppModule {
         ShiftsModule,
         PayslipsModule,
         AuditsModule,
+        DashboardModule,
       ],
       controllers: [RulesController, HealthController, OpenApiController],
       providers: [

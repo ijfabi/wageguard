@@ -11,6 +11,7 @@ This starts:
 1. **postgres** (17.6-alpine) and **redis** (8.2-alpine), with health checks, bound to 127.0.0.1.
 2. **migrate**, a one-off container that runs `prisma migrate deploy` once Postgres is healthy and then exits.
 3. **api** on http://localhost:3001, which starts only after `migrate` exits successfully. It runs as the non-root `node` user, with a container health check on `/api/v1/health`.
+4. **web** on http://localhost:3000 (Next.js standalone server, non-root, package managers removed), which starts once the API is healthy. `/api/v1/*` is rewritten to `http://api:3001` (fixed at image build time via the `API_ORIGIN` build argument).
 
 Smoke-tested by running register, employment, shift, payslip, audit, idempotent replay and report download against the containers. The API ran with `NODE_ENV=production` and the `__Host-` Secure session cookie (browsers treat `http://localhost` as a secure context). Redis is started for future background work but is not used yet ([ADR 0010](adr/0010-audits-idempotency-and-immutability.md)).
 

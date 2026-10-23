@@ -20,9 +20,11 @@ WageGuard is an informational tool, not legal advice, and it does not determine 
 
 ## Technical
 
-- **Not yet built.** The web UI, PDF export (the report is JSON), OpenTelemetry, a seeded demo account and any cloud deployment. See the [implementation checklist](implementation-checklist.md).
+- **Not yet built.** PDF export (the report is JSON), OpenTelemetry and any cloud deployment.
+- **Web CSP** allows `'unsafe-inline'` scripts (Next.js bootstrap scripts); a nonce-based CSP is a planned hardening step ([ADR 0012](adr/0012-web-frontend-architecture.md)).
+- **Web app public holidays** must be entered per audit; DST-ambiguous shift times (the repeated hour) need the API's offset fields, which the shift form does not expose yet. See the [implementation checklist](implementation-checklist.md).
 - **API limits.** Registration reveals whether an email is already registered. There is no email verification, password reset or MFA. Rate-limit state is per process (single instance only). See [security](security.md).
 - **Idempotency keys** never expire. Audits are processed synchronously ([ADR 0010](adr/0010-audits-idempotency-and-immutability.md)).
-- **No git on the development machine** at the time of writing. Benchmark records use a source-tree SHA-256 in place of a commit SHA.
+- **Early benchmark records** (the engine baseline and first optimised runs, made before the repository existed) carry a source-tree SHA-256 instead of a commit SHA; later records carry both.
 - **Ambiguous times.** Shifts that start or end in the repeated DST hour need an explicit UTC offset. The API accepts one (`startUtcOffsetMinutes`, `endUtcOffsetMinutes`), and the UI will need to ask for it.
 - **Benchmarks.** Synthetic and single-machine; see [performance](performance.md).

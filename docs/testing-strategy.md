@@ -1,14 +1,15 @@
 # Testing strategy
 
-| Layer                         | Tool                                | Where                                                                                                                             | Status            |
-| ----------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| Unit                          | Vitest                              | `packages/*/test/*.test.ts`                                                                                                       | Implemented       |
-| Property-based                | fast-check                          | `domain/test/{money,interval,canonical,offset-table}.test.ts`, `calculation-engine/test/properties.test.ts`                       | Implemented       |
-| Golden correctness            | Vitest + evaluator                  | `test-fixtures/test/golden.test.ts`, `pnpm benchmark:correctness`                                                                 | Implemented       |
-| Integration (real PostgreSQL) | Vitest + Testcontainers + Supertest | `apps/api/test/{auth,shifts,audits,platform}.test.ts`                                                                             | Implemented       |
-| Contract                      | Vitest                              | `packages/api-contracts/test/contracts.test.ts`; OpenAPI route-parity test in `apps/api/test/platform.test.ts`                    | Implemented       |
-| Security                      | Vitest + Supertest                  | `apps/api/test/security.test.ts` (BOLA, cross-user, database bypass, injection, deletion) plus security cases in the other suites | Implemented       |
-| End-to-end                    | Playwright                          | `tests/e2e`                                                                                                                       | Planned (Phase 3) |
+| Layer                         | Tool                                | Where                                                                                                                             | Status      |
+| ----------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Unit                          | Vitest                              | `packages/*/test/*.test.ts`                                                                                                       | Implemented |
+| Property-based                | fast-check                          | `domain/test/{money,interval,canonical,offset-table}.test.ts`, `calculation-engine/test/properties.test.ts`                       | Implemented |
+| Golden correctness            | Vitest + evaluator                  | `test-fixtures/test/golden.test.ts`, `pnpm benchmark:correctness`                                                                 | Implemented |
+| Integration (real PostgreSQL) | Vitest + Testcontainers + Supertest | `apps/api/test/{auth,shifts,audits,platform}.test.ts`                                                                             | Implemented |
+| Contract                      | Vitest                              | `packages/api-contracts/test/contracts.test.ts`; OpenAPI route-parity test in `apps/api/test/platform.test.ts`                    | Implemented |
+| Security                      | Vitest + Supertest                  | `apps/api/test/security.test.ts` (BOLA, cross-user, database bypass, injection, deletion) plus security cases in the other suites | Implemented |
+| End-to-end + accessibility    | Playwright + axe-core               | `apps/web/e2e/{journey,access}.spec.ts` (real API, real PostgreSQL, production web build)                                         | Implemented |
+| Web unit                      | Vitest                              | `apps/web/src/lib/lib.test.ts`                                                                                                    | Implemented |
 
 API tests live beside the app (`apps/api/test`) rather than in a top-level `tests/` folder, so that each suite runs with the app's own Vitest configuration (decorator transform, Testcontainers global setup). Each run starts a throwaway `postgres:17.6-alpine` container and applies the real migrations, so triggers and constraints are exercised exactly as in production.
 

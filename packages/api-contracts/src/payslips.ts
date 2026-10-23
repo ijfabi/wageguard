@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { IdSchema, InstantSchema, MoneySchema, PayPeriodSchema } from "./common.js";
+import { IdSchema, InstantSchema, MoneySchema, PageQuerySchema, PayPeriodSchema } from "./common.js";
 
 export const PayslipLineSchema = z.strictObject({
   category: z.enum(["HOURS_WORKED", "OVERTIME", "ALLOWANCE", "LEAVE", "OTHER"]),
@@ -24,5 +24,8 @@ export const PayslipResponseSchema = z.strictObject({
   createdAt: InstantSchema,
 });
 
+export const ListPayslipsQuerySchema = PageQuerySchema.extend({ employmentId: IdSchema.optional() });
+
 export type CreatePayslipRequest = z.infer<typeof CreatePayslipRequestSchema>;
+export type ListPayslipsQuery = z.infer<typeof ListPayslipsQuerySchema>;
 export type PayslipResponse = z.infer<typeof PayslipResponseSchema>;

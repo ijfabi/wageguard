@@ -1,5 +1,6 @@
 # Local stack: `docker compose up --build` starts PostgreSQL and Redis, applies database
-# migrations, then starts the API on http://localhost:3001 (OpenAPI at /api/v1/openapi.json).
+# migrations, then starts the API on http://localhost:3001 (OpenAPI at /api/v1/openapi.json) and
+# the web app on http://localhost:3000.
 # Credentials here are for local development only; never reuse them elsewhere.
 name: wageguard
 
@@ -61,6 +62,19 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        API_ORIGIN: http://api:3001
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
