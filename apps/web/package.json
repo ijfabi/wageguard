@@ -13,7 +13,8 @@
     "test:coverage": "vitest run --coverage",
     "test:evidence": "vitest run --reporter=default --reporter=json --outputFile.json=../../benchmarks/test-reports/web.json",
     "e2e": "playwright test",
-    "screenshots": "node --import tsx scripts/screenshots.ts"
+    "screenshots": "node --import tsx scripts/screenshots.ts",
+    "walkthrough": "node --import tsx scripts/walkthrough.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "6.0.0",

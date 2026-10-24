@@ -27,8 +27,11 @@ export class SessionService {
   ) {}
 
   async issue(userId: string): Promise<IssuedSession> {
+    const now = this.clock.now().epochMs;
     const token = randomBytes(TOKEN_BYTES).toString("base64url");
-    const expiresAt = new Date(this.clock.now().epochMs + this.config.sessionTtlMs);
+    const expiresAt = new Date(now + this.config.sessionTtlMs);
+    // Expired sessions are already rejected by resolve(); this stops them accumulating.
+    await this.prisma.session.deleteMany({ where: { userId, expiresAt: { lte: new Date(now) } } });
     await this.prisma.session.create({ data: { userId, tokenHash: hashToken(token), expiresAt } });
     return { token, expiresAt };
   }

@@ -22,7 +22,8 @@ export async function createApp(
     bodyParser: false,
   });
   app.useLogger(app.get(Logger));
-  app.set("trust proxy", false);
+  // The client address (rate limits) comes from X-Forwarded-For only behind trusted proxies.
+  app.set("trust proxy", config.trustProxyHops === 0 ? false : config.trustProxyHops);
   app.disable("x-powered-by");
   app.use(
     helmet({

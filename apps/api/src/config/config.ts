@@ -19,6 +19,11 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(120),
   AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(10),
+  /**
+   * Proxies in front of the API whose X-Forwarded-For can be trusted (for example 1 behind a load
+   * balancer). 0 ignores the header, so clients cannot choose their own rate-limit identity.
+   */
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
 });
 
 export interface AppConfig {
@@ -33,6 +38,7 @@ export interface AppConfig {
   readonly logLevel: string;
   readonly rateLimitPerMinute: number;
   readonly authRateLimitPerMinute: number;
+  readonly trustProxyHops: number;
 }
 
 export const APP_CONFIG = Symbol("APP_CONFIG");
@@ -61,5 +67,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     logLevel: e.LOG_LEVEL,
     rateLimitPerMinute: e.RATE_LIMIT_PER_MINUTE,
     authRateLimitPerMinute: e.AUTH_RATE_LIMIT_PER_MINUTE,
+    trustProxyHops: e.TRUST_PROXY,
   };
 }

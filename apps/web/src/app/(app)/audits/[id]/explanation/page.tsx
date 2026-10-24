@@ -9,7 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuditReport } from "@/lib/api/hooks";
-import { formatAud, formatDate, formatMinutes, formatShiftSpan, formatTime } from "@wageguard/presentation";
+import {
+  formatAud,
+  formatDate,
+  formatMinutes,
+  formatShiftSpan,
+  formatTime,
+  humaniseShiftIds,
+  weekdayOf,
+} from "@wageguard/presentation";
 import { issueTitle } from "@/lib/status";
 
 const SEVERITY: Readonly<Record<string, string>> = {
@@ -118,7 +126,7 @@ export default function ExplanationPage({ params }: { params: Promise<{ id: stri
                   <TableHeader>
                     <TableRow>
                       <TableHead>Time</TableHead>
-                      <TableHead className="text-right">Minutes</TableHead>
+                      <TableHead className="hidden text-right sm:table-cell">Minutes</TableHead>
                       <TableHead>Rule</TableHead>
                       <TableHead className="text-right">Rate</TableHead>
                       <TableHead className="hidden md:table-cell">Award clauses</TableHead>
@@ -127,12 +135,18 @@ export default function ExplanationPage({ params }: { params: Promise<{ id: stri
                   <TableBody>
                     {shift.segments.map((segment) => (
                       <TableRow key={segment.start}>
-                        <TableCell>
-                          {segment.weekday} {formatTime(segment.localStart.slice(11))} –{" "}
+                        <TableCell className="align-top whitespace-normal sm:align-middle sm:whitespace-nowrap">
+                          {weekdayOf(segment.localDate)} {formatTime(segment.localStart.slice(11))} –{" "}
                           {formatTime(segment.localEnd.slice(11))}
+                          {/* On narrow screens the minutes fold in under the time. */}
+                          <span className="text-muted-foreground block text-xs sm:hidden">
+                            {segment.minutes} min
+                          </span>
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">{segment.minutes}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                          {segment.minutes}
+                        </TableCell>
+                        <TableCell className="whitespace-normal">
                           {segment.classification.kind === "RULE" ? (
                             <>
                               {segment.classification.description}{" "}
@@ -180,7 +194,7 @@ export default function ExplanationPage({ params }: { params: Promise<{ id: stri
                         · {SEVERITY[i.severity] ?? i.severity}
                       </span>
                     </p>
-                    <p className="mt-1">{i.message}</p>
+                    <p className="mt-1">{humaniseShiftIds(i.message, calculation.shifts)}</p>
                     {i.clauseRefs.length === 0 ? null : (
                       <p className="text-muted-foreground mt-1 text-xs">
                         Award clauses: {i.clauseRefs.join(", ")}

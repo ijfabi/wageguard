@@ -130,6 +130,22 @@ jobs:
           ignore-unfixed: true
           exit-code: "1"
 
+  infra:
+    name: Terraform format and validate (never applied)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TERRAFORM: docker run --rm -v ${{ github.workspace }}/infra/aws:/work -w /work hashicorp/terraform:1.16.5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check formatting
+        run: $TERRAFORM fmt -check -recursive
+      # No backend and no credentials: this only downloads the pinned providers and checks the code.
+      - name: Initialise without a backend
+        run: $TERRAFORM init -backend=false -input=false -lockfile=readonly
+      - name: Validate
+        run: $TERRAFORM validate
+
   e2e:
     name: End-to-end (Playwright + axe)
     runs-on: ubuntu-24.04

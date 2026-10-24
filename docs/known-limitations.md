@@ -33,5 +33,6 @@ The rates were copied from the official award and checked against the award's ow
 - **OpenTelemetry versions.** The OpenTelemetry packages are pinned one release line behind the latest, which is why `pnpm install` warns about some renamed packages ([ADR 0013](adr/0013-opt-in-opentelemetry.md)).
 - **Dashboard cost.** The dashboard still adds up all of a user's audits on every request. It's index-only now, so it grows slowly, but it does grow ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
 - **Index rollout.** The Phase 5 index migration uses a plain `CREATE INDEX`. On a large existing database, build the indexes concurrently first ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
-- **Not built yet.** No cloud deployment, monitoring dashboards or alerts, or tracing in the web app.
+- **AWS deployment.** The Terraform in `infra/aws` is validated but has never been applied, so nothing about it is tested against real AWS ([deployment](deployment.md)).
+- **Not built yet.** Monitoring dashboards and alerts, tracing in the web app, and backups copied to another region.
 - **Benchmark scope.** All benchmarks are synthetic and ran on one laptop ([performance](performance.md)). The earliest engine records predate the git repository and are identified by a source-tree hash instead of a commit.

@@ -23,3 +23,10 @@ apps/web/next-env.d.ts
 
 # Benchmark B raw k6 data points (summarised into benchmarks/results)
 benchmarks/k6/out/
+
+# Terraform: provider cache, state (contains secrets) and real variable values
+infra/**/.terraform/
+infra/**/*.tfstate
+infra/**/*.tfstate.*
+infra/**/*.tfvars
+!infra/**/*.tfvars.example

@@ -89,25 +89,29 @@ export default function ShiftsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Shift</TableHead>
-                <TableHead>Employment</TableHead>
-                <TableHead>Breaks</TableHead>
+                <TableHead className="hidden sm:table-cell">Employment</TableHead>
+                <TableHead className="hidden md:table-cell">Breaks</TableHead>
                 <TableHead className="sr-only">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((shift) => (
                 <TableRow key={shift.id}>
-                  <TableCell className="font-medium">{formatShiftSpan(shift.start, shift.end)}</TableCell>
-                  <TableCell>{employmentById.get(shift.employmentId)?.label ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {shift.breaks.length === 0
-                      ? "None"
-                      : shift.breaks
-                          .map(
-                            (b) =>
-                              `${b.kind === "UNPAID_MEAL" ? "Meal" : "Rest"} ${formatTime(b.start.slice(11))}–${formatTime(b.end.slice(11))}`,
-                          )
-                          .join(", ")}
+                  <TableCell className="whitespace-normal sm:whitespace-nowrap">
+                    <span className="font-medium">{formatShiftSpan(shift.start, shift.end)}</span>
+                    {/* On narrow screens the employment and breaks fold in under the shift. */}
+                    <span className="text-muted-foreground block text-xs sm:hidden">
+                      {employmentById.get(shift.employmentId)?.label ?? "—"}
+                    </span>
+                    <span className="text-muted-foreground block text-xs md:hidden">
+                      Breaks: {describeBreaks(shift)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {employmentById.get(shift.employmentId)?.label ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+                    {describeBreaks(shift)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
@@ -148,6 +152,18 @@ export default function ShiftsPage() {
       />
     </>
   );
+}
+
+/** "Meal 12:00 pm–12:30 pm, Rest 3:00 pm–3:10 pm", or "None". */
+function describeBreaks(shift: ShiftResponse): string {
+  return shift.breaks.length === 0
+    ? "None"
+    : shift.breaks
+        .map(
+          (b) =>
+            `${b.kind === "UNPAID_MEAL" ? "Meal" : "Rest"} ${formatTime(b.start.slice(11))}–${formatTime(b.end.slice(11))}`,
+        )
+        .join(", ");
 }
 
 function EditShiftDialog({

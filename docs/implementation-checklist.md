@@ -68,4 +68,10 @@
 
 ## Phase 6: delivery
 
-- [ ] Final review, deployment guide, and an optional cloud design (never applied without approval)
+- [x] Final code review. Fixed: simultaneous sign-ups returning 500, expired sessions never cleaned up, a corrupted password hash read as a wrong password, and rate limits that would have been shared by every user behind a load balancer (`TRUST_PROXY`)
+- [x] UI polish from a page-by-page review at desktop and phone widths: tables that overflowed on phones, misaligned form fields, legends straddling borders, a clipped CSV example, raw weekday codes and shift IDs on the explanation page
+- [x] Demo account seed and a recorded end-to-end walkthrough ([demo](demo.md))
+- [x] Optional AWS deployment in Terraform, validated in CI and never applied ([deployment](deployment.md))
+- [x] Backup and recovery runbook (local restore tested) and incident response runbook
+- [x] Acceptance check against all 15 criteria ([acceptance](acceptance.md))
+- [x] Resume evidence regenerated from saved records

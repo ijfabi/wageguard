@@ -131,4 +131,35 @@ describe("rate limiting", () => {
       await limited.close();
     }
   });
+
+  const loginFrom = (app: TestApp, forwardedFor: string) =>
+    app
+      .agent()
+      .post("/api/v1/auth/login")
+      .set("X-Forwarded-For", forwardedFor)
+      .send({ email: "nobody@example.test", password: "wrong-password!" });
+
+  it("ignores X-Forwarded-For by default, so clients cannot pick their own rate-limit identity", async () => {
+    const limited = await startApp({ AUTH_RATE_LIMIT_PER_MINUTE: "2" });
+    try {
+      expect((await loginFrom(limited, "203.0.113.1")).status).toBe(401);
+      expect((await loginFrom(limited, "203.0.113.2")).status).toBe(401);
+      expect((await loginFrom(limited, "203.0.113.3")).status).toBe(429);
+    } finally {
+      await limited.close();
+    }
+  });
+
+  it("limits each real client separately behind a trusted load balancer (TRUST_PROXY=1)", async () => {
+    const limited = await startApp({ AUTH_RATE_LIMIT_PER_MINUTE: "2", TRUST_PROXY: "1" });
+    try {
+      expect((await loginFrom(limited, "203.0.113.1")).status).toBe(401);
+      expect((await loginFrom(limited, "203.0.113.1")).status).toBe(401);
+      expect((await loginFrom(limited, "203.0.113.1")).status).toBe(429);
+      // A different client behind the same balancer still has its own allowance.
+      expect((await loginFrom(limited, "203.0.113.2")).status).toBe(401);
+    } finally {
+      await limited.close();
+    }
+  });
 });

@@ -140,8 +140,8 @@ export default function NewAuditPage() {
                 )}
               </div>
 
-              <fieldset className="rounded-lg border p-4">
-                <legend className="px-1 text-sm font-semibold">
+              <fieldset className="rounded-lg border p-4 [&>legend+*]:clear-both">
+                <legend className="float-left mb-3 w-full text-sm font-semibold">
                   Public holidays in this pay period (optional)
                 </legend>
                 <p className="text-muted-foreground mb-3 text-xs">

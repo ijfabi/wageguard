@@ -4,6 +4,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { ApiErrorCode, type MeResponse, type RegisterRequest } from "@wageguard/api-contracts";
 
 import { ApiError } from "../../common/api-error.js";
+import { Prisma } from "../../generated/prisma/client.js";
 import { PrismaService } from "../../infrastructure/prisma.service.js";
 import { AuditEventsService } from "./audit-events.service.js";
 import { PASSWORD_HASHER, type PasswordHasher } from "./password-hasher.js";
@@ -30,7 +31,16 @@ export class AuthService {
     if (existing !== null) {
       throw new ApiError(409, ApiErrorCode.EMAIL_TAKEN, "An account with this email already exists");
     }
-    const user = await this.prisma.user.create({ data: { email: request.email, passwordHash } });
+    let user;
+    try {
+      user = await this.prisma.user.create({ data: { email: request.email, passwordHash } });
+    } catch (error: unknown) {
+      // Two sign-ups with the same email can both pass the check above; the unique index decides.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new ApiError(409, ApiErrorCode.EMAIL_TAKEN, "An account with this email already exists");
+      }
+      throw error;
+    }
     await this.events.record("REGISTERED", user.id);
     return { me: toMe(user), session: await this.sessions.issue(user.id) };
   }

@@ -153,7 +153,8 @@ export default function ImportShiftsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <pre className="bg-muted overflow-x-auto rounded-md p-3 text-xs">{EXAMPLE}</pre>
+            {/* Wrapped rather than scrolled: a hidden horizontal scrollbar made the example look cut off. */}
+            <pre className="bg-muted rounded-md p-3 text-xs break-all whitespace-pre-wrap">{EXAMPLE}</pre>
           </CardContent>
         </Card>
       </div>

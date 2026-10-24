@@ -6,7 +6,7 @@ WageGuard checks Australian retail pay. You enter your shifts and your payslip, 
 
 The rules are taken from the official award text and are versioned and deterministic. There is no AI anywhere in the calculation.
 
-> **Status:** a portfolio project, still in development. Everything listed under "What works" is built and tested. WageGuard is informational only and is not legal advice.
+> **Status:** a finished portfolio project. Everything listed under "What works" is built and tested, and [docs/demo.md](docs/demo.md) walks through it end to end. WageGuard is informational only and is not legal advice.
 
 ![Dashboard](docs/screenshots/02-dashboard.png)
 
@@ -25,6 +25,16 @@ The API (`apps/api`) is NestJS 12 with Prisma 7 and PostgreSQL 17. It uses cooki
 The calculation engine (`packages/calculation-engine`) picks the rule set in force for the pay period, splits each shift at midnight and at every rate boundary (daylight saving included), and prices the time with exact decimal arithmetic. It returns the full working along with the result, then compares the total with the payslip.
 
 The award rules (`packages/award-rules`) are the General Retail Industry Award rates as published by the Fair Work Commission, with amendments to 1 July 2026, and the relevant clauses quoted word for word. A published rule set can't be edited: each one is fingerprinted, and CI fails if a fingerprint changes.
+
+## Technology
+
+| Area        | Tools                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| Web app     | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, TanStack Query, React Hook Form, Recharts |
+| API         | NestJS 12, Prisma 7, PostgreSQL 17, Zod 4, argon2id sessions, pdfkit, OpenTelemetry                    |
+| Calculation | Plain TypeScript, decimal.js, Luxon (time-zone offsets only)                                           |
+| Testing     | Vitest, fast-check, Testcontainers, Supertest, Playwright, axe-core, k6                                |
+| Delivery    | pnpm workspaces, Docker Compose, GitHub Actions, Trivy, gitleaks, Terraform (AWS, never applied)       |
 
 ## Architecture
 
@@ -68,7 +78,7 @@ Every number here comes from a saved benchmark record. They are synthetic runs o
 | API throughput at 50 concurrent clients (k6, production image)                       | 307 → 475 requests/s (+54.9%), p95 443 ms → 312 ms, 0% errors                       |
 | Audit submissions with the API killed mid-load, then with the database down for 10 s | 14,999 of 14,999 completed, no duplicates, no lost or inconsistent records          |
 | Golden scenarios                                                                     | 21 of 21: 10 hand-worked reference calculations and 11 correct refusals             |
-| Automated tests                                                                      | 341 passing, plus 10 Playwright end-to-end tests                                    |
+| Automated tests                                                                      | 346 passing, plus 10 Playwright end-to-end tests                                    |
 | Calculation engine coverage                                                          | 98.6% of lines, 93.1% of branches                                                   |
 
 The golden scenarios were worked out by hand from the award's published rates, and nobody with payroll qualifications has reviewed them yet. They show the engine agrees with those calculations on a small, defined set of cases. They don't prove legal accuracy.
@@ -84,6 +94,8 @@ docker compose up --build
 # Web app:  http://localhost:3000
 # API:      http://localhost:3001/api/v1/health  (OpenAPI at /api/v1/openapi.json)
 ```
+
+Or follow the [walkthrough](docs/demo.md), which shows every step with screenshots.
 
 There's no demo password in the repository. Pick your own and seed a synthetic account with four audits (a match, an underpayment, one that needs review, and a part-time job):
 
@@ -115,11 +127,15 @@ pnpm resume:metrics          # docs/resume-evidence/
 
 ## Documentation
 
-[Architecture](docs/architecture.md) · [Rules engine](docs/rules-engine.md) · [API](docs/api.md) · [Data model](docs/data-model.md) · [Award sources](docs/award-sources.md) · [Testing](docs/testing-strategy.md) · [Performance](docs/performance.md) · [Security](docs/security.md) · [Observability](docs/observability.md) · [Deployment](docs/deployment.md) · [Known limitations](docs/known-limitations.md) · [Decision records](docs/adr/) · [Checklist](docs/implementation-checklist.md)
+[Demo](docs/demo.md) · [Architecture](docs/architecture.md) · [Rules engine](docs/rules-engine.md) · [API](docs/api.md) · [Data model](docs/data-model.md) · [Award sources](docs/award-sources.md) · [Testing](docs/testing-strategy.md) · [Performance](docs/performance.md) · [Security](docs/security.md) · [Observability](docs/observability.md) · [Deployment](docs/deployment.md) · [Known limitations](docs/known-limitations.md) · [Decision records](docs/adr/) · [Checklist](docs/implementation-checklist.md) · [Acceptance](docs/acceptance.md)
+
+## Deploying
+
+`docker compose up --build` runs everything locally. `infra/aws` holds an optional AWS deployment in Terraform (load balancer, ECS Fargate, RDS PostgreSQL), which CI validates but which has never been applied. [Deployment](docs/deployment.md) covers both, along with the [backup and recovery](docs/runbooks/backup-and-recovery.md) and [incident response](docs/runbooks/incident-response.md) runbooks.
 
 ## What's next
 
-Phases 0 to 5 are done: the engine and rules, the API and database, the web app, PDF reports and observability, and the benchmarks. Phase 6 is a final review and an optional cloud deployment design, which won't be applied without approval. Further out: a font that covers all characters in the PDF, a public holiday calendar, overtime, more classifications, a golden set reviewed by a payroll professional, and a cross-check against the Fair Work Pay Calculator.
+All six planned phases are done, and [docs/acceptance.md](docs/acceptance.md) checks the result against the original acceptance criteria. Still open: a font that covers all characters in the PDF, a public holiday calendar, overtime, more classifications, a golden set reviewed by a payroll professional, and a cross-check against the Fair Work Pay Calculator.
 
 ## Licence
 

@@ -16,6 +16,8 @@ RUN pnpm install --frozen-lockfile \
 
 # One-off migration runner (has the Prisma CLI). Used by the `migrate` compose service.
 FROM build AS migrate
+# Amazon RDS certificate authorities, for verified TLS to RDS (infra/aws). Unused locally.
+ADD --chmod=644 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/rds/global-bundle.pem
 WORKDIR /repo/apps/api
 CMD ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
 
@@ -26,6 +28,8 @@ ENV NODE_ENV=production PORT=3001
 # are removed: they are unused at runtime and carried the only HIGH findings in the image scan.
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-* \
       /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg
+# Amazon RDS certificate authorities, for verified TLS to RDS (infra/aws). Unused locally.
+ADD --chmod=644 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/rds/global-bundle.pem
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 USER node

@@ -20,7 +20,9 @@ export function FormField({ label, error, hint, children }: FieldProps) {
     .filter(Boolean)
     .join(" ");
   return (
-    <div className="grid gap-1.5">
+    // content-start: when a neighbouring field has a hint and the row grows, this field's label
+    // and control stay at the top instead of spreading out, so controls in a row line up.
+    <div className="grid content-start gap-1.5">
       <Label htmlFor={id}>{label}</Label>
       {cloneElement(children, {
         id,

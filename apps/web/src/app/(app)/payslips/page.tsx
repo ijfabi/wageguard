@@ -45,21 +45,31 @@ export default function PayslipsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Pay period</TableHead>
-              <TableHead>Employment</TableHead>
+              <TableHead className="hidden sm:table-cell">Employment</TableHead>
               <TableHead className="text-right">Gross pay</TableHead>
-              <TableHead className="text-right">Lines</TableHead>
+              <TableHead className="hidden text-right md:table-cell">Lines</TableHead>
               <TableHead className="sr-only">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {payslips.data.items.map((p) => (
               <TableRow key={p.id}>
-                <TableCell className="font-medium">
-                  {formatDate(p.payPeriod.startDate)} – {formatDate(p.payPeriod.endDate)}
+                <TableCell className="whitespace-normal sm:whitespace-nowrap">
+                  <span className="font-medium">
+                    {formatDate(p.payPeriod.startDate)} – {formatDate(p.payPeriod.endDate)}
+                  </span>
+                  {/* On narrow screens the employment folds in under the pay period. */}
+                  <span className="text-muted-foreground block text-xs sm:hidden">
+                    {labels.get(p.employmentId) ?? "—"}
+                  </span>
                 </TableCell>
-                <TableCell>{labels.get(p.employmentId) ?? "—"}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatAud(p.grossPay)}</TableCell>
-                <TableCell className="text-right tabular-nums">{p.lines.length}</TableCell>
+                <TableCell className="hidden sm:table-cell">{labels.get(p.employmentId) ?? "—"}</TableCell>
+                <TableCell className="text-right align-top tabular-nums sm:align-middle">
+                  {formatAud(p.grossPay)}
+                </TableCell>
+                <TableCell className="hidden text-right tabular-nums md:table-cell">
+                  {p.lines.length}
+                </TableCell>
                 <TableCell className="text-right">
                   <Button asChild variant="ghost" size="sm">
                     <Link href={`/audits/new?employmentId=${p.employmentId}&payslipId=${p.id}`}>

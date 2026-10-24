@@ -174,7 +174,7 @@ function EmploymentForm({ onDone }: { onDone: () => void }) {
           </div>
 
           <fieldset className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">
-            <legend className="px-1 text-sm font-semibold">About this job</legend>
+            <legend className="float-left w-full text-sm font-semibold md:col-span-2">About this job</legend>
             <FormField
               label="Is this job covered by the General Retail Industry Award?"
               hint="Check with the Fair Work 'Find my award' tool if unsure."
@@ -208,8 +208,8 @@ function EmploymentForm({ onDone }: { onDone: () => void }) {
           </fieldset>
 
           {partTime ? (
-            <fieldset className="rounded-lg border p-4">
-              <legend className="px-1 text-sm font-semibold">
+            <fieldset className="rounded-lg border p-4 [&>legend+*]:clear-both">
+              <legend className="float-left mb-3 w-full text-sm font-semibold">
                 Guaranteed hours (from your written part-time agreement)
               </legend>
               <p className="text-muted-foreground mb-3 text-xs">

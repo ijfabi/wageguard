@@ -76,6 +76,43 @@ describe("registration", () => {
   });
 });
 
+describe("registration races and stored-data faults", () => {
+  it("answers simultaneous sign-ups for one email with one 201 and 409s, never a server error", async () => {
+    const email = `race-${randomUUID()}@example.test`;
+    const statuses = await Promise.all(
+      Array.from({ length: 5 }, () =>
+        t
+          .agent()
+          .post("/api/v1/auth/register")
+          .send({ email, password: PASSWORD })
+          .then((r) => r.status),
+      ),
+    );
+    expect(statuses.filter((s) => s === 201)).toHaveLength(1);
+    expect(statuses.filter((s) => s === 409)).toHaveLength(4);
+    expect(await t.prisma.user.count({ where: { email } })).toBe(1);
+  });
+
+  it("treats a corrupted stored password hash as a server fault, not a wrong password", async () => {
+    const { email, id } = await signedInUser(t);
+    await t.prisma.user.update({ where: { id }, data: { passwordHash: "not-an-argon2-hash" } });
+    const res = await t.agent().post("/api/v1/auth/login").send({ email, password: PASSWORD });
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe("INTERNAL_ERROR");
+  });
+
+  it("clears the user's expired sessions when a new one is issued", async () => {
+    const { email, id } = await signedInUser(t);
+    await t.prisma.session.create({
+      data: { userId: id, tokenHash: "e".repeat(64), expiresAt: new Date(Date.now() - 60_000) },
+    });
+    await t.agent().post("/api/v1/auth/login").send({ email, password: PASSWORD }).expect(200);
+    const remaining = await t.prisma.session.findMany({ where: { userId: id } });
+    expect(remaining.every((s) => s.expiresAt.getTime() > Date.now())).toBe(true);
+    expect(remaining).toHaveLength(2); // the sign-up session and the new one
+  });
+});
+
 describe("sessions", () => {
   it("logs in, identifies the user, and logs out (revoking the session server-side)", async () => {
     const { email } = await signedInUser(t);

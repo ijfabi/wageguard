@@ -62,8 +62,8 @@ export function ShiftForm({
         </FormField>
       </div>
 
-      <fieldset className="rounded-lg border p-4">
-        <legend className="px-1 text-sm font-semibold">Unpaid meal break (optional)</legend>
+      <fieldset className="rounded-lg border p-4 [&>legend+*]:clear-both">
+        <legend className="float-left mb-3 w-full text-sm font-semibold">Unpaid meal break (optional)</legend>
         <div className="grid gap-4 sm:max-w-md sm:grid-cols-2">
           <FormField label="Meal break start" error={errors.mealStart?.message}>
             <Input type="time" {...form.register("mealStart")} />
@@ -74,8 +74,8 @@ export function ShiftForm({
         </div>
       </fieldset>
 
-      <fieldset className="rounded-lg border p-4">
-        <legend className="px-1 text-sm font-semibold">Paid rest breaks (optional)</legend>
+      <fieldset className="rounded-lg border p-4 [&>legend+*]:clear-both">
+        <legend className="float-left mb-3 w-full text-sm font-semibold">Paid rest breaks (optional)</legend>
         <p className="text-muted-foreground mb-3 text-xs">
           Rest breaks are paid time, so they do not change the calculated pay.
         </p>

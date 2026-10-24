@@ -213,8 +213,8 @@ function PayLines({ lines }: { lines: ReturnType<typeof useAuditLines> }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Rule</TableHead>
-                <TableHead className="text-right">Hours</TableHead>
-                <TableHead className="text-right">Rate</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">Hours</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">Rate</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
                 <TableHead className="hidden md:table-cell">Award clauses</TableHead>
               </TableRow>
@@ -222,15 +222,22 @@ function PayLines({ lines }: { lines: ReturnType<typeof useAuditLines> }) {
             <TableBody>
               {lines.data.lines.map((line) => (
                 <TableRow key={line.ruleId}>
-                  <TableCell>
+                  <TableCell className="whitespace-normal">
                     <span className="font-medium">{line.description}</span>
                     <span className="text-muted-foreground block text-xs">
                       {line.percentOfMinimumHourlyRate}% of {formatAud(line.baseHourlyRate)}
+                      {/* Hours and rate have their own columns from the sm breakpoint up. */}
+                      <span className="sm:hidden">
+                        {" "}
+                        · {line.hours} h at {formatAud(line.hourlyRate)}
+                      </span>
                     </span>
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{line.hours}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatAud(line.hourlyRate)}</TableCell>
-                  <TableCell className="text-right font-medium tabular-nums">
+                  <TableCell className="hidden text-right tabular-nums sm:table-cell">{line.hours}</TableCell>
+                  <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                    {formatAud(line.hourlyRate)}
+                  </TableCell>
+                  <TableCell className="text-right align-top font-medium tabular-nums sm:align-middle">
                     {formatAud(line.amount)}
                   </TableCell>
                   <TableCell className="text-muted-foreground hidden text-xs md:table-cell">
@@ -267,26 +274,38 @@ function ShiftBreakdown({ lines }: { lines: ReturnType<typeof useAuditLines> }) 
           <TableHeader>
             <TableRow>
               <TableHead>Shift</TableHead>
-              <TableHead className="text-right">Paid time</TableHead>
-              <TableHead className="text-right">Unpaid breaks</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Paid time</TableHead>
+              <TableHead className="hidden text-right sm:table-cell">Unpaid breaks</TableHead>
               <TableHead className="text-right">Amount</TableHead>
-              <TableHead>Notes</TableHead>
+              <TableHead className="hidden md:table-cell">Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {lines.data.shifts.map((shift) => (
               <TableRow key={shift.shiftId}>
-                <TableCell className="font-medium">
-                  {formatShiftSpan(shift.localStart, shift.localEnd)}
+                <TableCell className="whitespace-normal sm:whitespace-nowrap">
+                  <span className="font-medium">{formatShiftSpan(shift.localStart, shift.localEnd)}</span>
+                  {/* On narrow screens the time columns and notes fold in under the shift. */}
+                  <span className="text-muted-foreground block text-xs sm:hidden">
+                    {formatMinutes(shift.paidMinutes)} paid, {formatMinutes(shift.unpaidBreakMinutes)} unpaid
+                    break
+                  </span>
+                  {shift.issueCodes.length === 0 ? null : (
+                    <span className="text-muted-foreground block text-xs md:hidden">
+                      {shift.issueCodes.map(issueTitle).join("; ")}
+                    </span>
+                  )}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{formatMinutes(shift.paidMinutes)}</TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                  {formatMinutes(shift.paidMinutes)}
+                </TableCell>
+                <TableCell className="hidden text-right tabular-nums sm:table-cell">
                   {formatMinutes(shift.unpaidBreakMinutes)}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right align-top tabular-nums sm:align-middle">
                   {shift.indicativeAmount === null ? "Not priced" : formatAud(shift.indicativeAmount)}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-xs">
+                <TableCell className="text-muted-foreground hidden text-xs md:table-cell">
                   {shift.issueCodes.length === 0 ? "—" : shift.issueCodes.map(issueTitle).join("; ")}
                 </TableCell>
               </TableRow>
