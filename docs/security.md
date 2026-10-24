@@ -50,7 +50,11 @@ Untrusted input arrives from the browser at the API, and the API is the only thi
 
 ## Dependency exceptions
 
-`pnpm audit --audit-level high` runs in CI. Any advisory that's accepted is listed in `pnpm-workspace.yaml` (`auditConfig.ignoreGhsas`) and explained here.
+`pnpm audit --audit-level high` runs in CI, and both container images are scanned with Trivy.
+
+New releases normally wait two weeks before they're adopted ([ADR 0006](adr/0006-toolchain-versions.md)). A security fix is the exception. On 24 October 2026, CI's dependency audit flagged GHSA-q7qp-rjg7-q26m (high: denial of service in `multer`) in the version that `@nestjs/platform-express` 12.2.0 pins. The API never handles file uploads, so the flaw couldn't be reached. The vulnerable code was still in the production image, though, and the fixed `multer` 2.5.0 has the same dependencies as before. So `pnpm-workspace.yaml` forces 2.5.0 through `overrides`, two days after its release. Remove the override once NestJS ships with 2.5.0 or later.
+
+Any advisory that's accepted rather than fixed is listed in `pnpm-workspace.yaml` (`auditConfig.ignoreGhsas`) and explained here.
 
 | Advisory                                                                        | Package                                                                                                  | Why it's accepted                                                                                                                                                              | When to revisit                                             |
 | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |

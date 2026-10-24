@@ -9,6 +9,11 @@ onlyBuiltDependencies:
   - esbuild
   - prisma
 
+# Security patches applied ahead of the two-week rule (docs/security.md, Dependency exceptions).
+# multer 2.5.0 fixes GHSA-q7qp-rjg7-q26m; @nestjs/platform-express 12.2.0 still pins 2.4.0.
+overrides:
+  multer: 2.5.0
+
 # Advisories accepted after review; each entry is justified in docs/security.md (Dependency exceptions).
 auditConfig:
   ignoreGhsas:
