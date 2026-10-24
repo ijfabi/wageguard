@@ -1,0 +1,71 @@
+# Isolated stack for Benchmark B (API load). Started and removed by `pnpm benchmark:api`.
+# It uses its own project name, network and throwaway database (no named volumes), so it never
+# touches the development stack or its data. Synthetic data only; local use only.
+# Each long-running container is capped at 1 GiB so a run cannot exhaust the workstation's memory.
+name: wageguard-bench
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    mem_limit: 1g
+    environment:
+      POSTGRES_DB: wageguard
+      POSTGRES_USER: wageguard
+      POSTGRES_PASSWORD: benchmark-only-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wageguard -d wageguard"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://wageguard:benchmark-only-password@postgres:5432/wageguard
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # The production image and production settings; only the rate limits are raised, because every
+  # virtual user arrives from the load generator's single IP address.
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    mem_limit: 1g
+    # Benchmark E kills the Node process (SIGKILL) and relies on Docker to restart the container, as a
+    # supervisor would. With an init process as PID 1, killing Node ends the container with an error
+    # (`docker kill` would count as a deliberate stop and skip the restart policy).
+    init: true
+    restart: on-failure
+    # Benchmark E's client runs on the host. Bound to localhost only.
+    ports:
+      - "127.0.0.1:3101:3001"
+    environment:
+      NODE_ENV: production
+      COOKIE_SECURE: "true"
+      DATABASE_URL: postgresql://wageguard:benchmark-only-password@postgres:5432/wageguard
+      ALLOWED_ORIGINS: http://localhost:3000
+      RATE_LIMIT_PER_MINUTE: "10000000"
+      AUTH_RATE_LIMIT_PER_MINUTE: "100000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Raw output is written to /tmp inside this container and copied out with `docker cp`. A host
+  # bind mount stalled k6 after about 2.5 minutes of sustained writes (seen twice), and a named
+  # volume is owned by root while k6 runs as a non-root user.
+  k6:
+    image: grafana/k6:2.3.0
+    mem_limit: 1g
+    profiles: ["load"]
+    volumes:
+      - ./:/scripts:ro
+    depends_on:
+      api:
+        condition: service_healthy

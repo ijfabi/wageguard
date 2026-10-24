@@ -12,6 +12,8 @@ interface Mapped {
   readonly code: ApiErrorCode;
   readonly message: string;
   readonly issues?: readonly ApiIssue[];
+  /** Sent as Retry-After (seconds) for temporary failures. */
+  readonly retryAfterSeconds?: number;
 }
 
 /**
@@ -40,6 +42,9 @@ export class ErrorFilter implements ExceptionFilter {
         correlationId,
       },
     };
+    if (mapped.retryAfterSeconds !== undefined) {
+      response.setHeader("Retry-After", String(mapped.retryAfterSeconds));
+    }
     response.status(mapped.status).json(body);
   }
 }
@@ -115,6 +120,14 @@ function bodyParserError(exception: unknown): Mapped | null {
 }
 
 /**
+ * Connection-level failures from node-postgres and PostgreSQL: refused or reset connections, DNS
+ * failures while the database host is down, the pool's connect timeout, and the server shutting down
+ * or starting up (SQLSTATE 57P01, 57P03).
+ */
+const DATABASE_UNREACHABLE =
+  /ECONNREFUSED|ECONNRESET|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|Connection terminated|timeout exceeded when trying to connect|terminating connection due to administrator command|the database system is (shutting down|starting up|in recovery mode)|57P0[13]/i;
+
+/**
  * Database constraint violations. Matched on constraint names and the trigger messages defined in
  * the migrations, which keeps this independent of the driver adapter's error class shapes.
  */
@@ -123,6 +136,16 @@ function databaseError(exception: unknown): Mapped | null {
     return null;
   }
   const text = `${exception.message} ${safeStringify(exception)}`;
+  if (DATABASE_UNREACHABLE.test(text)) {
+    // Temporary: the database is down, restarting or unreachable. Clients should retry (with the
+    // same Idempotency-Key for audits), not treat it as a bug. Measured in Benchmark E.
+    return {
+      status: 503,
+      code: ApiErrorCode.SERVICE_UNAVAILABLE,
+      message: "The service is temporarily unavailable; try again shortly",
+      retryAfterSeconds: 2,
+    };
+  }
   if (text.includes("shifts_no_overlap")) {
     return {
       status: 409,

@@ -1,0 +1,148 @@
+{
+  "benchmark": "Benchmark E: reliability and recovery",
+  "status": "COMPLETED",
+  "reason": null,
+  "environment": {
+    "runId": "reliability-2026-10-24T15-49-32-351Z-b942b0",
+    "timestampUtc": "2026-10-24T15:49:32.351Z",
+    "git": {
+      "commitSha": "73dc9a0b90f0184c7efbc567eb009c3a4c46a055",
+      "dirty": true,
+      "note": null
+    },
+    "sourceTreeSha256": "f07e4cba89924cda3ce129a4404be7e9c82ed1424be5308935e44cd58ae53615",
+    "environment": "local-developer-workstation",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26200",
+      "arch": "x64"
+    },
+    "cpu": {
+      "model": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "logicalCores": 20
+    },
+    "memory": {
+      "totalBytes": 16849256448,
+      "freeBytesAtStart": 674643968
+    },
+    "node": "v24.22.1",
+    "dockerVersion": "Docker version 29.9.1, build dfc520d",
+    "postgresVersion": "17.6",
+    "cpuBusyPercentAtStart": 15.9
+  },
+  "configuration": {
+    "label": "fail-fast-503",
+    "clients": 10,
+    "warmSeconds": 10,
+    "afterFaultSeconds": 30,
+    "outageSeconds": 10,
+    "retryPolicy": "Same Idempotency-Key on every attempt; retry network errors and 5xx; backoff 250 ms doubling to 2 s; give up after 60 s",
+    "failureInjection": {
+      "apiCrash": "docker exec wageguard-bench-api-1 sh -c \"kill -9 $(pidof node)\" (the container exits; restart policy on-failure restarts it)",
+      "databaseOutage": "docker stop wageguard-bench-postgres-1; wait 10 s; docker start wageguard-bench-postgres-1"
+    },
+    "notApplicable": {
+      "Transient queue failure": "No queue: audits are processed synchronously in the request (ADR 0010).",
+      "Queue wait and job processing durations": "No queue or background worker."
+    }
+  },
+  "results": {
+    "duplicates": {
+      "sequential": {
+        "requests": 20,
+        "created": 1,
+        "replayed": 19,
+        "distinctAuditIds": 1,
+        "auditsStored": 1
+      },
+      "concurrent": {
+        "requests": 50,
+        "created": 1,
+        "replayed": 49,
+        "failed": 0,
+        "distinctAuditIds": 1,
+        "auditsStored": 1
+      },
+      "keyReuseWithDifferentBody": {
+        "status": 422
+      }
+    },
+    "apiCrash": {
+      "logicalSubmissions": 7445,
+      "completed": 7445,
+      "failed": 0,
+      "successRatePercent": 100,
+      "replayedAfterLostResponse": 0,
+      "submissionsThatNeededRetries": 10,
+      "totalAttempts": 7475,
+      "attemptStatusCounts": {
+        "201": 7445,
+        "network error": 30
+      },
+      "faultStartSeconds": 10,
+      "faultEndSeconds": 11.47,
+      "longestStretchWithoutCompletionsSeconds": 1.95,
+      "completionsResumedSecondsAfterInjection": 2.08,
+      "completionsResumedSecondsAfterFaultEnd": 0.61,
+      "successRateAfterRecoveryPercent": 100,
+      "retriedSubmissionLatencyMs": {
+        "count": 10,
+        "min": 1950.5461999999825,
+        "max": 2062.817699999956,
+        "mean": 2027.1847099999954,
+        "median": 2029.7178000000422,
+        "p95": 2062.817699999956,
+        "p99": 2062.817699999956,
+        "stddev": 32.08360769937868
+      },
+      "integrity": {
+        "auditsStored": 7447,
+        "duplicateKeys": 0,
+        "acknowledgedButMissing": 0,
+        "orphanFindings": 0,
+        "findingsMismatches": 0,
+        "notCompleted": 0
+      }
+    },
+    "apiRestartCount": 1,
+    "databaseOutage": {
+      "logicalSubmissions": 7554,
+      "completed": 7554,
+      "failed": 0,
+      "successRatePercent": 100,
+      "replayedAfterLostResponse": 0,
+      "submissionsThatNeededRetries": 10,
+      "totalAttempts": 7584,
+      "attemptStatusCounts": {
+        "201": 7554,
+        "503": 30
+      },
+      "faultStartSeconds": 10,
+      "faultEndSeconds": 20.61,
+      "longestStretchWithoutCompletionsSeconds": 11.54,
+      "completionsResumedSecondsAfterInjection": 11.96,
+      "completionsResumedSecondsAfterFaultEnd": 1.35,
+      "successRateAfterRecoveryPercent": 100,
+      "retriedSubmissionLatencyMs": {
+        "count": 10,
+        "min": 11543.999299999967,
+        "max": 11552.269900000014,
+        "mean": 11548.872099999997,
+        "median": 11549.4718,
+        "p95": 11552.269900000014,
+        "p99": 11552.269900000014,
+        "stddev": 2.624765123040477
+      },
+      "integrity": {
+        "auditsStored": 15001,
+        "duplicateKeys": 0,
+        "acknowledgedButMissing": 0,
+        "orphanFindings": 0,
+        "findingsMismatches": 0,
+        "notCompleted": 0
+      }
+    }
+  },
+  "errorCount": 0,
+  "exitStatus": 0
+}

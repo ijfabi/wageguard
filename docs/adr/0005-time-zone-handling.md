@@ -1,35 +1,22 @@
-# ADR 0005: Wall-clock input, IANA zones, half-open intervals
+# ADR 0005: Times as written, real time zones, and intervals that don't double-count
 
 - Status: Accepted
 - Date: 2026-10-22
 
 ## Context
 
-Timesheets record wall-clock times. Award rules are expressed in local days and times, such as "Saturday" or "after 6.00 pm". Australian zones observe DST, so local days can be 23 or 25 hours long.
+Timesheets record clock times. The award talks in local days and times, such as "Saturday" or "after 6.00 pm". Most Australian states observe daylight saving, so a local day can be 23 or 25 hours long.
 
 ## Decision
 
-**Input**
+Shifts are entered as clock times (`YYYY-MM-DDTHH:MM`), together with the employment's IANA time zone. Abbreviations like "AEST" and fixed offsets aren't accepted, because they can't follow daylight saving.
 
-- Shifts are entered as `YYYY-MM-DDTHH:MM` wall-clock times plus the employment's IANA zone. Abbreviations such as "AEST" and fixed offsets are rejected.
+A clock time is turned into a moment in UTC by finding every offset in force at that time. If a time falls in the hour skipped when daylight saving starts, it doesn't exist, and it's rejected. If it falls in the hour repeated when daylight saving ends, it's ambiguous, and it's also rejected unless the person gives an explicit UTC offset to say which one they meant. Rule boundaries like midnight resolve those cases automatically (the earlier time, or the end of the gap), but that shortcut is never applied to what a person typed.
 
-**Conversion to instants**
-
-- Wall-clock times are converted to UTC instants by finding every offset in force at that wall-clock time.
-- **Nonexistent** times (inside the DST start gap) and **ambiguous** times (the repeated hour when DST ends) are rejected for user input. An explicit UTC offset can be supplied to resolve an ambiguous time.
-- Rule boundaries such as midnight use "earlier, or end of gap" resolution, which is never applied to user input.
-
-**Intervals and attribution**
-
-- Intervals are half-open, `[start, end)`. Touching intervals do not overlap, so a minute at 18:00 belongs to exactly one window.
-- Rule windows are built per local date and converted to instants. The engine never assumes a day is 24 hours.
-- A shift belongs to the pay period of its start date. Segments are attributed to the local date in which they fall.
-
-**Persistence**
-
-- Persisted event timestamps are UTC instants (Phase 2).
+Intervals include their start and exclude their end. Back-to-back intervals don't overlap, so the minute at 18:00 belongs to exactly one rate. Rule windows are built for each local date and then converted to UTC, so the engine never assumes a day lasts 24 hours. A shift belongs to the pay period it starts in, and each piece of it counts towards the local date it falls on. Timestamps in the database are stored in UTC.
 
 ## Consequences
 
-- DST behaviour is covered by unit and property tests, including the 2026-10-04 and 2026-04-05 transitions in `Australia/Sydney`.
-- Users who work through the repeated hour must supply an offset. The UI must ask for it (Phase 3).
+Unit and property tests cover the daylight-saving changes, including 4 October 2026 and 5 April 2026 in `Australia/Sydney`.
+
+Anyone working through the repeated hour has to give an offset. The API accepts one, but the web form doesn't ask for it yet, which is listed in the [known limitations](../known-limitations.md).

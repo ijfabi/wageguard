@@ -182,23 +182,25 @@ export class ShiftsService {
       throw ApiError.validation(issues, "The CSV could not be imported");
     }
 
+    // Two multi-row inserts instead of four statements per row (measured in Benchmark C). Rows were
+    // checked for overlaps above, so startLocal identifies each shift within this import; the
+    // database's exclusion constraint still rejects overlaps with existing shifts.
     const created = await this.prisma.$transaction(async (tx) => {
-      const shifts = [];
-      for (const { times, shift } of resolved) {
-        shifts.push(
-          await tx.shift.create({
-            data: {
-              userId,
-              employmentId: employment.id,
-              ...shiftColumns(times, shift),
-              breaks: { create: breakColumns(times) },
-            },
-            include: withBreaks,
-          }),
-        );
-      }
+      const shifts = await tx.shift.createManyAndReturn({
+        data: resolved.map(({ times, shift }) => ({
+          userId,
+          employmentId: employment.id,
+          ...shiftColumns(times, shift),
+        })),
+      });
+      const idByStart = new Map(shifts.map((s) => [s.startLocal, s.id]));
+      const breaks = await tx.shiftBreak.createManyAndReturn({
+        data: resolved.flatMap(({ times }) =>
+          breakColumns(times).map((b) => ({ ...b, shiftId: idByStart.get(times.start) as string })),
+        ),
+      });
       await this.events.record("SHIFTS_IMPORTED", userId, { count: shifts.length }, tx);
-      return shifts;
+      return shifts.map((s) => ({ ...s, breaks: breaks.filter((b) => b.shiftId === s.id) }));
     });
     return { imported: created.length, shifts: created.map(toShiftResponse) };
   }

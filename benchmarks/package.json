@@ -8,9 +8,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "engine": "node --expose-gc --conditions=@wageguard/source --import tsx scripts/engine.ts",
     "correctness": "node --conditions=@wageguard/source --import tsx scripts/correctness.ts",
-    "api": "node --conditions=@wageguard/source --import tsx scripts/not-executed.ts api",
-    "database": "node --conditions=@wageguard/source --import tsx scripts/not-executed.ts database",
-    "reliability": "node --conditions=@wageguard/source --import tsx scripts/not-executed.ts reliability",
+    "api": "node --import tsx scripts/api.ts",
+    "database": "node --import tsx scripts/database.ts",
+    "reliability": "node --import tsx scripts/reliability.ts",
     "equivalence": "node --conditions=@wageguard/source --import tsx scripts/verify-offset-equivalence.ts",
     "report": "node --conditions=@wageguard/source --import tsx scripts/report.ts",
     "resume-metrics": "node --conditions=@wageguard/source --import tsx scripts/resume-metrics.ts"

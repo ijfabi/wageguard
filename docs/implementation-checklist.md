@@ -1,68 +1,71 @@
 # Implementation checklist
 
-Legend: [x] done and verified · [~] partially done · [ ] not started
+`[x]` means done and verified, `[ ]` means not started.
 
-## Phase 0: Engineering setup
+## Phase 0: setup
 
-- [x] Toolchain versions verified against the npm registry (ADR 0006)
-- [x] pnpm workspace, TypeScript strict (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`)
-- [x] ESLint (strict type-checked) and Prettier, with monetary-safety lint rules
-- [x] Docker Compose stack: verified with `docker compose up --build` on 2026-10-22
-- [x] Documentation structure and ADRs 0001–0011
-- [x] GitHub Actions CI with SHA-pinned actions. First green run: https://github.com/ijfabi/wageguard/actions/runs/39777538158
-- [x] git repository initialised and published (public, all rights reserved)
+- [x] Toolchain versions checked against the npm registry ([ADR 0006](adr/0006-toolchain-versions.md))
+- [x] pnpm workspace with strict TypeScript (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`)
+- [x] ESLint (strict, type-aware) and Prettier, plus lint rules that block floating-point money
+- [x] Docker Compose stack, checked with `docker compose up --build` on 2026-10-22
+- [x] Documentation and decision records
+- [x] GitHub Actions CI with actions pinned to commit hashes ([first green run](https://github.com/ijfabi/wageguard/actions/runs/39777538158))
+- [x] Public repository, all rights reserved
 
-## Phase 1: Domain and calculation foundation
+## Phase 1: domain and calculation
 
-- [x] Money / Decimal with explicit rounding
-- [x] LocalDate, LocalTime, Instant, TimeZone (DST-aware, memoised offsets), half-open Interval
-- [x] Employment, Shift and Break, PayPeriod, Payslip domain models
-- [x] Rule-set schema, registry, immutability fingerprints
-- [x] MA000004 2026-07-01 r1 rules transcribed from the official source
-- [x] Calculation engine (segmentation, checks, pricing, aggregation, trace)
-- [x] Reconciliation and audit findings
-- [x] Unit, property and golden tests
+- [x] Money and decimal types with explicit rounding
+- [x] Dates, times, instants and time zones (aware of daylight saving), half-open intervals
+- [x] Employment, shift, break, pay period and payslip models
+- [x] Rule-set schema, registry and immutability fingerprints
+- [x] MA000004 rules effective 1 July 2026, copied from the official award
+- [x] Calculation engine: segmentation, checks, pricing, aggregation and the explanation trace
+- [x] Reconciliation against payslips, with findings
+- [x] Unit, property-based and golden tests
 
-## Phase 2: Persistence and APIs
+## Phase 2: persistence and API
 
-- [x] Prisma 7 schema, initial migration with exclusion constraint, CHECKs and immutability triggers
-- [x] Migration drift check in CI (apply to an empty database, then `migrate diff --exit-code`)
-- [x] `api-contracts` package: Zod contracts as the single source for validation, types and OpenAPI
-- [x] Identity: register, login, logout, me, account deletion (argon2id, hashed server-side sessions)
-- [x] Employments, shifts (create, list, get, optimistic-concurrency patch, CSV import), payslips
+- [x] Prisma 7 schema and migrations, with the shift-overlap exclusion constraint, CHECK constraints and immutability triggers
+- [x] Migration drift check in CI
+- [x] `api-contracts` package: Zod schemas used for validation, types and the OpenAPI document
+- [x] Accounts: register, sign in and out, current user, delete account (argon2id, server-side sessions stored hashed)
+- [x] Employments, shifts (including edits with optimistic concurrency and CSV import) and payslips
 - [x] Audits: idempotent creation, immutable snapshots, list, detail, lines, JSON report
-- [x] Rules versions, health, readiness, OpenAPI 3.1 document with a route-parity test
-- [x] Global guards (rate limit, CSRF origin, authentication), error filter, correlation ids, structured redacted logs, security headers, body limits
-- [x] Integration tests on real PostgreSQL via Testcontainers (63), contract tests (7)
-- [x] Security tests: BOLA, cross-user access, malformed and oversized CSV, duplicate and concurrent audits, invalid dates and DST times, injection
-- [x] API Docker image (multi-stage, non-root, health check); migrate service; Trivy scan in CI
-- [x] Seeded synthetic demo account (`seed:demo`; password from the environment, never committed)
+- [x] Rule versions, health, readiness, OpenAPI 3.1 with a test that every route is documented
+- [x] Rate limiting, a CSRF origin check, authentication, one error format, correlation IDs, redacted structured logs, security headers, body limits
+- [x] Integration tests on real PostgreSQL (Testcontainers) and contract tests
+- [x] Security tests: other users' objects, cross-user writes, bad and oversized CSV, duplicate and concurrent audits, invalid dates and daylight-saving times, injection attempts
+- [x] API Docker image (multi-stage, non-root, health check), migration container, Trivy scan in CI
+- [x] Demo account seed script (the password comes from the environment, never the repository)
 
-## Phase 3: Frontend
+## Phase 3: web app
 
-- [x] Next.js 16 app: landing, sign up/in, dashboard, employment, shifts, CSV upload, payslip, audit history, audit detail, calculation explanation, settings (ADR 0012)
-- [x] `GET /payslips` and `GET /dashboard` API endpoints with integration tests
-- [x] Unit tests for web logic: 19 in `apps/web` (form mapping, redirects, CSP) and 14 in `packages/presentation` (money, formatting, status and amount wording)
-- [x] Playwright E2E (10 tests): full audit journey with PDF and JSON report download, underpayment, malformed CSV, access control, open-redirect protection, nonce CSP, credentials without JavaScript, keyboard skip link
-- [x] axe accessibility checks (WCAG 2.1 AA, serious/critical fail) across 13 page states
-- [x] Web Docker image (standalone, non-root), Compose `web` service, CI E2E job and web image scan
-- [x] README screenshots from the seeded synthetic account
+- [x] Next.js 16 app covering sign-up and sign-in, dashboard, employment, shifts, CSV upload, payslips, audit history, audit detail, the calculation explanation and settings ([ADR 0012](adr/0012-web-frontend-architecture.md))
+- [x] `GET /payslips` and `GET /dashboard` endpoints with integration tests
+- [x] Unit tests for the web logic (19 in `apps/web`, 14 in `packages/presentation`)
+- [x] 10 Playwright end-to-end tests: the full audit journey with PDF and JSON downloads, an underpayment, a malformed CSV, access control, open-redirect protection, the content security policy, signing in without JavaScript, and the skip link
+- [x] axe accessibility checks (WCAG 2.1 AA) across 13 page states
+- [x] Web Docker image, Compose service, end-to-end tests and image scan in CI
+- [x] README screenshots from the demo account
 
-## Phase 4: Engineering quality
+## Phase 4: engineering quality
 
-- [x] PDF audit report from the immutable snapshot (`GET /audits/:id/report/pdf`, ADR 0014), linked from the audit page
-- [x] `@wageguard/presentation`: one source for money, date and status wording in the web app and the PDF
-- [x] OpenTelemetry traces and metrics, opt-in, with privacy redaction and custom audit metrics (ADR 0013, [observability](observability.md)); verified against a local collector
-- [x] Nonce-based Content Security Policy for the web app (no `'unsafe-inline'` scripts), with E2E violation checks
-- [x] Credential forms post (never GET) if submitted before JavaScript loads; E2E test with JavaScript disabled
-- [x] Container scanning (Trivy in CI) and dependency/secret scanning
-- [ ] Unicode font and tagged (accessible) PDF; dashboards and alerts; web app tracing
+- [x] PDF audit report built from the stored snapshot ([ADR 0014](adr/0014-pdf-evidence-report.md))
+- [x] `@wageguard/presentation`: shared wording for money, dates and statuses, used by the web app and the PDF
+- [x] Optional OpenTelemetry traces and metrics, with redaction and audit metrics ([ADR 0013](adr/0013-opt-in-opentelemetry.md), [observability](observability.md)), checked against a local collector
+- [x] Nonce-based content security policy for the web app, with end-to-end violation checks
+- [x] Sign-in and account-deletion forms use POST, so credentials never land in a URL even before JavaScript loads
+- [x] Container, dependency and secret scanning in CI
+- [ ] A Unicode font and a tagged, accessible PDF; monitoring dashboards and alerts; tracing in the web app
 
-## Phase 5: Benchmarking
+## Phase 5: benchmarking
 
-- [x] Deterministic workload generator; Benchmarks A, D, F; report and resume-evidence generators
-- [ ] Benchmark B (API with k6), C (database queries with EXPLAIN ANALYZE), E (reliability): now unblocked by Phase 2
+- [x] Deterministic workload generator; Benchmarks A, D and F; report and resume-evidence generators
+- [x] Benchmark C: database queries at 500 to 50,000 audits, with statement counts and EXPLAIN ANALYZE
+- [x] Benchmark B: the API under load with k6 at 1 to 50 concurrent clients, against the production image
+- [x] Benchmark E: duplicate submissions, an API crash and a database outage, with integrity checks afterwards
+- [x] Fixes for the problems the benchmarks found (column selection, covering indexes, batched import, failing fast with 503), re-measured before and after ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md), [performance](performance.md))
 
-## Phase 6: Portfolio delivery
+## Phase 6: delivery
 
-- [ ] Screenshots, demo account, final review, deployment guide (Terraform optional, never applied without approval)
+- [ ] Final review, deployment guide, and an optional cloud design (never applied without approval)

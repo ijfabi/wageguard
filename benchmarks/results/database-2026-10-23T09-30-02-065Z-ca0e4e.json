@@ -1,0 +1,1881 @@
+{
+  "benchmark": "Benchmark C: database query performance",
+  "status": "COMPLETED",
+  "reason": null,
+  "environment": {
+    "runId": "database-2026-10-23T09-30-02-065Z-ca0e4e",
+    "timestampUtc": "2026-10-23T09:30:02.065Z",
+    "git": {
+      "commitSha": null,
+      "dirty": null,
+      "note": "git unavailable or not a repository; see sourceTreeSha256"
+    },
+    "sourceTreeSha256": "ea019b2df8e084b80f91226c392b73d34a7af5c7aa53329262e3b1a94ef03dff",
+    "environment": "local-developer-workstation",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26200",
+      "arch": "x64"
+    },
+    "cpu": {
+      "model": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "logicalCores": 20
+    },
+    "memory": {
+      "totalBytes": 16849256448,
+      "freeBytesAtStart": 2291130368
+    },
+    "node": "v24.22.1",
+    "dockerVersion": "Docker version 29.9.1, build dfc520d",
+    "postgresVersion": "17.6",
+    "cpuBusyPercentAtStart": 13.1
+  },
+  "configuration": {
+    "label": "baseline",
+    "method": "Compiled services called in-process (no HTTP) against PostgreSQL in a container; latency is wall time per service call including Prisma. SQL statements are counted at the pg driver during the first measured call (BEGIN/COMMIT included). EXPLAIN (ANALYZE, BUFFERS) re-runs each distinct SELECT with its captured parameters on a warm cache.",
+    "scales": [
+      100,
+      1000,
+      10000
+    ],
+    "otherUsers": 4,
+    "otherUserAuditsEach": "same as the measured user",
+    "shiftsPerAuditForMeasuredUser": 10,
+    "otherUserShiftsEach": "one per audit",
+    "warmupIterations": 5,
+    "measuredIterations": 30,
+    "importIterations": 20,
+    "importRows": 14,
+    "postgresImage": "postgres:17.6-alpine"
+  },
+  "results": [
+    {
+      "measuredUserAudits": 100,
+      "rows": {
+        "audits": 500,
+        "findings": 665,
+        "shifts": 1400,
+        "payslips": 500,
+        "bytes": 14418447
+      },
+      "seedSeconds": 0.4,
+      "operations": [
+        {
+          "operation": "Audit history, first page (20)",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.513,
+              "executionMs": 0.3,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 27,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 5.482299999999668,
+            "max": 10.795799999999872,
+            "mean": 7.009700000000036,
+            "median": 6.458099999999831,
+            "p95": 10.338900000000649,
+            "p99": 10.795799999999872,
+            "stddev": 1.5960272774438293
+          },
+          "rawLatenciesMs": [
+            10.339,
+            9.079,
+            10.796,
+            9.279,
+            8.552,
+            7.155,
+            9.095,
+            6.132,
+            6.212,
+            6.024,
+            5.679,
+            5.601,
+            5.593,
+            5.485,
+            6.329,
+            5.513,
+            6.4,
+            5.577,
+            5.898,
+            5.482,
+            5.895,
+            7.21,
+            6.66,
+            6.476,
+            6.882,
+            10.286,
+            6.72,
+            6.458,
+            7.006,
+            6.479
+          ]
+        },
+        {
+          "operation": "Audit history, page at the midpoint (keyset)",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.088,
+              "executionMs": 0.162,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 16,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 5.664899999999761,
+            "max": 10.26339999999982,
+            "mean": 6.615093333333244,
+            "median": 6.091599999999744,
+            "p95": 8.895299999999224,
+            "p99": 10.26339999999982,
+            "stddev": 1.0820460608887694
+          },
+          "rawLatenciesMs": [
+            7.862,
+            7.852,
+            7.356,
+            8.895,
+            7.628,
+            10.263,
+            7.876,
+            6.927,
+            6.437,
+            5.998,
+            7.098,
+            6.645,
+            5.909,
+            5.9,
+            6.57,
+            5.667,
+            6.259,
+            5.74,
+            5.665,
+            6.342,
+            5.682,
+            5.711,
+            5.948,
+            5.892,
+            6.333,
+            6.058,
+            6.092,
+            5.828,
+            6.02,
+            6.002
+          ]
+        },
+        {
+          "operation": "Audit history filtered by status",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.252,
+              "executionMs": 0.136,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_finding_status_created_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 7,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 5.562000000000808,
+            "max": 10.929900000000089,
+            "mean": 7.2530200000000455,
+            "median": 6.850699999999961,
+            "p95": 10.63090000000011,
+            "p99": 10.929900000000089,
+            "stddev": 1.2917047112113487
+          },
+          "rawLatenciesMs": [
+            6.357,
+            7.006,
+            7.204,
+            6.433,
+            5.562,
+            6.083,
+            5.888,
+            7.749,
+            8.496,
+            10.93,
+            9.413,
+            10.631,
+            8.16,
+            7.694,
+            7.13,
+            7.826,
+            8.422,
+            6.903,
+            6.811,
+            6.494,
+            6.735,
+            5.914,
+            5.775,
+            6.851,
+            6.543,
+            6.753,
+            6.835,
+            6.627,
+            7.101,
+            7.263
+          ]
+        },
+        {
+          "operation": "Audit detail with findings",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.049,
+              "executionMs": 0.049,
+              "nodes": [
+                "Limit",
+                "Index Scan (audits_pkey)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"audit_findings\".\"id\", \"public\".\"audit_findings\".\"audit_id\", \"public\".\"audit_findings\".\"position\", \"public\".\"audit_findings\".\"code\", \"public\".\"audit_findings\".\"scope\", \"public\".\"audit_findings\".\"status\"::text, \"public\".\"audit_findings\".\"explanation\", \"public\".\"audit_findings\".\"expected_amount\", \"public\".\"audit_findings\".\"reported_amount\", \"public\".\"audit_findings\".\"difference\", \"public\".\"audit_findings\".\"shift_ids\", \"public\".\"audit_findings\".\"clause_refs\", \"public\".\"audit_finding",
+              "planningMs": 0.227,
+              "executionMs": 0.024,
+              "nodes": [
+                "Index Scan (audit_findings_audit_id_position_key)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 1.8389999999999418,
+            "max": 13.177700000000186,
+            "mean": 3.7381033333334015,
+            "median": 2.915100000000166,
+            "p95": 6.135299999999916,
+            "p99": 13.177700000000186,
+            "stddev": 2.18868853339058
+          },
+          "rawLatenciesMs": [
+            2.688,
+            2.037,
+            2.02,
+            2.459,
+            3.131,
+            5.069,
+            4.566,
+            4.595,
+            5.094,
+            6.135,
+            4.487,
+            4.016,
+            5.999,
+            3.859,
+            2.834,
+            2.611,
+            3.524,
+            3.342,
+            3.332,
+            2.546,
+            13.178,
+            2.626,
+            2.175,
+            1.839,
+            2.462,
+            5.795,
+            2.485,
+            2.915,
+            2.378,
+            1.949
+          ]
+        },
+        {
+          "operation": "Dashboard summary",
+          "queryCount": 5,
+          "statementKinds": {
+            "SELECT": 5
+          },
+          "plans": [
+            {
+              "sql": "SELECT COUNT(*) AS \"_count$_all\", \"public\".\"audits\".\"finding_status\"::text FROM \"public\".\"audits\" WHERE \"public\".\"audits\".\"user_id\" = $1 GROUP BY \"public\".\"audits\".\"finding_status\" OFFSET $2",
+              "planningMs": 0.052,
+              "executionMs": 0.049,
+              "nodes": [
+                "Aggregate",
+                "Index Only Scan (audits_user_id_finding_status_created_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT SUM(\"shift_count\") AS \"_sum$shift_count\", COUNT(*) AS \"_count$_all\" FROM (SELECT \"public\".\"audits\".\"shift_count\", \"public\".\"audits\".\"id\" FROM \"public\".\"audits\" WHERE \"public\".\"audits\".\"user_id\" = $1 OFFSET $2) AS \"sub\"",
+              "planningMs": 0.059,
+              "executionMs": 0.075,
+              "nodes": [
+                "Aggregate",
+                "Seq Scan (audits)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "audits",
+                  "rows": 100
+                }
+              ],
+              "sharedBuffersHit": 84,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT SUM(\"difference\") AS \"_sum$difference\" FROM (SELECT \"public\".\"audits\".\"difference\" FROM \"public\".\"audits\" WHERE (\"public\".\"audits\".\"user_id\" = $1 AND \"public\".\"audits\".\"finding_status\" = CAST($2::text AS \"public\".\"FindingStatus\")) OFFSET $3) AS \"sub\"",
+              "planningMs": 0.097,
+              "executionMs": 0.089,
+              "nodes": [
+                "Aggregate",
+                "Seq Scan (audits)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "audits",
+                  "rows": 100
+                }
+              ],
+              "sharedBuffersHit": 84,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.048,
+              "executionMs": 0.099,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 4,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": " SELECT to_char(date_trunc('month', created_at AT TIME ZONE 'UTC'), 'YYYY-MM') AS month, finding_status, count(*) AS count FROM audits WHERE user_id = $1::uuid AND created_at >= $2 GROUP BY 1, 2",
+              "planningMs": 0.072,
+              "executionMs": 0.142,
+              "nodes": [
+                "Aggregate",
+                "Index Only Scan (audits_user_id_finding_status_created_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 2.2830999999996493,
+            "max": 6.720000000000255,
+            "mean": 3.642419999999978,
+            "median": 3.374399999999696,
+            "p95": 5.716800000000148,
+            "p99": 6.720000000000255,
+            "stddev": 1.0262577559537436
+          },
+          "rawLatenciesMs": [
+            5.053,
+            4.787,
+            4.102,
+            3.925,
+            5.717,
+            3.99,
+            3.422,
+            4.055,
+            6.72,
+            4.632,
+            4.008,
+            4.385,
+            3.1,
+            3.247,
+            3.099,
+            3.374,
+            4.386,
+            3.04,
+            3.062,
+            2.831,
+            3.457,
+            2.283,
+            2.333,
+            2.362,
+            2.809,
+            2.652,
+            2.989,
+            2.689,
+            3.55,
+            3.211
+          ]
+        },
+        {
+          "operation": "Payslip history, first page (20)",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"payslips\".\"id\", \"public\".\"payslips\".\"user_id\", \"public\".\"payslips\".\"employment_id\", \"public\".\"payslips\".\"period_start\", \"public\".\"payslips\".\"period_end\", \"public\".\"payslips\".\"gross_pay\", \"public\".\"payslips\".\"created_at\" FROM \"public\".\"payslips\" WHERE \"public\".\"payslips\".\"user_id\" = $1 ORDER BY \"public\".\"payslips\".\"created_at\" DESC, \"public\".\"payslips\".\"id\" DESC LIMIT $2 OFFSET $3",
+              "planningMs": 0.113,
+              "executionMs": 0.043,
+              "nodes": [
+                "Limit",
+                "Sort",
+                "Seq Scan (payslips)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "payslips",
+                  "rows": 100
+                }
+              ],
+              "sharedBuffersHit": 7,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"payslip_lines\".\"id\", \"public\".\"payslip_lines\".\"payslip_id\", \"public\".\"payslip_lines\".\"position\", \"public\".\"payslip_lines\".\"category\"::text, \"public\".\"payslip_lines\".\"description\", \"public\".\"payslip_lines\".\"amount\" FROM \"public\".\"payslip_lines\" WHERE \"public\".\"payslip_lines\".\"payslip_id\" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) OFFSET $22",
+              "planningMs": 0.124,
+              "executionMs": 0.006,
+              "nodes": [
+                "Seq Scan (payslip_lines)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "payslip_lines",
+                  "rows": 0
+                }
+              ],
+              "sharedBuffersHit": 0,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 1.384700000000521,
+            "max": 1.9754999999995562,
+            "mean": 1.7092900000000555,
+            "median": 1.7298000000000684,
+            "p95": 1.930699999999888,
+            "p99": 1.9754999999995562,
+            "stddev": 0.16096418181558614
+          },
+          "rawLatenciesMs": [
+            1.642,
+            1.714,
+            1.788,
+            1.844,
+            1.552,
+            1.574,
+            1.804,
+            1.843,
+            1.677,
+            1.73,
+            1.863,
+            1.672,
+            1.426,
+            1.527,
+            1.749,
+            1.931,
+            1.755,
+            1.706,
+            1.833,
+            1.816,
+            1.661,
+            1.842,
+            1.589,
+            1.475,
+            1.385,
+            1.387,
+            1.975,
+            1.778,
+            1.928,
+            1.815
+          ]
+        },
+        {
+          "operation": "Shift list for an employment (20)",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"shifts\".\"id\", \"public\".\"shifts\".\"user_id\", \"public\".\"shifts\".\"employment_id\", \"public\".\"shifts\".\"start_local\", \"public\".\"shifts\".\"end_local\", \"public\".\"shifts\".\"start_utc_offset_minutes\", \"public\".\"shifts\".\"end_utc_offset_minutes\", \"public\".\"shifts\".\"start_date\", \"public\".\"shifts\".\"start_at\", \"public\".\"shifts\".\"end_at\", \"public\".\"shifts\".\"version\", \"public\".\"shifts\".\"created_at\", \"public\".\"shifts\".\"updated_at\" FROM \"public\".\"shifts\" WHERE (\"public\".\"shifts\".\"user_id\" = $1 AND \"p",
+              "planningMs": 0.332,
+              "executionMs": 0.07,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (shifts_user_id_start_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"shift_breaks\".\"id\", \"public\".\"shift_breaks\".\"shift_id\", \"public\".\"shift_breaks\".\"position\", \"public\".\"shift_breaks\".\"kind\"::text, \"public\".\"shift_breaks\".\"start_local\", \"public\".\"shift_breaks\".\"end_local\", \"public\".\"shift_breaks\".\"start_utc_offset_minutes\", \"public\".\"shift_breaks\".\"end_utc_offset_minutes\" FROM \"public\".\"shift_breaks\" WHERE \"public\".\"shift_breaks\".\"shift_id\" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) ORDER BY \"public\".\"shift_b",
+              "planningMs": 0.185,
+              "executionMs": 0.025,
+              "nodes": [
+                "Sort",
+                "Seq Scan (shift_breaks)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "shift_breaks",
+                  "rows": 0
+                }
+              ],
+              "sharedBuffersHit": 0,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 1.5474000000003798,
+            "max": 2.832800000000134,
+            "mean": 2.0013699999999517,
+            "median": 2.000699999999597,
+            "p95": 2.4601000000002387,
+            "p99": 2.832800000000134,
+            "stddev": 0.3298198161693039
+          },
+          "rawLatenciesMs": [
+            1.837,
+            1.687,
+            1.637,
+            1.61,
+            1.695,
+            1.937,
+            1.613,
+            1.559,
+            1.676,
+            1.812,
+            1.547,
+            1.693,
+            1.695,
+            1.878,
+            2.205,
+            2.251,
+            2.339,
+            2.169,
+            2.001,
+            2.073,
+            2.132,
+            2.049,
+            2.4,
+            2.045,
+            2.46,
+            2.136,
+            2.364,
+            2.276,
+            2.434,
+            2.833
+          ]
+        },
+        {
+          "operation": "Shift CSV import (14 rows with meal breaks)",
+          "queryCount": 60,
+          "statementKinds": {
+            "SELECT": 29,
+            "BEGIN": 1,
+            "INSERT": 29,
+            "COMMIT": 1
+          },
+          "plans": [],
+          "latencyMs": {
+            "count": 20,
+            "min": 36.71430000000055,
+            "max": 64.60940000000028,
+            "mean": 48.29851000000012,
+            "median": 46.91329999999925,
+            "p95": 62.394100000000435,
+            "p99": 64.60940000000028,
+            "stddev": 6.635926103923808
+          },
+          "rawLatenciesMs": [
+            47.495,
+            50.477,
+            46.666,
+            48.067,
+            44.01,
+            36.714,
+            46.913,
+            44.294,
+            45.889,
+            45.606,
+            40.801,
+            42.116,
+            44.99,
+            62.394,
+            54.706,
+            47.017,
+            48.974,
+            53.251,
+            64.609,
+            50.979
+          ]
+        }
+      ]
+    },
+    {
+      "measuredUserAudits": 1000,
+      "rows": {
+        "audits": 5000,
+        "findings": 6665,
+        "shifts": 14000,
+        "payslips": 5000,
+        "bytes": 62145039
+      },
+      "seedSeconds": 2,
+      "operations": [
+        {
+          "operation": "Audit history, first page (20)",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.423,
+              "executionMs": 0.147,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 7,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 5.851399999999558,
+            "max": 10.008399999998801,
+            "mean": 7.527969999999793,
+            "median": 7.502599999999802,
+            "p95": 9.925899999998364,
+            "p99": 10.008399999998801,
+            "stddev": 1.2549591569530263
+          },
+          "rawLatenciesMs": [
+            5.956,
+            7.502,
+            7.962,
+            10.008,
+            9.464,
+            8.287,
+            9.926,
+            8.618,
+            8.056,
+            6.63,
+            6.081,
+            6.675,
+            6.437,
+            6.663,
+            6.493,
+            6.206,
+            6.202,
+            5.86,
+            6.265,
+            5.851,
+            7.621,
+            8.012,
+            8.762,
+            7.932,
+            9.853,
+            7.503,
+            7.457,
+            7.589,
+            7.647,
+            8.321
+          ]
+        },
+        {
+          "operation": "Audit history, page at the midpoint (keyset)",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.094,
+              "executionMs": 0.334,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 97,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 5.478799999998955,
+            "max": 7.658999999999651,
+            "mean": 6.3057233333331775,
+            "median": 6.186099999998987,
+            "p95": 7.549699999999575,
+            "p99": 7.658999999999651,
+            "stddev": 0.5624018490203913
+          },
+          "rawLatenciesMs": [
+            7.55,
+            6.72,
+            6.688,
+            6.7,
+            6.722,
+            6.419,
+            5.771,
+            5.479,
+            5.752,
+            5.753,
+            5.959,
+            5.799,
+            5.975,
+            6.313,
+            6.389,
+            6.186,
+            5.881,
+            5.747,
+            5.735,
+            5.993,
+            5.777,
+            5.895,
+            6.566,
+            7.659,
+            7.186,
+            6.931,
+            6.511,
+            6.854,
+            6.281,
+            5.985
+          ]
+        },
+        {
+          "operation": "Audit history filtered by status",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.107,
+              "executionMs": 0.15,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 7,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 6.333599999999933,
+            "max": 15.4937000000009,
+            "mean": 9.253356666666514,
+            "median": 8.22439999999915,
+            "p95": 14.103499999999258,
+            "p99": 15.4937000000009,
+            "stddev": 2.170367246165875
+          },
+          "rawLatenciesMs": [
+            8.615,
+            8.138,
+            9.779,
+            7.783,
+            7.757,
+            7.764,
+            8.185,
+            8.067,
+            6.929,
+            7.417,
+            7.618,
+            8.085,
+            11.077,
+            9.928,
+            14.103,
+            11.104,
+            13.034,
+            12.046,
+            9.76,
+            15.494,
+            10.63,
+            8.611,
+            9.388,
+            9.586,
+            7.834,
+            8.224,
+            7.969,
+            7.021,
+            6.334,
+            9.321
+          ]
+        },
+        {
+          "operation": "Audit detail with findings",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.047,
+              "executionMs": 0.051,
+              "nodes": [
+                "Limit",
+                "Index Scan (audits_pkey)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"audit_findings\".\"id\", \"public\".\"audit_findings\".\"audit_id\", \"public\".\"audit_findings\".\"position\", \"public\".\"audit_findings\".\"code\", \"public\".\"audit_findings\".\"scope\", \"public\".\"audit_findings\".\"status\"::text, \"public\".\"audit_findings\".\"explanation\", \"public\".\"audit_findings\".\"expected_amount\", \"public\".\"audit_findings\".\"reported_amount\", \"public\".\"audit_findings\".\"difference\", \"public\".\"audit_findings\".\"shift_ids\", \"public\".\"audit_findings\".\"clause_refs\", \"public\".\"audit_finding",
+              "planningMs": 0.185,
+              "executionMs": 0.02,
+              "nodes": [
+                "Index Scan (audit_findings_audit_id_position_key)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 1.7523999999993976,
+            "max": 2.7157999999999447,
+            "mean": 2.1930433333334802,
+            "median": 2.1746000000002823,
+            "p95": 2.607399999998961,
+            "p99": 2.7157999999999447,
+            "stddev": 0.23821599830929274
+          },
+          "rawLatenciesMs": [
+            2.043,
+            1.95,
+            1.752,
+            2.194,
+            2.276,
+            2.175,
+            2.58,
+            2.716,
+            2.597,
+            2.498,
+            2.607,
+            2.086,
+            2.295,
+            2.206,
+            2.527,
+            2.153,
+            1.9,
+            2.249,
+            2.167,
+            2.079,
+            2.182,
+            2.134,
+            1.959,
+            2.092,
+            2.195,
+            2.188,
+            2.196,
+            1.939,
+            1.927,
+            1.93
+          ]
+        },
+        {
+          "operation": "Dashboard summary",
+          "queryCount": 5,
+          "statementKinds": {
+            "SELECT": 5
+          },
+          "plans": [
+            {
+              "sql": "SELECT COUNT(*) AS \"_count$_all\", \"public\".\"audits\".\"finding_status\"::text FROM \"public\".\"audits\" WHERE \"public\".\"audits\".\"user_id\" = $1 GROUP BY \"public\".\"audits\".\"finding_status\" OFFSET $2",
+              "planningMs": 0.079,
+              "executionMs": 0.203,
+              "nodes": [
+                "Aggregate",
+                "Index Only Scan (audits_user_id_finding_status_created_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 13,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT SUM(\"shift_count\") AS \"_sum$shift_count\", COUNT(*) AS \"_count$_all\" FROM (SELECT \"public\".\"audits\".\"shift_count\", \"public\".\"audits\".\"id\" FROM \"public\".\"audits\" WHERE \"public\".\"audits\".\"user_id\" = $1 OFFSET $2) AS \"sub\"",
+              "planningMs": 0.06,
+              "executionMs": 0.861,
+              "nodes": [
+                "Aggregate",
+                "Seq Scan (audits)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "audits",
+                  "rows": 1000
+                }
+              ],
+              "sharedBuffersHit": 834,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT SUM(\"difference\") AS \"_sum$difference\" FROM (SELECT \"public\".\"audits\".\"difference\" FROM \"public\".\"audits\" WHERE (\"public\".\"audits\".\"user_id\" = $1 AND \"public\".\"audits\".\"finding_status\" = CAST($2::text AS \"public\".\"FindingStatus\")) OFFSET $3) AS \"sub\"",
+              "planningMs": 0.102,
+              "executionMs": 1.049,
+              "nodes": [
+                "Aggregate",
+                "Seq Scan (audits)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "audits",
+                  "rows": 1000
+                }
+              ],
+              "sharedBuffersHit": 834,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.063,
+              "executionMs": 0.11,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 4,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": " SELECT to_char(date_trunc('month', created_at AT TIME ZONE 'UTC'), 'YYYY-MM') AS month, finding_status, count(*) AS count FROM audits WHERE user_id = $1::uuid AND created_at >= $2 GROUP BY 1, 2",
+              "planningMs": 0.054,
+              "executionMs": 0.684,
+              "nodes": [
+                "Aggregate",
+                "Index Only Scan (audits_user_id_finding_status_created_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 13,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 2.6906999999991967,
+            "max": 6.20679999999993,
+            "mean": 4.053953333333387,
+            "median": 3.9510000000009313,
+            "p95": 5.397000000000844,
+            "p99": 6.20679999999993,
+            "stddev": 0.6736113443704338
+          },
+          "rawLatenciesMs": [
+            3.659,
+            2.691,
+            3.308,
+            3.682,
+            4.389,
+            3.782,
+            3.669,
+            3.694,
+            3.951,
+            4.135,
+            4.134,
+            3.968,
+            3.579,
+            3.809,
+            3.48,
+            4.167,
+            4.896,
+            4.085,
+            4.205,
+            4.323,
+            4.878,
+            4.479,
+            4.009,
+            6.207,
+            4.546,
+            3.401,
+            5.397,
+            3.844,
+            3.36,
+            3.891
+          ]
+        },
+        {
+          "operation": "Payslip history, first page (20)",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"payslips\".\"id\", \"public\".\"payslips\".\"user_id\", \"public\".\"payslips\".\"employment_id\", \"public\".\"payslips\".\"period_start\", \"public\".\"payslips\".\"period_end\", \"public\".\"payslips\".\"gross_pay\", \"public\".\"payslips\".\"created_at\" FROM \"public\".\"payslips\" WHERE \"public\".\"payslips\".\"user_id\" = $1 ORDER BY \"public\".\"payslips\".\"created_at\" DESC, \"public\".\"payslips\".\"id\" DESC LIMIT $2 OFFSET $3",
+              "planningMs": 0.146,
+              "executionMs": 0.297,
+              "nodes": [
+                "Limit",
+                "Sort",
+                "Seq Scan (payslips)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "payslips",
+                  "rows": 1000
+                }
+              ],
+              "sharedBuffersHit": 62,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"payslip_lines\".\"id\", \"public\".\"payslip_lines\".\"payslip_id\", \"public\".\"payslip_lines\".\"position\", \"public\".\"payslip_lines\".\"category\"::text, \"public\".\"payslip_lines\".\"description\", \"public\".\"payslip_lines\".\"amount\" FROM \"public\".\"payslip_lines\" WHERE \"public\".\"payslip_lines\".\"payslip_id\" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) OFFSET $22",
+              "planningMs": 0.063,
+              "executionMs": 0.008,
+              "nodes": [
+                "Seq Scan (payslip_lines)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "payslip_lines",
+                  "rows": 0
+                }
+              ],
+              "sharedBuffersHit": 0,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 1.8618999999998778,
+            "max": 4.022600000000239,
+            "mean": 2.6021999999998418,
+            "median": 2.444900000000416,
+            "p95": 3.627599999999802,
+            "p99": 4.022600000000239,
+            "stddev": 0.49983677335699134
+          },
+          "rawLatenciesMs": [
+            2.992,
+            2.84,
+            2.505,
+            2.096,
+            2.408,
+            2.085,
+            2.124,
+            2.741,
+            2.167,
+            2.12,
+            1.862,
+            2.246,
+            3.099,
+            4.023,
+            2.919,
+            2.315,
+            2.094,
+            2.325,
+            2.363,
+            2.554,
+            2.984,
+            2.276,
+            2.278,
+            3.405,
+            3.628,
+            2.843,
+            2.792,
+            2.611,
+            2.445,
+            2.931
+          ]
+        },
+        {
+          "operation": "Shift list for an employment (20)",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"shifts\".\"id\", \"public\".\"shifts\".\"user_id\", \"public\".\"shifts\".\"employment_id\", \"public\".\"shifts\".\"start_local\", \"public\".\"shifts\".\"end_local\", \"public\".\"shifts\".\"start_utc_offset_minutes\", \"public\".\"shifts\".\"end_utc_offset_minutes\", \"public\".\"shifts\".\"start_date\", \"public\".\"shifts\".\"start_at\", \"public\".\"shifts\".\"end_at\", \"public\".\"shifts\".\"version\", \"public\".\"shifts\".\"created_at\", \"public\".\"shifts\".\"updated_at\" FROM \"public\".\"shifts\" WHERE (\"public\".\"shifts\".\"user_id\" = $1 AND \"p",
+              "planningMs": 0.185,
+              "executionMs": 0.055,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (shifts_user_id_start_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"shift_breaks\".\"id\", \"public\".\"shift_breaks\".\"shift_id\", \"public\".\"shift_breaks\".\"position\", \"public\".\"shift_breaks\".\"kind\"::text, \"public\".\"shift_breaks\".\"start_local\", \"public\".\"shift_breaks\".\"end_local\", \"public\".\"shift_breaks\".\"start_utc_offset_minutes\", \"public\".\"shift_breaks\".\"end_utc_offset_minutes\" FROM \"public\".\"shift_breaks\" WHERE \"public\".\"shift_breaks\".\"shift_id\" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) ORDER BY \"public\".\"shift_b",
+              "planningMs": 0.224,
+              "executionMs": 0.062,
+              "nodes": [
+                "Sort",
+                "Seq Scan (shift_breaks)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "shift_breaks",
+                  "rows": 21
+                }
+              ],
+              "sharedBuffersHit": 7,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 1.9606999999996333,
+            "max": 8.300600000000486,
+            "mean": 2.595843333333323,
+            "median": 2.3554999999996653,
+            "p95": 3.3179999999993015,
+            "p99": 8.300600000000486,
+            "stddev": 1.1159448749466288
+          },
+          "rawLatenciesMs": [
+            8.301,
+            2.378,
+            2.236,
+            3.318,
+            2.781,
+            3.045,
+            2.253,
+            2.176,
+            2.154,
+            2.041,
+            2.551,
+            2.344,
+            2.355,
+            2.333,
+            2.208,
+            2.212,
+            2.159,
+            2.63,
+            2.485,
+            2.381,
+            2.489,
+            1.961,
+            2.072,
+            2.365,
+            2.627,
+            2.637,
+            2.372,
+            2.598,
+            2.221,
+            2.192
+          ]
+        },
+        {
+          "operation": "Shift CSV import (14 rows with meal breaks)",
+          "queryCount": 60,
+          "statementKinds": {
+            "SELECT": 29,
+            "BEGIN": 1,
+            "INSERT": 29,
+            "COMMIT": 1
+          },
+          "plans": [],
+          "latencyMs": {
+            "count": 20,
+            "min": 35.77939999999944,
+            "max": 56.72819999999956,
+            "mean": 43.25578999999989,
+            "median": 41.207800000000134,
+            "p95": 51.35330000000067,
+            "p99": 56.72819999999956,
+            "stddev": 5.497193316871063
+          },
+          "rawLatenciesMs": [
+            42.329,
+            37.219,
+            37.419,
+            37.63,
+            47.339,
+            47.863,
+            46.314,
+            41.131,
+            38.756,
+            39.944,
+            35.779,
+            41.208,
+            48.205,
+            40,
+            42.578,
+            45.343,
+            48.461,
+            56.728,
+            51.353,
+            39.516
+          ]
+        }
+      ]
+    },
+    {
+      "measuredUserAudits": 10000,
+      "rows": {
+        "audits": 50000,
+        "findings": 66665,
+        "shifts": 140000,
+        "payslips": 50000,
+        "bytes": 538111123
+      },
+      "seedSeconds": 17.3,
+      "operations": [
+        {
+          "operation": "Audit history, first page (20)",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.386,
+              "executionMs": 0.121,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 8,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 5.149900000000343,
+            "max": 12.443299999998999,
+            "mean": 6.5172133333333475,
+            "median": 6.05880000000252,
+            "p95": 10.283500000001368,
+            "p99": 12.443299999998999,
+            "stddev": 1.6188498317470799
+          },
+          "rawLatenciesMs": [
+            5.683,
+            5.622,
+            5.667,
+            5.502,
+            5.489,
+            5.343,
+            6.453,
+            10.284,
+            9.281,
+            8.391,
+            7.09,
+            6.477,
+            6.265,
+            6.112,
+            12.443,
+            6.943,
+            5.785,
+            6.489,
+            6.45,
+            5.588,
+            5.865,
+            5.29,
+            5.15,
+            5.243,
+            6.127,
+            5.709,
+            5.41,
+            6.587,
+            6.72,
+            6.059
+          ]
+        },
+        {
+          "operation": "Audit history, page at the midpoint (keyset)",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.11,
+              "executionMs": 1.919,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 907,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 7.323499999998603,
+            "max": 14.839599999999336,
+            "mean": 9.065333333333305,
+            "median": 8.743999999998778,
+            "p95": 11.61030000000028,
+            "p99": 14.839599999999336,
+            "stddev": 1.3831852266651175
+          },
+          "rawLatenciesMs": [
+            14.84,
+            9.873,
+            8.795,
+            8.794,
+            8.51,
+            8.488,
+            8.6,
+            9.223,
+            9.101,
+            7.951,
+            7.327,
+            8.003,
+            7.323,
+            7.975,
+            8.606,
+            8.686,
+            8.656,
+            8.744,
+            9.042,
+            8.787,
+            8.913,
+            8.421,
+            9.21,
+            11.61,
+            10.108,
+            9.012,
+            8.716,
+            10.236,
+            8.665,
+            9.744
+          ]
+        },
+        {
+          "operation": "Audit history filtered by status",
+          "queryCount": 1,
+          "statementKinds": {
+            "SELECT": 1
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.107,
+              "executionMs": 0.154,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 8,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 5.573199999998906,
+            "max": 7.33100000000195,
+            "mean": 6.402549999999974,
+            "median": 6.44629999999961,
+            "p95": 7.153699999998935,
+            "p99": 7.33100000000195,
+            "stddev": 0.4654518255377424
+          },
+          "rawLatenciesMs": [
+            7.154,
+            6.847,
+            6.803,
+            6.465,
+            7.083,
+            6.644,
+            7.106,
+            6.654,
+            6.645,
+            6.836,
+            6.217,
+            6.267,
+            6.266,
+            6.446,
+            5.857,
+            5.573,
+            6.011,
+            6.223,
+            6.07,
+            6.574,
+            5.933,
+            6.581,
+            6.552,
+            6.613,
+            5.857,
+            5.826,
+            5.839,
+            5.984,
+            5.819,
+            7.331
+          ]
+        },
+        {
+          "operation": "Audit detail with findings",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.047,
+              "executionMs": 0.043,
+              "nodes": [
+                "Limit",
+                "Index Scan (audits_pkey)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"audit_findings\".\"id\", \"public\".\"audit_findings\".\"audit_id\", \"public\".\"audit_findings\".\"position\", \"public\".\"audit_findings\".\"code\", \"public\".\"audit_findings\".\"scope\", \"public\".\"audit_findings\".\"status\"::text, \"public\".\"audit_findings\".\"explanation\", \"public\".\"audit_findings\".\"expected_amount\", \"public\".\"audit_findings\".\"reported_amount\", \"public\".\"audit_findings\".\"difference\", \"public\".\"audit_findings\".\"shift_ids\", \"public\".\"audit_findings\".\"clause_refs\", \"public\".\"audit_finding",
+              "planningMs": 0.176,
+              "executionMs": 0.025,
+              "nodes": [
+                "Index Scan (audit_findings_audit_id_position_key)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 4,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 1.7651000000005297,
+            "max": 4.376299999999901,
+            "mean": 2.5538900000001985,
+            "median": 2.354299999999057,
+            "p95": 3.517100000000937,
+            "p99": 4.376299999999901,
+            "stddev": 0.6643395280406637
+          },
+          "rawLatenciesMs": [
+            4.376,
+            3.349,
+            3.257,
+            3.517,
+            3.489,
+            2.898,
+            2.678,
+            2.848,
+            2.774,
+            2.798,
+            3.296,
+            3.202,
+            2.869,
+            2.788,
+            2.328,
+            2.409,
+            2.078,
+            1.96,
+            2.058,
+            2.354,
+            1.979,
+            2.348,
+            2.001,
+            1.81,
+            1.821,
+            1.765,
+            1.917,
+            1.964,
+            1.812,
+            1.873
+          ]
+        },
+        {
+          "operation": "Dashboard summary",
+          "queryCount": 5,
+          "statementKinds": {
+            "SELECT": 5
+          },
+          "plans": [
+            {
+              "sql": "SELECT COUNT(*) AS \"_count$_all\", \"public\".\"audits\".\"finding_status\"::text FROM \"public\".\"audits\" WHERE \"public\".\"audits\".\"user_id\" = $1 GROUP BY \"public\".\"audits\".\"finding_status\" OFFSET $2",
+              "planningMs": 0.157,
+              "executionMs": 1.935,
+              "nodes": [
+                "Aggregate",
+                "Index Only Scan (audits_user_id_finding_status_created_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 112,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT SUM(\"shift_count\") AS \"_sum$shift_count\", COUNT(*) AS \"_count$_all\" FROM (SELECT \"public\".\"audits\".\"shift_count\", \"public\".\"audits\".\"id\" FROM \"public\".\"audits\" WHERE \"public\".\"audits\".\"user_id\" = $1 OFFSET $2) AS \"sub\"",
+              "planningMs": 0.148,
+              "executionMs": 16.281,
+              "nodes": [
+                "Aggregate",
+                "Seq Scan (audits)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "audits",
+                  "rows": 10000
+                }
+              ],
+              "sharedBuffersHit": 5436,
+              "sharedBuffersRead": 2898
+            },
+            {
+              "sql": "SELECT SUM(\"difference\") AS \"_sum$difference\" FROM (SELECT \"public\".\"audits\".\"difference\" FROM \"public\".\"audits\" WHERE (\"public\".\"audits\".\"user_id\" = $1 AND \"public\".\"audits\".\"finding_status\" = CAST($2::text AS \"public\".\"FindingStatus\")) OFFSET $3) AS \"sub\"",
+              "planningMs": 0.111,
+              "executionMs": 15.324,
+              "nodes": [
+                "Aggregate",
+                "Seq Scan (audits)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "audits",
+                  "rows": 10000
+                }
+              ],
+              "sharedBuffersHit": 5468,
+              "sharedBuffersRead": 2866
+            },
+            {
+              "sql": "SELECT \"public\".\"audits\".\"id\", \"public\".\"audits\".\"user_id\", \"public\".\"audits\".\"employment_id\", \"public\".\"audits\".\"payslip_id\", \"public\".\"audits\".\"idempotency_key\", \"public\".\"audits\".\"request_hash\", \"public\".\"audits\".\"status\"::text, \"public\".\"audits\".\"period_start\", \"public\".\"audits\".\"period_end\", \"public\".\"audits\".\"finding_status\"::text, \"public\".\"audits\".\"calculation_status\"::text, \"public\".\"audits\".\"expected_amount\", \"public\".\"audits\".\"reported_amount\", \"public\".\"audits\".\"difference\", \"public\"",
+              "planningMs": 0.089,
+              "executionMs": 0.115,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (audits_user_id_created_at_id_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 5,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": " SELECT to_char(date_trunc('month', created_at AT TIME ZONE 'UTC'), 'YYYY-MM') AS month, finding_status, count(*) AS count FROM audits WHERE user_id = $1::uuid AND created_at >= $2 GROUP BY 1, 2",
+              "planningMs": 0.082,
+              "executionMs": 6.737,
+              "nodes": [
+                "Aggregate",
+                "Index Only Scan (audits_user_id_finding_status_created_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 112,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 17.543799999999464,
+            "max": 34.36199999999735,
+            "mean": 23.804783333333155,
+            "median": 23.526300000001356,
+            "p95": 29.5779999999977,
+            "p99": 34.36199999999735,
+            "stddev": 3.9349146436940927
+          },
+          "rawLatenciesMs": [
+            26.49,
+            24.219,
+            25.944,
+            26.464,
+            34.362,
+            25.73,
+            29.466,
+            26.061,
+            25.398,
+            20.876,
+            21.212,
+            23.881,
+            21.24,
+            21.196,
+            22.777,
+            25.308,
+            23.726,
+            28.981,
+            29.578,
+            22.901,
+            18.263,
+            17.544,
+            19.158,
+            21.998,
+            23.526,
+            21.096,
+            18.422,
+            19.564,
+            20.358,
+            28.406
+          ]
+        },
+        {
+          "operation": "Payslip history, first page (20)",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"payslips\".\"id\", \"public\".\"payslips\".\"user_id\", \"public\".\"payslips\".\"employment_id\", \"public\".\"payslips\".\"period_start\", \"public\".\"payslips\".\"period_end\", \"public\".\"payslips\".\"gross_pay\", \"public\".\"payslips\".\"created_at\" FROM \"public\".\"payslips\" WHERE \"public\".\"payslips\".\"user_id\" = $1 ORDER BY \"public\".\"payslips\".\"created_at\" DESC, \"public\".\"payslips\".\"id\" DESC LIMIT $2 OFFSET $3",
+              "planningMs": 0.132,
+              "executionMs": 2.384,
+              "nodes": [
+                "Limit",
+                "Sort",
+                "Seq Scan (payslips)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "payslips",
+                  "rows": 10000
+                }
+              ],
+              "sharedBuffersHit": 618,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"payslip_lines\".\"id\", \"public\".\"payslip_lines\".\"payslip_id\", \"public\".\"payslip_lines\".\"position\", \"public\".\"payslip_lines\".\"category\"::text, \"public\".\"payslip_lines\".\"description\", \"public\".\"payslip_lines\".\"amount\" FROM \"public\".\"payslip_lines\" WHERE \"public\".\"payslip_lines\".\"payslip_id\" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) OFFSET $22",
+              "planningMs": 0.109,
+              "executionMs": 0.009,
+              "nodes": [
+                "Seq Scan (payslip_lines)"
+              ],
+              "sequentialScans": [
+                {
+                  "relation": "payslip_lines",
+                  "rows": 0
+                }
+              ],
+              "sharedBuffersHit": 0,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 3.1635000000023865,
+            "max": 5.984599999999773,
+            "mean": 4.151170000000396,
+            "median": 3.882399999998597,
+            "p95": 5.82760000000053,
+            "p99": 5.984599999999773,
+            "stddev": 0.758970247997188
+          },
+          "rawLatenciesMs": [
+            4.119,
+            3.815,
+            3.448,
+            3.913,
+            3.164,
+            3.316,
+            3.341,
+            3.18,
+            4.838,
+            4.065,
+            3.963,
+            3.882,
+            4.937,
+            4.378,
+            3.812,
+            4.136,
+            3.792,
+            3.704,
+            3.588,
+            3.734,
+            3.859,
+            3.439,
+            3.6,
+            5.159,
+            5.985,
+            5.828,
+            4.597,
+            5.082,
+            5.255,
+            4.61
+          ]
+        },
+        {
+          "operation": "Shift list for an employment (20)",
+          "queryCount": 2,
+          "statementKinds": {
+            "SELECT": 2
+          },
+          "plans": [
+            {
+              "sql": "SELECT \"public\".\"shifts\".\"id\", \"public\".\"shifts\".\"user_id\", \"public\".\"shifts\".\"employment_id\", \"public\".\"shifts\".\"start_local\", \"public\".\"shifts\".\"end_local\", \"public\".\"shifts\".\"start_utc_offset_minutes\", \"public\".\"shifts\".\"end_utc_offset_minutes\", \"public\".\"shifts\".\"start_date\", \"public\".\"shifts\".\"start_at\", \"public\".\"shifts\".\"end_at\", \"public\".\"shifts\".\"version\", \"public\".\"shifts\".\"created_at\", \"public\".\"shifts\".\"updated_at\" FROM \"public\".\"shifts\" WHERE (\"public\".\"shifts\".\"user_id\" = $1 AND \"p",
+              "planningMs": 0.201,
+              "executionMs": 0.057,
+              "nodes": [
+                "Limit",
+                "Incremental Sort",
+                "Index Scan (shifts_user_id_start_at_idx)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 4,
+              "sharedBuffersRead": 0
+            },
+            {
+              "sql": "SELECT \"public\".\"shift_breaks\".\"id\", \"public\".\"shift_breaks\".\"shift_id\", \"public\".\"shift_breaks\".\"position\", \"public\".\"shift_breaks\".\"kind\"::text, \"public\".\"shift_breaks\".\"start_local\", \"public\".\"shift_breaks\".\"end_local\", \"public\".\"shift_breaks\".\"start_utc_offset_minutes\", \"public\".\"shift_breaks\".\"end_utc_offset_minutes\" FROM \"public\".\"shift_breaks\" WHERE \"public\".\"shift_breaks\".\"shift_id\" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) ORDER BY \"public\".\"shift_b",
+              "planningMs": 0.233,
+              "executionMs": 0.052,
+              "nodes": [
+                "Sort",
+                "Bitmap Heap Scan (shift_breaks)",
+                "Bitmap Index Scan (shift_breaks_shift_id_position_key)"
+              ],
+              "sequentialScans": [],
+              "sharedBuffersHit": 3,
+              "sharedBuffersRead": 0
+            }
+          ],
+          "latencyMs": {
+            "count": 30,
+            "min": 1.8868000000002212,
+            "max": 3.6797000000005937,
+            "mean": 2.3839766666664217,
+            "median": 2.2792999999983294,
+            "p95": 3.3796999999976833,
+            "p99": 3.6797000000005937,
+            "stddev": 0.41614281839143086
+          },
+          "rawLatenciesMs": [
+            2.521,
+            2.437,
+            2.279,
+            2.08,
+            1.887,
+            1.914,
+            2.145,
+            2.057,
+            2.563,
+            3.083,
+            2.499,
+            2.232,
+            2.044,
+            1.971,
+            2.186,
+            2.191,
+            2.38,
+            2.515,
+            2.153,
+            1.94,
+            2.651,
+            2.666,
+            3.68,
+            3.38,
+            2.417,
+            2.025,
+            2.255,
+            2.353,
+            2.309,
+            2.706
+          ]
+        },
+        {
+          "operation": "Shift CSV import (14 rows with meal breaks)",
+          "queryCount": 60,
+          "statementKinds": {
+            "SELECT": 29,
+            "BEGIN": 1,
+            "INSERT": 29,
+            "COMMIT": 1
+          },
+          "plans": [],
+          "latencyMs": {
+            "count": 20,
+            "min": 52.71779999999853,
+            "max": 101.4571999999971,
+            "mean": 76.36980999999905,
+            "median": 71.7213999999949,
+            "p95": 101.1286,
+            "p99": 101.4571999999971,
+            "stddev": 14.198971970381544
+          },
+          "rawLatenciesMs": [
+            101.457,
+            75.117,
+            101.129,
+            85.719,
+            86.281,
+            89.345,
+            65.005,
+            88.764,
+            91.796,
+            71.721,
+            60.07,
+            56.109,
+            67.618,
+            71.152,
+            52.718,
+            66.278,
+            76.108,
+            66.78,
+            85.943,
+            68.286
+          ]
+        }
+      ]
+    }
+  ],
+  "errorCount": 0,
+  "exitStatus": 0
+}

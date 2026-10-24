@@ -45,5 +45,8 @@ export function environmentMarkdown(env: Environment): string {
     `| Node.js | ${env.node} |`,
     `| Docker | ${env.dockerVersion ?? "not available"} |`,
     `| PostgreSQL | ${env.postgresVersion ?? "not used"} |`,
+    ...(env.cpuBusyPercentAtStart === undefined
+      ? []
+      : [`| CPU busy before the run | ${env.cpuBusyPercentAtStart}% of all cores (1 s sample) |`]),
   ].join("\n");
 }

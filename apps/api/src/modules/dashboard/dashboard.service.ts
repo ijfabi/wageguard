@@ -9,6 +9,7 @@ import type { FindingStatus } from "../../generated/prisma/client.js";
 import { CLOCK, type Clock } from "../../infrastructure/clock.js";
 import { PrismaService } from "../../infrastructure/prisma.service.js";
 import { toAuditSummary } from "../audits/audit.mappers.js";
+import { AUDIT_SUMMARY_COLUMNS } from "../audits/audit.repository.js";
 import { decimalString } from "../payslips/payslips.service.js";
 
 type StatusCounts = DashboardResponse["totals"]["byFindingStatus"];
@@ -49,6 +50,7 @@ export class DashboardService {
         where: { userId },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: RECENT_AUDITS,
+        select: AUDIT_SUMMARY_COLUMNS,
       }),
       this.prisma.$queryRaw<{ month: string; finding_status: FindingStatus; count: bigint }[]>`
         SELECT to_char(date_trunc('month', created_at AT TIME ZONE 'UTC'), 'YYYY-MM') AS month,

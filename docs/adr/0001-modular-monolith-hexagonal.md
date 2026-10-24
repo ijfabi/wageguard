@@ -1,22 +1,24 @@
-# ADR 0001: Modular monolith with hexagonal boundaries
+# ADR 0001: One application, with the calculation kept separate from everything else
 
 - Status: Accepted
 - Date: 2026-10-22
 
 ## Context
 
-WageGuard needs clear separation between payroll rules, calculation, persistence and HTTP, and it must be explainable and testable. The expected load is small, and one developer maintains it.
+WageGuard has distinct concerns: the award rules, the pay calculation, storage and the web layer. They need clean boundaries so the calculation can be explained and tested on its own. The load will be small, and one person maintains it.
 
 ## Decision
 
-- Build a modular monolith in one pnpm workspace, not microservices.
-- Keep the domain (`packages/domain`), the rule data (`packages/award-rules`) and the calculation engine (`packages/calculation-engine`) as pure TypeScript packages. They must not import NestJS, Prisma, HTTP or React code.
-- The engine depends on ports, not adapters. For example, `RuleSetResolver` is a port; `AwardRuleRegistry` implements it today, and a database-backed implementation can replace it later without engine changes.
-- `apps/api` (NestJS) and `apps/web` (Next.js) are adapters around these packages.
+WageGuard is a single application (a modular monolith) in one pnpm workspace, not a set of services.
+
+The domain types (`packages/domain`), the rule data (`packages/award-rules`) and the calculation engine (`packages/calculation-engine`) are plain TypeScript packages. They're not allowed to import NestJS, Prisma, HTTP or React code.
+
+Where the engine needs something from outside, it asks through an interface rather than a concrete implementation. Rules, for example, come through `RuleSetResolver`. Today the bundled `AwardRuleRegistry` answers it, and a database-backed version could take its place without the engine changing. The API (`apps/api`, NestJS) and the web app (`apps/web`, Next.js) are wrappers around these packages.
 
 ## Consequences
 
-- The engine runs and is tested with no server or database. This is how its tests and Benchmark A run.
-- One deployable unit keeps deployment, transactions and debugging simple.
-- Module boundaries are enforced by package dependencies, not by network calls. A boundary violation shows up as a new `dependencies` entry, which is visible in review.
-- If one module ever needs independent scaling, its package boundary is already the seam to extract along.
+The engine runs and is tested with no server or database at all. That's how its tests and Benchmark A work.
+
+A single deployable unit keeps deployment, transactions and debugging simple.
+
+Package dependencies enforce the boundaries rather than network calls. If someone breaks a boundary, a new entry turns up in a `package.json`, where it's easy to spot in review. If one part ever needs to scale on its own, its package boundary is already the place to split it out.

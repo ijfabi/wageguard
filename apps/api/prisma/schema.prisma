@@ -205,6 +205,8 @@ model Payslip {
 
   @@unique([id, userId])
   @@index([employmentId, periodStart])
+  /// Payslip history for a user, newest first (keyset pagination).
+  @@index([userId, createdAt(sort: Desc), id])
   @@map("payslips")
 }
 
@@ -258,7 +260,9 @@ model Audit {
 
   @@unique([userId, idempotencyKey])
   @@index([userId, createdAt(sort: Desc), id])
-  @@index([userId, findingStatus, createdAt(sort: Desc)])
+  /// Also covers the dashboard sums (shift_count, difference), so they read the index alone.
+  /// Prisma cannot declare INCLUDE columns, so they are trailing key columns.
+  @@index([userId, findingStatus, createdAt(sort: Desc), shiftCount, difference])
   @@map("audits")
 }
 

@@ -1,0 +1,367 @@
+{
+  "benchmark": "Benchmark B: audit API performance",
+  "status": "COMPLETED",
+  "reason": null,
+  "environment": {
+    "runId": "api-2026-10-24T15-23-43-912Z-8815c8",
+    "timestampUtc": "2026-10-24T15:23:43.912Z",
+    "git": {
+      "commitSha": "73dc9a0b90f0184c7efbc567eb009c3a4c46a055",
+      "dirty": true,
+      "note": null
+    },
+    "sourceTreeSha256": "0d415e332f16e4b7aca5f41fa6dce05d3b4ddf928557cd81533f2b4895aa4b8b",
+    "environment": "local-developer-workstation",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26200",
+      "arch": "x64"
+    },
+    "cpu": {
+      "model": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "logicalCores": 20
+    },
+    "memory": {
+      "totalBytes": 16849256448,
+      "freeBytesAtStart": 1411620864
+    },
+    "node": "v24.22.1",
+    "dockerVersion": "Docker version 29.9.1, build dfc520d",
+    "postgresVersion": "17.6",
+    "cpuBusyPercentAtStart": 23.2
+  },
+  "configuration": {
+    "label": "optimised",
+    "tool": "k6 2.3.0 (grafana/k6 image)",
+    "model": "Closed: constant virtual users, no think time; each level runs a discarded warm-up then a measured phase.",
+    "levels": [
+      1,
+      10,
+      25,
+      50
+    ],
+    "warmupSeconds": 10,
+    "measuredSeconds": 60,
+    "requestMix": "Fixed 20-slot cycle per virtual user: dashboard 30%, audit history 25%, audit detail 20%, audit lines 10%, audit creation 15%",
+    "accounts": "50 synthetic users seeded in k6 setup (one per virtual user), each with 6 shifts, a payslip and one audit",
+    "target": "Production API image (NODE_ENV=production, Secure cookies) and PostgreSQL 17.6 in an isolated compose project; rate limits raised",
+    "apiImageId": "sha256:57849cc446551bf39263513133d88a8a30d882ffaf866f38fe1f7dd268a213ba",
+    "queueMetrics": "Not applicable: audits are processed synchronously within the request (ADR 0010)",
+    "rawDataPointsBytes": 291448553
+  },
+  "results": {
+    "levels": [
+      {
+        "concurrentClients": 1,
+        "requests": 14084,
+        "measuredSeconds": 60,
+        "throughputRps": 234.7,
+        "errorRatePercent": 0,
+        "successfulCompletionPercent": 100,
+        "latencyMs": {
+          "count": 14084,
+          "min": 1.241879,
+          "max": 61.035686,
+          "mean": 4.076156522720811,
+          "median": 2.609723,
+          "p95": 11.79395,
+          "p99": 17.997013,
+          "stddev": 3.934018216404788
+        },
+        "byEndpoint": {
+          "dashboard": {
+            "count": 4225,
+            "min": 1.584222,
+            "max": 17.365063,
+            "mean": 3.2911135330177586,
+            "median": 3.172729,
+            "p95": 4.999865,
+            "p99": 6.611623,
+            "stddev": 1.029000524085879,
+            "share": 30
+          },
+          "audit_list": {
+            "count": 3521,
+            "min": 1.241879,
+            "max": 9.576655,
+            "mean": 2.4459617134336864,
+            "median": 2.284659,
+            "p95": 3.756415,
+            "p99": 5.085053,
+            "stddev": 0.7140619937536945,
+            "share": 25
+          },
+          "audit_detail": {
+            "count": 2817,
+            "min": 1.414086,
+            "max": 61.035686,
+            "mean": 2.302329609158679,
+            "median": 2.098784,
+            "p95": 3.546523,
+            "p99": 4.678917,
+            "stddev": 1.2844026942975193,
+            "share": 20
+          },
+          "audit_lines": {
+            "count": 1408,
+            "min": 1.251047,
+            "max": 6.978334,
+            "mean": 2.0726842187499965,
+            "median": 1.905489,
+            "p95": 3.249707,
+            "p99": 4.573634,
+            "stddev": 0.6243371727743362,
+            "share": 10
+          },
+          "audit_create": {
+            "count": 2113,
+            "min": 7.772889,
+            "max": 57.12586,
+            "mean": 12.062186799337447,
+            "median": 10.751417,
+            "p95": 19.019507,
+            "p99": 31.85355,
+            "stddev": 4.629140670446838,
+            "share": 15
+          }
+        }
+      },
+      {
+        "concurrentClients": 10,
+        "requests": 28999,
+        "measuredSeconds": 60,
+        "throughputRps": 483.3,
+        "errorRatePercent": 0,
+        "successfulCompletionPercent": 100,
+        "latencyMs": {
+          "count": 28999,
+          "min": 2.424424,
+          "max": 112.25277,
+          "mean": 20.50941318293746,
+          "median": 14.632931,
+          "p95": 56.729863,
+          "p99": 69.535328,
+          "stddev": 15.312919369329293
+        },
+        "byEndpoint": {
+          "dashboard": {
+            "count": 8698,
+            "min": 2.733327,
+            "max": 39.913603,
+            "mean": 15.39326818613478,
+            "median": 14.947973,
+            "p95": 21.426284,
+            "p99": 28.335082,
+            "stddev": 3.4574571410903108,
+            "share": 30
+          },
+          "audit_list": {
+            "count": 7249,
+            "min": 4.389039,
+            "max": 43.221455,
+            "mean": 13.914428628776394,
+            "median": 13.533378,
+            "p95": 19.5849,
+            "p99": 25.9686,
+            "stddev": 3.3316578390097815,
+            "share": 25
+          },
+          "audit_detail": {
+            "count": 5802,
+            "min": 3.200152,
+            "max": 43.953546,
+            "mean": 13.82619777318166,
+            "median": 13.414144,
+            "p95": 19.601152,
+            "p99": 24.963049,
+            "stddev": 3.3762796759064884,
+            "share": 20
+          },
+          "audit_lines": {
+            "count": 2898,
+            "min": 2.424424,
+            "max": 34.498684,
+            "mean": 13.668070390269165,
+            "median": 13.394346,
+            "p95": 18.871984,
+            "p99": 24.81582,
+            "stddev": 3.088910297754271,
+            "share": 10
+          },
+          "audit_create": {
+            "count": 4352,
+            "min": 27.807793,
+            "max": 112.25277,
+            "mean": 55.1853091930148,
+            "median": 53.729203,
+            "p95": 72.1847,
+            "p99": 87.215928,
+            "stddev": 8.97864889501749,
+            "share": 15
+          }
+        }
+      },
+      {
+        "concurrentClients": 25,
+        "requests": 28256,
+        "measuredSeconds": 60,
+        "throughputRps": 470.9,
+        "errorRatePercent": 0,
+        "successfulCompletionPercent": 100,
+        "latencyMs": {
+          "count": 28256,
+          "min": 15.181479,
+          "max": 244.966757,
+          "mean": 52.91552882421429,
+          "median": 35.846187,
+          "p95": 155.444804,
+          "p99": 176.142054,
+          "stddev": 42.029415033368664
+        },
+        "byEndpoint": {
+          "dashboard": {
+            "count": 8473,
+            "min": 15.52677,
+            "max": 98.959855,
+            "mean": 36.65809015036007,
+            "median": 35.611648,
+            "p95": 48.82625,
+            "p99": 59.936081,
+            "stddev": 6.663897794615293,
+            "share": 30
+          },
+          "audit_list": {
+            "count": 7062,
+            "min": 15.181479,
+            "max": 80.623159,
+            "mean": 35.2052092676296,
+            "median": 34.333484,
+            "p95": 46.976171,
+            "p99": 57.437639,
+            "stddev": 6.327629673889014,
+            "share": 25
+          },
+          "audit_detail": {
+            "count": 5650,
+            "min": 16.482223,
+            "max": 79.598519,
+            "mean": 34.92649631734509,
+            "median": 33.98835,
+            "p95": 46.210555,
+            "p99": 58.044564,
+            "stddev": 6.299954109905989,
+            "share": 20
+          },
+          "audit_lines": {
+            "count": 2828,
+            "min": 20.581581,
+            "max": 76.436907,
+            "mean": 35.07674987411597,
+            "median": 34.128866,
+            "p95": 47.516279,
+            "p99": 57.589166,
+            "stddev": 6.470803792606052,
+            "share": 10
+          },
+          "audit_create": {
+            "count": 4243,
+            "min": 78.312172,
+            "max": 244.966757,
+            "mean": 150.7014480150839,
+            "median": 148.783447,
+            "p95": 179.26632,
+            "p99": 202.894049,
+            "stddev": 16.503896415450317,
+            "share": 15
+          }
+        }
+      },
+      {
+        "concurrentClients": 50,
+        "requests": 28561,
+        "measuredSeconds": 60.1,
+        "throughputRps": 475.4,
+        "errorRatePercent": 0,
+        "successfulCompletionPercent": 100,
+        "latencyMs": {
+          "count": 28561,
+          "min": 37.481409,
+          "max": 444.499801,
+          "mean": 104.97277138727625,
+          "median": 71.33747,
+          "p95": 311.599018,
+          "p99": 342.596838,
+          "stddev": 83.89157232120678
+        },
+        "byEndpoint": {
+          "dashboard": {
+            "count": 8564,
+            "min": 39.709784,
+            "max": 154.221936,
+            "mean": 71.90829643519403,
+            "median": 70.82602,
+            "p95": 92.656782,
+            "p99": 111.099155,
+            "stddev": 12.271889330233373,
+            "share": 30
+          },
+          "audit_list": {
+            "count": 7131,
+            "min": 39.562607,
+            "max": 137.628218,
+            "mean": 69.66315829953717,
+            "median": 68.650298,
+            "p95": 89.957724,
+            "p99": 105.52686,
+            "stddev": 11.576274676314833,
+            "share": 25
+          },
+          "audit_detail": {
+            "count": 5719,
+            "min": 37.481409,
+            "max": 149.420015,
+            "mean": 69.18183074838257,
+            "median": 67.996743,
+            "p95": 89.402968,
+            "p99": 107.200538,
+            "stddev": 11.628372694105162,
+            "share": 20
+          },
+          "audit_lines": {
+            "count": 2857,
+            "min": 39.71219,
+            "max": 149.237917,
+            "mean": 69.3981894088205,
+            "median": 68.429069,
+            "p95": 88.749757,
+            "p99": 105.984766,
+            "stddev": 11.581635819454345,
+            "share": 10
+          },
+          "audit_create": {
+            "count": 4290,
+            "min": 131.612988,
+            "max": 444.499801,
+            "mean": 301.0757981109555,
+            "median": 299.640391,
+            "p95": 349.760243,
+            "p99": 377.695351,
+            "stddev": 28.25916889664947,
+            "share": 15
+          }
+        }
+      }
+    ],
+    "integrity": {
+      "auditsStored": 17672,
+      "distinctKeys": 17672,
+      "orphanFindings": 0,
+      "successfulCreateResponses": 17622,
+      "expectedAudits": 17672,
+      "duplicateAudits": 0,
+      "missingOrExtraAudits": 0
+    }
+  },
+  "errorCount": 0,
+  "exitStatus": 0
+}

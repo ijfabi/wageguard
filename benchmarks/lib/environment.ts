@@ -7,12 +7,16 @@ import { fileURLToPath } from "node:url";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-/** Source directories whose content identifies the code under test. */
+/** Source directories whose content identifies the code under test (engine, API and schema). */
 const SOURCE_DIRS = [
   "packages/domain/src",
   "packages/award-rules/src",
   "packages/calculation-engine/src",
   "packages/test-fixtures/src",
+  "packages/api-contracts/src",
+  "packages/presentation/src",
+  "apps/api/src",
+  "apps/api/prisma",
 ];
 
 export interface Environment {
@@ -32,11 +36,16 @@ export interface Environment {
   readonly node: string;
   readonly dockerVersion: string | null;
   readonly postgresVersion: string | null;
+  /**
+   * Share of all CPU time that was busy during a 1 s sample just before the run (0-100). Recorded
+   * because this is a shared developer machine: a high value means the run competed for CPU.
+   */
+  readonly cpuBusyPercentAtStart?: number;
 }
 
 export function captureEnvironment(
   kind: string,
-  extras: { postgresVersion?: string | null } = {},
+  extras: { postgresVersion?: string | null; cpuBusyPercentAtStart?: number } = {},
 ): Environment {
   const timestamp = new Date();
   const git = gitInfo();
@@ -52,7 +61,28 @@ export function captureEnvironment(
     node: process.version,
     dockerVersion: tryExec("docker", ["--version"]),
     postgresVersion: extras.postgresVersion ?? null,
+    ...(extras.cpuBusyPercentAtStart === undefined
+      ? {}
+      : { cpuBusyPercentAtStart: extras.cpuBusyPercentAtStart }),
   };
+}
+
+/** Busy share of all logical cores over `ms` milliseconds (portable; load average is 0 on Windows). */
+export async function sampleCpuBusyPercent(ms = 1_000): Promise<number> {
+  const totals = () =>
+    os.cpus().reduce(
+      (acc, cpu) => {
+        const { idle, ...rest } = cpu.times;
+        const busy = Object.values(rest).reduce((s, v) => s + v, 0);
+        return { busy: acc.busy + busy, all: acc.all + busy + idle };
+      },
+      { busy: 0, all: 0 },
+    );
+  const before = totals();
+  await new Promise((resolve) => setTimeout(resolve, ms));
+  const after = totals();
+  const all = after.all - before.all;
+  return all === 0 ? 0 : Math.round(((after.busy - before.busy) / all) * 1000) / 10;
 }
 
 function gitInfo(): Environment["git"] {

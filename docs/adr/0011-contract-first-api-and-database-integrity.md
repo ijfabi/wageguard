@@ -1,44 +1,40 @@
-# ADR 0011: Contract-first API and database-enforced integrity
+# ADR 0011: One set of API contracts, and integrity rules the database enforces
 
 - Status: Accepted
 - Date: 2026-10-22
 
 ## Context
 
-Request and response types must not be duplicated across the API, the web client and the documentation. Ownership and overlap rules must hold even if application code has a bug.
+Request and response types shouldn't be written out separately in the API, the web client and the documentation, where they'd drift apart. Rules about ownership and overlapping shifts need to hold even if the application code has a bug.
 
 ## Decision
 
 ### Contracts
 
-- `packages/api-contracts` defines every request and response as a Zod schema. It is the single source for:
-  - **validation:** a small `ZodPipe` validates bodies, queries and params;
-  - **TypeScript types:** inferred from the schemas, so the future web client and the API share them;
-  - **the OpenAPI 3.1 document**, served at `/api/v1/openapi.json` and generated with `z.toJSONSchema`.
-- Schemas are strict: unknown fields are rejected, which prevents mass assignment.
-- A test asserts that the routes documented in OpenAPI exactly match the routes Nest registers.
-- Engine output structures (calculation results, findings) stay typed by `@wageguard/calculation-engine` and appear as open objects in OpenAPI, rather than being re-declared.
+`packages/api-contracts` defines every request and response as a Zod schema, and those schemas are used everywhere. A small `ZodPipe` validates request bodies, queries and parameters against them. The TypeScript types are inferred from them, so the API and the web app share the same types. The OpenAPI 3.1 document at `/api/v1/openapi.json` is generated from them with `z.toJSONSchema`.
 
-We chose a custom pipe over Nest 12's built-in `StandardSchemaValidationPipe` because it maps issues to our documented error body directly.
+The schemas are strict, so unknown fields are rejected, which stops clients from setting fields they shouldn't. A test checks that the routes in the OpenAPI document exactly match the routes the API actually registers. The engine's own output structures, such as calculation results and findings, keep their types from `@wageguard/calculation-engine` and appear as open objects in OpenAPI, rather than being described twice.
 
-### Database integrity
+The API uses this small custom pipe rather than Nest 12's `StandardSchemaValidationPipe`, because it maps validation problems straight onto the documented error format.
 
-Implemented in the initial migration:
+### Integrity in the database
 
-- **Composite ownership keys.** Shifts, payslips and audits reference their employment through a composite `(id, user_id)` foreign key, so a child can never point at another user's employment.
-- **Immutable ownership.** Triggers forbid changing `user_id` on owned rows and `employment_id` on shifts and payslips. The composite keys use `ON UPDATE CASCADE`, so without this an ownership change would silently move children.
-- **No overlapping shifts.** A `btree_gist` exclusion constraint over `tstzrange(start_at, end_at, '[)')` per employment, half-open to match the domain.
-- **CHECK constraints** on shift ordering, pay period ordering and non-negative amounts.
-- **Audit immutability triggers** (ADR 0010).
-- **Drift check.** CI applies all migrations to an empty database and fails if `prisma migrate diff` finds drift from `schema.prisma`.
+The first migration sets these rules up:
 
-### Hexagonal discipline in the API
+- **Children can't point at another user's parent.** Shifts, payslips and audits reference their employment through a composite `(id, user_id)` foreign key.
+- **Ownership never changes.** Triggers stop `user_id` changing on any owned row, and `employment_id` changing on shifts and payslips. The composite keys cascade on update, so without the triggers, changing an owner would quietly move all their children with it.
+- **Shifts can't overlap.** A `btree_gist` exclusion constraint over `tstzrange(start_at, end_at, '[)')` per employment. The range includes its start and excludes its end, matching the domain code.
+- **CHECK constraints** keep shifts and pay periods in order and amounts non-negative.
+- **Audits can't change**, as described in [ADR 0010](0010-audits-idempotency-and-immutability.md).
 
-- The audit module depends on an `AuditRepository` port with a Prisma adapter, and on a `RuleSetResolver` port. These are the boundaries where alternative implementations are plausible.
-- Simple CRUD services (employments, shifts, payslips) use the Prisma service directly. Wrapping every query in a repository interface would add indirection without a second implementation.
-- All business rules stay in the pure packages, so the API layer contains orchestration and mapping only.
+CI applies every migration to an empty database and fails if `prisma migrate diff` finds any difference from `schema.prisma`.
+
+### Where the boundaries are in the API
+
+The audit module talks to an `AuditRepository` interface backed by Prisma, and gets its rules through the `RuleSetResolver` interface. Those are the two places where a different implementation is realistic. The simple create-and-read services (employments, shifts, payslips) use Prisma directly, because wrapping every query in an interface would add indirection with no second implementation to justify it. Business rules all live in the pure packages, so the API layer only coordinates and maps data.
 
 ## Consequences
 
-- A client generated from the OpenAPI document gets accurate request types, but generic response types for engine structures. The web client imports TypeScript types from the contracts and engine packages instead.
-- Constraint violations surface as database errors. The global error filter maps them to `409 SHIFT_OVERLAP` and `409 VERSION_CONFLICT`.
+A client generated from the OpenAPI document gets accurate request types but loose types for the engine's structures. The web app imports its types from the contracts and engine packages instead.
+
+When a constraint is violated, the database raises the error. The global error filter turns those errors into `409 SHIFT_OVERLAP` and `409 VERSION_CONFLICT`.

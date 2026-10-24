@@ -75,6 +75,8 @@ export const ApiErrorCode = {
   UNSUPPORTED_MEDIA_TYPE: "UNSUPPORTED_MEDIA_TYPE",
   RATE_LIMITED: "RATE_LIMITED",
   NOT_READY: "NOT_READY",
+  /** A dependency (the database) is temporarily unreachable; retry after the Retry-After delay. */
+  SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
   INTERNAL_ERROR: "INTERNAL_ERROR",
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];

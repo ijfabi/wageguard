@@ -1,57 +1,30 @@
-# ADR 0009: Server-side sessions with argon2id, no custom cryptography
+# ADR 0009: Server-side sessions with argon2id, and no home-made cryptography
 
 - Status: Accepted
 - Date: 2026-10-22
 
 ## Context
 
-The API holds personal pay data. The brief requires secure authentication with a maintained solution, HTTP-only cookies, CSRF protection and rate limiting, and no home-made cryptography.
+The API holds personal pay data. Authentication had to use maintained libraries, HTTP-only cookies, protection against cross-site requests and rate limiting, with no cryptography written from scratch.
 
 ## Decision
 
-**Passwords**
+Passwords are hashed with argon2id through the maintained `argon2` package, using OWASP's minimum settings (19 MiB of memory, 2 passes, 1 lane). When someone signs in with an email that doesn't exist, the password is still checked against a dummy hash. That way both kinds of failure take about the same time and return the same message.
 
-- Hashed with argon2id via the maintained `argon2` binding, using the OWASP minimum parameters: m = 19 MiB, t = 2, p = 1.
-- Login verifies against a dummy hash when the email is unknown, so both failure paths take similar time and return the same message.
+Sessions live on the server. The browser gets 256 random bits in a cookie, and the database only stores a SHA-256 hash of them, so a leaked database doesn't contain usable tokens. Sessions expire after `SESSION_TTL_HOURS` (12 by default) and are deleted when the person signs out or deletes their account.
 
-**Sessions**
+The cookie is `HttpOnly`, `SameSite=Strict` and `Path=/`. Its lifetime is a relative `Max-Age`, never an absolute `Expires` worked out from the server's clock. An absolute expiry arrived already expired whenever the server's and browser's clocks disagreed. That was caught in CI, when a test that used a fixed clock started failing once real time passed its expiry. The `expires_at` column in the database is the limit that actually counts. When `COOKIE_SECURE=true`, which production requires (the API refuses to start otherwise), the cookie is also `Secure` and uses the `__Host-` prefix.
 
-- Opaque server-side sessions. The client receives 256 random bits (`crypto.randomBytes`) in a cookie; the database stores only their SHA-256. A database leak therefore does not reveal usable tokens.
-- Sessions expire after `SESSION_TTL_HOURS` (default 12) and are deleted on logout and on account deletion.
+`SameSite=Strict` is the main defence against cross-site requests. As a second layer, a guard rejects any state-changing request that arrives with `Sec-Fetch-Site: cross-site` or an `Origin` not in `ALLOWED_ORIGINS`.
 
-**Cookie**
+Every route needs a session unless it's marked `@Public()`. Every query is scoped to the signed-in user, and another user's record gives the same 404 as one that doesn't exist.
 
-- `HttpOnly`, `SameSite=Strict`, `Path=/`.
-- A relative `Max-Age` (the session TTL), never an absolute `Expires` computed from server time. An absolute expiry made cookies arrive already expired whenever server and client clocks disagreed; this was caught in CI, when a test with an injected clock started failing once real time passed its expiry. The database `expires_at` remains the authoritative limit.
-- `Secure` with the `__Host-` name prefix whenever `COOKIE_SECURE=true`, which is mandatory in production and refused at startup otherwise.
+Rate limiting uses `@nestjs/throttler`, keyed by client IP. A general limit covers every route, and a stricter one covers registration, sign-in and account deletion.
 
-**CSRF**
-
-- The primary control is `SameSite=Strict`.
-- As defence in depth, a global guard rejects state-changing requests that carry `Sec-Fetch-Site: cross-site` or an `Origin` outside `ALLOWED_ORIGINS`.
-
-**Authorisation**
-
-- A global guard requires a session on every route unless it is marked `@Public()`.
-- Every query is scoped by `userId`. Another user's resource returns the same 404 as a missing one.
-
-**Rate limiting**
-
-- `@nestjs/throttler`, keyed by client IP.
-- A general limit applies to every route, and a stricter named limit applies to register, login and account deletion.
-
-**Account deletion**
-
-- Requires the password. Cascades to all owned data, including completed audits; see ADR 0010 for how the immutability trigger allows this.
+Deleting an account requires the password and removes everything the person owns, completed audits included. [ADR 0010](0010-audits-idempotency-and-immutability.md) explains how that gets past the trigger that otherwise protects audits.
 
 ## Consequences
 
-**Rejected alternatives**
+JSON Web Tokens were considered and rejected. They can't be revoked on the server without a denylist, and a denylist rebuilds sessions anyway. A third-party identity provider would add an outside dependency and a cost that an informational demo doesn't need.
 
-- JWT access tokens: these cannot be revoked server-side without a denylist, which recreates sessions anyway.
-- A third-party identity provider: adds an external dependency and a cost that an informational demo doesn't need.
-
-**Known limitations**
-
-- Registration returns `409 EMAIL_TAKEN` for an existing address, which lets someone check whether an email is registered. This is mitigated by the auth rate limit; email-verification flows are out of scope.
-- Throttler state is in process memory, which is correct for a single instance only.
+Two weaknesses remain. Registration returns `409 EMAIL_TAKEN` for an address that's already registered, so anyone can check whether an email has an account. The rate limit slows that down, and email verification is out of scope for now. The rate-limit counters also live in process memory, so they're only correct with a single API instance.

@@ -1,73 +1,59 @@
 # Observability
 
-The API emits OpenTelemetry traces and metrics when an OTLP endpoint is configured. It is **off by default**: with no endpoint, the SDK is never loaded. Logs are structured JSON on stdout, and carry trace and span IDs when telemetry is on.
+The API can send OpenTelemetry traces and metrics to any OTLP collector. It's off unless you configure an endpoint. Without one, none of the OpenTelemetry code is even loaded. Logs are always JSON on standard output, and when telemetry is on, each line also carries the trace and span IDs so you can jump from a log line to its trace.
 
-## Turning it on locally
+## Trying it locally
 
 ```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4318 docker compose --profile observability up --build
 ```
 
-The `observability` profile adds `grafana/otel-lgtm`, a single development container with an OpenTelemetry collector, Tempo (traces), Prometheus (metrics), Loki and Grafana. Grafana is at http://localhost:3003, bound to localhost only, with anonymous access. It is for development only and not a production setup.
+The `observability` profile adds `grafana/otel-lgtm`, a single container that bundles a collector with Tempo for traces, Prometheus for metrics, Loki and Grafana. Grafana opens at http://localhost:3003 without a login and only listens on localhost. It's a development convenience, not a production setup.
 
-Outside Compose, start the API with the preload and point it at any OTLP/HTTP endpoint:
+Outside Docker Compose, start the API with the preload and point it at any OTLP/HTTP endpoint:
 
 ```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 node --import ./dist/otel.js dist/main.js
 ```
 
-Standard `OTEL_*` variables apply, such as `OTEL_SERVICE_NAME` (default `wageguard-api`) and `OTEL_SDK_DISABLED=true`. `OTEL_METRIC_EXPORT_INTERVAL` defaults to 15 000 ms.
+The usual `OTEL_*` variables work, including `OTEL_SERVICE_NAME` (defaults to `wageguard-api`) and `OTEL_SDK_DISABLED=true`. Metrics are exported every 15 seconds unless `OTEL_METRIC_EXPORT_INTERVAL` says otherwise.
 
-## What is collected
+## What gets collected
 
-**Traces** come from automatic instrumentation of HTTP, Express, NestJS and `pg`. Prisma's queries go through the pg adapter, so they appear as SQL spans. There is also one custom span:
+Traces come from the standard instrumentation for HTTP, Express, NestJS and the `pg` driver. Prisma goes through `pg`, so every database query shows up as its own span. There's one custom span, `wageguard.audit.calculate`, around the pure calculation and reconciliation. It records the number of shifts, the calculation and finding statuses, and the rule-set version. If the calculation throws, the span is marked as an error with only the error's type. The message could contain input, so it isn't recorded. Health and readiness checks aren't traced, because they'd drown everything else out.
 
-| Span                                                                    | Attributes                                                                                                                                                           |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `wageguard.audit.calculate` (the pure engine: calculate plus reconcile) | `wageguard.shift_count`, `wageguard.calculation_status`, `wageguard.finding_status`, `wageguard.rule_set_version`; on failure, error status with the error type only |
+The custom metrics are:
 
-Health and readiness probes are not traced.
+| Metric                                      | Type                             | Broken down by                                                                     |
+| ------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| `wageguard.audits.created`                  | counter                          | finding status, calculation status, rule-set version                               |
+| `wageguard.audit.calculation.duration` (ms) | histogram, 0.5 to 250 ms buckets | calculation status                                                                 |
+| `wageguard.reports.exported`                | counter                          | format (`json` or `pdf`)                                                           |
+| `wageguard.shift_imports`                   | counter                          | outcome (`imported`, or `rejected` for any error, in which case nothing was saved) |
 
-**Metrics:**
+The standard `http.server.request.duration` metric is exported as well.
 
-| Metric                                      | Type                           | Attributes                                                                       |
-| ------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------- |
-| `wageguard.audits.created`                  | counter                        | finding status, calculation status, rule-set version                             |
-| `wageguard.audit.calculation.duration` (ms) | histogram (0.5–250 ms buckets) | calculation status                                                               |
-| `wageguard.reports.exported`                | counter                        | format (`json`, `pdf`)                                                           |
-| `wageguard.shift_imports`                   | counter                        | outcome (`imported`, `rejected`; rejected means any error, and nothing is saved) |
+## Keeping private data out
 
-Automatic HTTP server metrics (`http.server.request.duration`) are also exported.
+Telemetry follows the same rule as the logs: no pay data and no information about who someone is.
 
-## Privacy
+Custom attributes can only be set through a type that allows a fixed list of names (`SafeAttributes` in `src/infrastructure/telemetry.ts`). Those names cover status codes, counts, versions and formats. Amounts, names, emails, shift dates and record IDs aren't on the list.
 
-Telemetry follows the same rule as the logs: no pay data and no identities.
+Before anything is exported, a span processor (`src/infrastructure/telemetry-redaction.ts`) rewrites every span, whichever instrumentation produced it. It blanks the client address, peer address and port, and the user agent, and strips query strings from URLs. The standard instrumentation is configured so it never records request or response headers, bodies, or SQL parameter values. Prisma always sends parameterised queries, so values don't appear in the SQL text either. Logs aren't exported through OpenTelemetry at all.
 
-- **Custom attributes are allow-listed** by type (`SafeAttributes` in `src/infrastructure/telemetry.ts`). They hold codes, counts, versions and formats only. Amounts, names, emails, shift dates and record IDs are never included.
-- **A redacting span processor** (`src/infrastructure/telemetry-redaction.ts`) rewrites every span before export:
-  - it redacts `client.address`, `network.peer.*` and `user_agent.original`;
-  - it removes query strings from `url.query` and `url.full`.
-- **What auto-instrumentation never captures:**
-  - request and response headers and bodies;
-  - database parameter values (`enhancedDatabaseReporting: false`, and Prisma always parameterises).
-- **Logs are not exported** through OpenTelemetry; pino only gains `trace_id` and `span_id` fields.
+`apps/api/test/telemetry.test.ts` runs a real audit through the API with in-memory exporters attached. It checks that no email, amount or record ID shows up in any span or metric, and that the redaction processor rewrites the sensitive attributes.
 
-These rules are tested in `apps/api/test/telemetry.test.ts`, with in-memory exporters and a real audit through the HTTP API. One test asserts that no email, amount or record ID appears in any span or metric. Another asserts that the redaction processor rewrites the sensitive attributes.
+## Manual check
 
-## Verification record
+On 23 October 2026 the whole pipeline was checked by hand against `grafana/otel-lgtm:0.36.0`, first with the API running directly and then with the production container. These are observations from that session, not ongoing monitoring.
 
-This was checked by hand on 23 October 2026 against `grafana/otel-lgtm:0.36.0`, first with the API run locally and then with the production API container. These are observations from that session, not continuous monitoring.
+One Playwright run against the container produced 53 traces in Tempo, covering every group of routes. A single audit-creation trace had 36 spans: the HTTP request, the Express middleware, the Nest controller, 14 parameterised SQL statements and the calculation span.
 
-- **Traces:**
-  - Request traces for every route group reached Tempo (53 in one Playwright journey against the container).
-  - An audit-creation trace contained 36 spans: HTTP, Express middleware, the Nest controller, 14 parameterised SQL statements and `wageguard.audit.calculate`.
-- **Redaction:** a request with `?limit=2&findingStatus=MATCHED` was stored with `url.query=[REDACTED]`, and with a redacted client address, peer address, port and user agent. A scan of the stored trace found no email, amount, session cookie or password.
-- **Metrics:** Prometheus showed `wageguard_audits_created_total` by status, `wageguard_reports_exported_total` by format and `wageguard_shift_imports_total` by outcome.
-- **Log correlation:** a `trace_id` copied from an API log line resolved to its trace in Tempo.
+A request sent with `?limit=2&findingStatus=MATCHED` was stored with its query blanked out, along with the client address, peer address, port and user agent. A search of the stored trace found no email, amount, session cookie or password. Prometheus showed the audit, report and import counters broken down as expected. A `trace_id` copied out of an API log line opened the right trace in Tempo.
 
-## Not in place
+## Not set up yet
 
-- No dashboards, alerts or SLOs are defined.
-- No production collector or backend exists, and nothing is deployed.
-- The web app (Next.js) is not instrumented.
-- The OpenTelemetry JS packages are pinned to the 0.223 / 2.12 line. Newer 0.300 / 3.x releases rename the trace SDK packages, but were under two weeks old when this was built. The upgrade is a follow-up, and the transitive deprecation warnings during install come from that rename.
+- No dashboards, alerts or service-level objectives.
+- No production collector, since nothing is deployed.
+- No tracing in the web app.
+- The OpenTelemetry packages are pinned to the 0.223 and 2.12 releases. The next line (0.300 and 3.x) renames the trace SDK packages, and it was less than two weeks old when this was built, so upgrading is a follow-up. The rename is also why `pnpm install` warns about some deprecated packages.

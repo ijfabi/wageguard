@@ -2,9 +2,11 @@
 
 **Understand your pay. Verify every dollar.**
 
-WageGuard is an independent Australian payroll verification tool. It calculates the award minimum gross pay for supported shifts using deterministic, versioned rules taken from the official award text. It then compares that figure with a payslip and explains every dollar, or says plainly when a situation is outside what it can verify.
+WageGuard checks Australian retail pay. You enter your shifts and your payslip, and it works out the minimum the award requires for those shifts, compares that with what you were paid, and shows the working line by line. When a situation is outside what it can calculate, it says so instead of guessing.
 
-> **Status: in development.** The calculation engine, the REST API with PostgreSQL and authentication, the web app, PDF evidence reports and opt-in OpenTelemetry are implemented and tested. The API, database and reliability benchmarks and a cloud deployment are still to come; see [the checklist](docs/implementation-checklist.md). WageGuard is informational and is not legal advice.
+The rules are taken from the official award text and are versioned and deterministic. There is no AI anywhere in the calculation.
+
+> **Status:** a portfolio project, still in development. Everything listed under "What works" is built and tested. WageGuard is informational only and is not legal advice.
 
 ![Dashboard](docs/screenshots/02-dashboard.png)
 
@@ -12,34 +14,17 @@ WageGuard is an independent Australian payroll verification tool. It calculates 
 | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
 | ![Audit detail](docs/screenshots/03-audit-underpayment.png) | ![Calculation explanation](docs/screenshots/04-calculation-explanation.png) |
 
-Screenshots show a seeded **synthetic** demonstration account.
+The screenshots come from a seeded demo account with made-up data.
 
-## What works today
+## What works
 
-- **Web app** (`apps/web`, Next.js 16):
-  - sign up and sign in;
-  - employment profiles;
-  - shifts, entered one at a time or imported from CSV;
-  - payslip entry;
-  - audits, with a dashboard, audit history and audit detail;
-  - a full calculation explanation, and the evidence report as a printable PDF or JSON;
-  - account deletion.
-- **REST API** (`apps/api`, NestJS 12, Prisma 7, PostgreSQL 17):
-  - cookie sessions with argon2id password hashing;
-  - per-user access checks, also enforced by database constraints;
-  - idempotent audit creation (no duplicates from retries);
-  - completed audits that can't be changed;
-  - an OpenAPI 3.1 document;
-  - opt-in OpenTelemetry traces and metrics with no pay data or identities in them ([observability](docs/observability.md)).
-- **Calculation engine** (`packages/calculation-engine`):
-  - selects the rule set in force for the pay period;
-  - splits shifts at local midnight and at rule boundaries, accounting for daylight saving;
-  - prices ordinary and penalty hours with exact decimal arithmetic;
-  - returns a full explanation trace;
-  - reconciles the result against the payslip.
-- **Versioned award rules** (`packages/award-rules`): MA000004 rates transcribed from the Fair Work Commission's consolidated award (amendments to 1 July 2026), with verbatim clause excerpts. Published rule sets are immutable, enforced by content fingerprints.
-- **Security hardening:** a per-request nonce Content Security Policy (no inline scripts), object-level authorisation tests on every route, and container, dependency and secret scanning in CI.
-- **Evidence tooling:** golden correctness scenarios, reproducible benchmarks, and a resume-evidence generator that only reports measured values.
+The web app (`apps/web`, Next.js 16) covers the whole flow: create an account, add a job, enter shifts by hand or import them from CSV, enter a payslip, and run an audit. Each audit has a detail page, a full explanation of the calculation, and a downloadable evidence report as PDF or JSON. The dashboard shows your audit history, and you can delete your account and all of its data from settings.
+
+The API (`apps/api`) is NestJS 12 with Prisma 7 and PostgreSQL 17. It uses cookie sessions with argon2id password hashing and checks ownership on every object. The database enforces ownership as well, with constraints and triggers. Audit creation is idempotent, so a retried request never creates a second audit. Completed audits can't be changed. There's an OpenAPI 3.1 document, and optional OpenTelemetry tracing that keeps pay data and identities out of the telemetry.
+
+The calculation engine (`packages/calculation-engine`) picks the rule set in force for the pay period, splits each shift at midnight and at every rate boundary (daylight saving included), and prices the time with exact decimal arithmetic. It returns the full working along with the result, then compares the total with the payslip.
+
+The award rules (`packages/award-rules`) are the General Retail Industry Award rates as published by the Fair Work Commission, with amendments to 1 July 2026, and the relevant clauses quoted word for word. A published rule set can't be edited: each one is fingerprinted, and CI fails if a fingerprint changes.
 
 ## Architecture
 
@@ -54,11 +39,11 @@ flowchart LR
   api -->|Prisma 7| db[("PostgreSQL 17<br/>constraints + triggers")]
 ```
 
-The pure packages have no framework or I/O dependencies ([ADR 0001](docs/adr/0001-modular-monolith-hexagonal.md)). More detail: [architecture](docs/architecture.md), [rules engine](docs/rules-engine.md), [API](docs/api.md), [data model](docs/data-model.md), [frontend](docs/adr/0012-web-frontend-architecture.md).
+The calculation packages are plain TypeScript with no framework or I/O, which keeps them easy to test ([ADR 0001](docs/adr/0001-modular-monolith-hexagonal.md)). The [architecture notes](docs/architecture.md) go into more detail, along with the [rules engine](docs/rules-engine.md), [API](docs/api.md) and [data model](docs/data-model.md) docs.
 
-## Supported scenarios
+## What it can and can't calculate
 
-General Retail Industry Award 2020 (MA000004), **Retail Employee Level 1**, **adult casual or part-time non-shiftworkers**, ordinary hours within the span of hours, pay periods starting on or after **1 July 2026**.
+WageGuard covers one slice of one award: the General Retail Industry Award 2020 (MA000004), Retail Employee Level 1, adults on casual or part-time contracts who aren't shiftworkers, working ordinary hours, in pay periods starting on or after 1 July 2026.
 
 | Hours                 | Part-time | Casual (loading included) |
 | --------------------- | --------- | ------------------------- |
@@ -67,81 +52,75 @@ General Retail Industry Award 2020 (MA000004), **Retail Employee Level 1**, **ad
 | Saturday 7 am to 6 pm | $34.76    | $41.72                    |
 | Sunday 9 am to 6 pm   | $41.72    | $48.67                    |
 
-**Not calculated** (returned as `REVIEW_REQUIRED` or `UNSUPPORTED_SCENARIO`, never guessed):
-
-- overtime and public holidays;
-- minimum-engagement top-ups;
-- breaks of less than 12 hours between work days;
-- work outside the span of ordinary hours;
-- full-time, junior and shiftwork employment;
-- enterprise agreements, other classifications and other awards;
-- allowances and leave.
-
-See [known limitations](docs/known-limitations.md).
+It doesn't calculate overtime, public holidays, minimum-engagement top-ups, short breaks between shifts, work outside the span of ordinary hours, full-time, junior or shiftwork employment, enterprise agreements, other classifications or awards, allowances, or leave. When an audit touches any of those, the result is marked "needs review" or "not supported", and the affected hours aren't priced. [Known limitations](docs/known-limitations.md) has the full list.
 
 ## Measured results
 
-All measurements are synthetic, from one developer workstation (Intel i7-13650HX, Windows 11, Node 24.22.1). The methodology and raw records are in [docs/performance.md](docs/performance.md) and `benchmarks/results/`.
+Every number here comes from a saved benchmark record. They are synthetic runs on one laptop (Intel i7-13650HX, Windows 11, Node 24.22.1), so treat them as relative measurements, not production capacity. The methods and raw data are in [docs/performance.md](docs/performance.md) and `benchmarks/results/`.
 
-| Measure                                                                                 | Result                                                                          | Evidence                                                         |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Engine throughput, 10,000 synthetic shifts (median of 10 repetitions)                   | 32,588 shifts/s (commit `4b05512`; range 32,358–34,453 across non-outlier runs) | `benchmarks/results/engine-2026-10-22T12-01-59-466Z-3bf2ea.json` |
-| Runtime reduction from profiling-led optimisation (same workload, identical outputs)    | 85.3% (2,088 ms → 307 ms)                                                       | [ADR 0007](docs/adr/0007-offset-table-optimisation.md)           |
-| Golden scenarios (10 hand-derived reference calculations + 11 correct refusals)         | 21 / 21                                                                         | `benchmarks/results/correctness-*.json`                          |
-| Automated tests (unit, property-based, golden, API integration on real PostgreSQL, web) | 334 passing, plus 10 Playwright E2E                                             | `benchmarks/test-reports/`, CI                                   |
-| Calculation engine coverage                                                             | 98.6% lines, 93.1% branches                                                     | Benchmark D record                                               |
+| What was measured                                                                    | Result                                                                              |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Calculation engine, 10,000 synthetic shifts                                          | 32,588 shifts/s median (32,358–34,453 across normal runs)                           |
+| Engine runtime after profiling and optimising time-zone lookups                      | 85.3% faster on the same workload (2,088 ms → 307 ms), identical output             |
+| Audit history page with 50,000 audits in the database                                | 6.06 ms → 1.36 ms median (−77.6%) after it stopped loading unused JSON snapshots    |
+| Dashboard with 50,000 audits                                                         | 23.5 ms → 8.9 ms median (−62.3%) after an index change removed two full-table scans |
+| Importing a 14-row CSV                                                               | 71.7 ms → 15.5 ms (−78.5%), 60 SQL statements → 6                                   |
+| API throughput at 50 concurrent clients (k6, production image)                       | 307 → 475 requests/s (+54.9%), p95 443 ms → 312 ms, 0% errors                       |
+| Audit submissions with the API killed mid-load, then with the database down for 10 s | 14,999 of 14,999 completed, no duplicates, no lost or inconsistent records          |
+| Golden scenarios                                                                     | 21 of 21: 10 hand-worked reference calculations and 11 correct refusals             |
+| Automated tests                                                                      | 341 passing, plus 10 Playwright end-to-end tests                                    |
+| Calculation engine coverage                                                          | 98.6% of lines, 93.1% of branches                                                   |
 
-The golden expectations are derived from the award's published Schedule B rates and **have not been reviewed by a payroll professional**. These figures show agreement on a small, defined scenario set, not legal accuracy.
+The golden scenarios were worked out by hand from the award's published rates, and nobody with payroll qualifications has reviewed them yet. They show the engine agrees with those calculations on a small, defined set of cases. They don't prove legal accuracy.
 
-## Getting started
+## Running it
 
-Requirements: Node.js 24, pnpm 10 (`npm i -g pnpm@10`), Docker.
+You'll need Node.js 24, pnpm 10 (`npm i -g pnpm@10`) and Docker.
 
-**Run everything in containers:**
+To run everything in containers:
 
 ```bash
 docker compose up --build
 # Web app:  http://localhost:3000
-# API:      http://localhost:3001/api/v1/health  (OpenAPI: /api/v1/openapi.json)
+# API:      http://localhost:3001/api/v1/health  (OpenAPI at /api/v1/openapi.json)
 ```
 
-**Demo account.** No password is stored in the repository. Choose your own, then seed a synthetic account with four audits (a match, an underpayment, a needs-review case and a part-time job):
+There's no demo password in the repository. Pick your own and seed a synthetic account with four audits (a match, an underpayment, one that needs review, and a part-time job):
 
 ```bash
 DEMO_PASSWORD='choose-at-least-12-chars' pnpm --filter @wageguard/api seed:demo
 # then sign in at http://localhost:3000 as demo@wageguard.example
 ```
 
-**Develop and test:**
+For development and testing:
 
 ```bash
 pnpm install
 pnpm build && pnpm --filter @wageguard/web build
-pnpm test                               # unit, property, golden and API integration tests (Docker required)
-pnpm --filter @wageguard/web e2e        # Playwright + axe accessibility checks (needs PostgreSQL)
+pnpm test                               # unit, property, golden and API tests (needs Docker)
+pnpm --filter @wageguard/web e2e        # Playwright and axe accessibility checks (needs PostgreSQL)
 pnpm lint && pnpm typecheck && pnpm format:check
 ```
 
-**Benchmarks and evidence:**
+Benchmarks write their raw results to `benchmarks/results/`:
 
 ```bash
-BENCHMARK_LABEL=optimised-local pnpm benchmark:engine
-pnpm test:coverage && pnpm benchmark:correctness
-pnpm benchmark:report       # benchmarks/reports/summary.md
-pnpm resume:metrics         # docs/resume-evidence/
+pnpm benchmark:engine        # A: calculation engine
+pnpm benchmark:api           # B: API under load (k6, Docker)
+pnpm benchmark:database      # C: database queries (run pnpm build first)
+pnpm benchmark:reliability   # E: failure injection (Docker)
+pnpm benchmark:report        # benchmarks/reports/summary.md
+pnpm resume:metrics          # docs/resume-evidence/
 ```
 
 ## Documentation
 
-[Architecture](docs/architecture.md) · [Rules engine](docs/rules-engine.md) · [API](docs/api.md) · [Data model](docs/data-model.md) · [Award sources](docs/award-sources.md) · [Testing strategy](docs/testing-strategy.md) · [Performance](docs/performance.md) · [Security](docs/security.md) · [Observability](docs/observability.md) · [Deployment](docs/deployment.md) · [Known limitations](docs/known-limitations.md) · [ADRs](docs/adr/) · [Checklist](docs/implementation-checklist.md)
+[Architecture](docs/architecture.md) · [Rules engine](docs/rules-engine.md) · [API](docs/api.md) · [Data model](docs/data-model.md) · [Award sources](docs/award-sources.md) · [Testing](docs/testing-strategy.md) · [Performance](docs/performance.md) · [Security](docs/security.md) · [Observability](docs/observability.md) · [Deployment](docs/deployment.md) · [Known limitations](docs/known-limitations.md) · [Decision records](docs/adr/) · [Checklist](docs/implementation-checklist.md)
+
+## What's next
+
+Phases 0 to 5 are done: the engine and rules, the API and database, the web app, PDF reports and observability, and the benchmarks. Phase 6 is a final review and an optional cloud deployment design, which won't be applied without approval. Further out: a font that covers all characters in the PDF, a public holiday calendar, overtime, more classifications, a golden set reviewed by a payroll professional, and a cross-check against the Fair Work Pay Calculator.
 
 ## Licence
 
-Copyright (c) 2026 ijfabi. All rights reserved. The code is published for viewing and evaluation only; see [LICENSE](LICENSE).
-
-## Roadmap
-
-1. **Phases 0–4 (done).** Engine, rules, API, persistence, authentication, web app, end-to-end and accessibility tests, PDF reports, OpenTelemetry, nonce-based CSP.
-2. **Phase 5.** API, database and reliability benchmarks (B, C, E).
-3. **Phase 6.** Final review and an optional cloud deployment design (never applied without approval).
-4. **Later.** Unicode and tagged PDF, a public holiday calendar, overtime, further classifications, a human-reviewed golden set and a Pay Calculator cross-check.
+Copyright (c) 2026 ijfabi. All rights reserved. The code is published so it can be read and evaluated, not reused. See [LICENSE](LICENSE).

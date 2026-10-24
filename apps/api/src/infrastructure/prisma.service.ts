@@ -8,7 +8,15 @@ import { PrismaClient } from "../generated/prisma/client.js";
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
   constructor(@Inject(APP_CONFIG) config: AppConfig) {
-    super({ adapter: new PrismaPg({ connectionString: config.databaseUrl }) });
+    super({
+      adapter: new PrismaPg({
+        connectionString: config.databaseUrl,
+        // Without a limit, requests wait indefinitely for a connection while the database is down
+        // (Benchmark E: requests hung until the client gave up). Failing after 3 s lets the API
+        // answer 503 with Retry-After instead.
+        connectionTimeoutMillis: 3_000,
+      }),
+    });
   }
 
   async onModuleDestroy(): Promise<void> {

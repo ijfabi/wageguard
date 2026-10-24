@@ -1,35 +1,37 @@
 # Known limitations
 
-WageGuard is an informational tool, not legal advice, and it does not determine award coverage.
+WageGuard is an information tool. It isn't legal advice, and it doesn't decide whether the award covers you. You tell it that.
 
-## Legal and calculation scope
+## What it calculates
 
-- **Award and classification.** Only MA000004 Retail Employee Level 1, adult, casual or part-time non-shiftworkers, in pay periods starting on or after 1 July 2026. Everything else is `UNSUPPORTED_SCENARIO`.
-- **Not calculated, only flagged.** These are detected and flagged but never calculated:
-  - overtime
-  - public holidays
-  - minimum engagement top-ups
-  - cl. 16.6 break-between-work-days pay
-  - cl. 15.2 span exceptions (newsagencies, video shops, extended trading to 11 pm)
-- **Outside scope entirely.** Allowances, leave loading, leave, junior and apprentice rates, shiftwork, rostered days off, time off instead of overtime, and enterprise agreements.
-- **Public holidays.** Only dates the user declares are treated as public holidays; there is no state calendar.
-- **Weekly and daily checks.** These only see shifts supplied in the same pay period. A week that spans two pay periods is checked only partially.
-- **Part-time guaranteed hours.** These are a single per-weekday figure. Written temporary variations (cl. 10.6) and agreed start and finish times (cl. 10.5(b)) are not modelled.
-- **Breaks.** Breaks are taken as recorded. Rest-break entitlements are not checked; meal-break timing produces a warning only.
-- **Verification.** Rates were transcribed from the official award and cross-checked against its own Schedule B. They have **not** been reviewed by a qualified professional or compared with the Fair Work Pay Calculator.
+Only one slice of one award is supported: the General Retail Industry Award 2020 (MA000004), Retail Employee Level 1, adults on casual or part-time contracts who aren't shiftworkers, in pay periods starting on or after 1 July 2026. Anything else comes back as "not supported".
+
+Some situations are detected and flagged but never priced: overtime, public holidays, minimum-engagement top-ups, the payment for less than 12 hours between work days (cl. 16.6), and the span-of-hours exceptions in cl. 15.2 (newsagencies, video shops, and extended trading to 11 pm). When one of these applies, the affected hours are left out of the total and the audit is marked "needs review".
+
+Other things are out of scope entirely: allowances, leave and leave loading, junior and apprentice rates, shiftwork, rostered days off, time off instead of overtime, and enterprise agreements.
+
+A few simplifications are worth knowing about:
+
+- **Public holidays.** A day only counts as a public holiday if you say so when you run the audit. There's no built-in calendar.
+- **Daily and weekly hour checks.** These only see shifts in the same pay period, so a week that spans two pay periods is only partly checked.
+- **Part-time guaranteed hours.** These are one number per weekday. Written temporary changes (cl. 10.6) and agreed start and finish times (cl. 10.5(b)) aren't modelled.
+- **Breaks.** These are taken exactly as recorded. Rest-break entitlements aren't checked, and meal-break timing only produces a warning.
+
+The rates were copied from the official award and checked against the award's own Schedule B. Nobody with payroll or legal qualifications has reviewed them, and they haven't been compared with the Fair Work Pay Calculator.
+
+## Product
+
+- Shifts that start or end in the repeated hour when daylight saving ends need an explicit UTC offset. The API accepts one, but the shift form in the web app doesn't ask for it yet.
+- The PDF report uses the standard PDF font, so characters outside the Western European set show up as "?". The PDF isn't tagged for screen readers either. The audit and explanation pages in the web app are the accessible version ([ADR 0014](adr/0014-pdf-evidence-report.md)).
+- There's no email verification, password reset or two-factor sign-in. Registration also reveals whether an email address is already in use. See [security](security.md).
 
 ## Technical
 
-- **Not yet built.** Any cloud deployment, dashboards and alerts, and tracing in the web app.
-- **PDF report.**
-  - It uses the standard PDF font, so characters outside Windows-1252 in user-entered text appear as "?".
-  - It is not tagged for screen readers; the web audit and explanation pages are the accessible version ([ADR 0014](adr/0014-pdf-evidence-report.md)).
-- **Web CSP styles.** `style-src` still allows `'unsafe-inline'`: UI libraries set inline style attributes and inject `<style>` elements. Scripts are nonce-only ([ADR 0012](adr/0012-web-frontend-architecture.md)).
-- **Every web page renders per request**, which the CSP nonce requires. No page is statically cached.
-- **OpenTelemetry packages** are pinned one release line behind the latest (0.223 / 2.12), so `pnpm install` warns about deprecated, renamed transitive packages ([ADR 0013](adr/0013-opt-in-opentelemetry.md)).
-- **Web app public holidays** must be entered per audit; DST-ambiguous shift times (the repeated hour) need the API's offset fields, which the shift form does not expose yet. See the [implementation checklist](implementation-checklist.md).
-- **API limits.** Registration reveals whether an email is already registered. There is no email verification, password reset or MFA. Rate-limit state is per process (single instance only). See [security](security.md).
-- **Idempotency keys** never expire. Audits are processed synchronously ([ADR 0010](adr/0010-audits-idempotency-and-immutability.md)).
-- **Early benchmark records** (the engine baseline and first optimised runs, made before the repository existed) carry a source-tree SHA-256 instead of a commit SHA; later records carry both.
-- **Ambiguous times.** Shifts that start or end in the repeated DST hour need an explicit UTC offset. The API accepts one (`startUtcOffsetMinutes`, `endUtcOffsetMinutes`), and the UI will need to ask for it.
-- **Benchmarks.** Synthetic and single-machine; see [performance](performance.md).
+- **Rate limits.** Rate-limit counters live in the API process, so they're only correct with a single instance.
+- **Idempotency keys** never expire.
+- **Web content security policy.** Scripts are locked down with a per-request nonce, but styles still allow inline values, because the UI libraries set inline styles at runtime ([ADR 0012](adr/0012-web-frontend-architecture.md)). The nonce also means every page is rendered per request, so nothing is served from a static cache.
+- **OpenTelemetry versions.** The OpenTelemetry packages are pinned one release line behind the latest, which is why `pnpm install` warns about some renamed packages ([ADR 0013](adr/0013-opt-in-opentelemetry.md)).
+- **Dashboard cost.** The dashboard still adds up all of a user's audits on every request. It's index-only now, so it grows slowly, but it does grow ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
+- **Index rollout.** The Phase 5 index migration uses a plain `CREATE INDEX`. On a large existing database, build the indexes concurrently first ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
+- **Not built yet.** No cloud deployment, monitoring dashboards or alerts, or tracing in the web app.
+- **Benchmark scope.** All benchmarks are synthetic and ran on one laptop ([performance](performance.md)). The earliest engine records predate the git repository and are identified by a source-tree hash instead of a commit.

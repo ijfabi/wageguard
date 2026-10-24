@@ -1,8 +1,8 @@
 # Architecture
 
-WageGuard is a modular monolith with hexagonal boundaries ([ADR 0001](adr/0001-modular-monolith-hexagonal.md)). This page describes what exists today and what is planned, and labels each.
+WageGuard is one deployable application split into modules with clear boundaries ([ADR 0001](adr/0001-modular-monolith-hexagonal.md)). The interesting part, the pay calculation, is plain TypeScript with no framework, database or network access. Everything else is built around it.
 
-## Package map
+## Packages
 
 ```mermaid
 flowchart LR
@@ -12,7 +12,7 @@ flowchart LR
     engine["@wageguard/calculation-engine<br/>input contract, segmentation, checks,<br/>pricing, reconciliation"]
   end
   fixtures["@wageguard/test-fixtures<br/>golden scenarios, workload generator"]
-  bench["benchmarks<br/>A, D, F (+ B, C, E planned)"]
+  bench["benchmarks<br/>A to F"]
   contracts["@wageguard/api-contracts<br/>Zod request/response schemas"]
   presentation["@wageguard/presentation<br/>money, dates, status wording"]
   api["apps/api (NestJS)<br/>identity, employments, shifts, payslips,<br/>audits, PDF reports, dashboard, rules, health"]
@@ -37,45 +37,45 @@ flowchart LR
   web -->|/api/v1 same-origin rewrite| api
 ```
 
-`@wageguard/presentation` holds the user-facing wording: exact money formatting, wall-clock dates, status labels and the headline amounts. The web app and the PDF report both use it, so they cannot drift apart. Telemetry is opt-in ([observability](observability.md)).
+Arrows point from a package to the package it depends on.
 
-Arrows point from a dependent package to its dependency. The engine depends on the `RuleSetResolver` port. `AwardRuleRegistry` implements it today, and a persistence-backed resolver can replace it without changing the engine.
+The engine doesn't import the rules directly. It asks for them through a small interface, `RuleSetResolver`. Today that's answered by the rule registry bundled with the code, and a database-backed store could replace it without changing the engine.
 
-## Calculation pipeline
+`@wageguard/presentation` holds everything a person reads: money formatting, dates shown exactly as entered, status labels and the wording of the headline amounts. The web app and the PDF report both use it, so the two can't drift apart. Telemetry is optional ([observability](observability.md)).
 
-`calculatePayPeriod(rawInput, { rules, calculatedAt })` in `packages/calculation-engine/src/calculate.ts`:
+## How a pay period is calculated
 
-1. **Validate.** Zod checks the structure, then the domain objects validate semantics: dates, IANA zone, DST gaps and repeats, breaks inside shifts, overlapping shifts, duplicate ids, and shifts or holidays outside the period. All problems are reported together.
-2. **Resolve the rule set** by award code and pay period start, using first-full-pay-period semantics.
-3. **Check scope.** Award, classification, employment type, time zone, the user's declarations (coverage, enterprise agreement, age, shiftworker) and part-time guaranteed hours.
-4. **Segment** each shift's paid time (shift minus unpaid meal breaks) at local midnights and rule-window boundaries into non-overlapping segments, each classified as a rule, `OUTSIDE_SPAN` or `PUBLIC_HOLIDAY`, with precedence recorded.
-5. **Entitlement checks** for situations that may change pay but are not calculated (ADR 0008).
-6. **Price** shifts with no blocking issue. Rates and line amounts are rounded per the rule set's policy (ADR 0004).
-7. **Aggregate** one pay line per rule for the period.
-8. **Determine status** and return metadata: rule-set version and fingerprint, source, input hash, engine version, rounding policy and timestamp. The result also carries assumptions, issues with clause references and next steps, and an 8-step trace.
+`calculatePayPeriod(rawInput, { rules, calculatedAt })` in `packages/calculation-engine/src/calculate.ts` works in eight steps:
 
-`reconcile(result, payslip)` compares the calculation with a payslip and produces audit findings (`MATCHED`, `POTENTIAL_UNDERPAYMENT`, `POTENTIAL_OVERPAYMENT`, `REVIEW_REQUIRED`, `UNSUPPORTED_SCENARIO`, `INCOMPLETE_DATA`). Each finding carries evidence pointers into the result.
+1. **Validate the input.** First the shape, then the meaning: real dates, a real time zone, times that exist on the day daylight saving changes, breaks inside their shifts, no overlapping shifts, no duplicate IDs, and nothing outside the pay period. Every problem is reported at once, not just the first.
+2. **Find the rule set** in force for the award and pay period. A new rate applies from the first full pay period after it takes effect.
+3. **Check the scope:** the award, classification, employment type and time zone, what the person has told us about their situation, and part-time guaranteed hours.
+4. **Split each shift** into segments. Paid time (the shift minus unpaid meal breaks) is cut at midnight and at every point where a different rate starts. Each segment gets a rule, or is marked as outside the span of ordinary hours or on a public holiday.
+5. **Look for entitlements** that might change the pay but aren't calculated, such as overtime or a short break between shifts ([ADR 0008](adr/0008-review-required-over-partial-guesses.md)).
+6. **Price the shifts** that have no blocking issue, rounding rates and lines as the rule set specifies ([ADR 0004](adr/0004-decimal-money-and-rounding.md)).
+7. **Combine** the priced time into one pay line per rule for the whole period.
+8. **Decide the overall status.** The result records the rule-set version and fingerprint, the source, a hash of the input, the engine version, the rounding policy and the time of calculation. It also carries the assumptions made, every issue with its award clause and a suggested next step, and a trace of the eight steps.
 
-## Design properties
+`reconcile(result, payslip)` then compares the calculated minimum with the payslip. The outcome is one of: matches, possible underpayment, possible overpayment, needs review, not supported, or missing information. Each finding points back to the parts of the calculation that support it.
 
-| Property               | How it is achieved                                                                                                                                                           |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Deterministic          | No clock or randomness in the engine. Input is canonicalised (sorted) before hashing and processing. A property test runs shuffled input twice and expects identical output. |
-| Explainable            | Every segment names its rule, percentage, clauses and any overridden rules. Every issue names its clauses and a next step.                                                   |
-| Reproducible           | Results carry the rule-set fingerprint and input hash. Published rule sets are immutable (ADR 0003).                                                                         |
-| Exact money            | `Money` and `Decimal` only, with explicit rounding stages (ADR 0004) and lint bans on float helpers.                                                                         |
-| Safe under uncertainty | Unsupported or uncertain minutes are never priced (ADR 0008).                                                                                                                |
+## Properties worth keeping
 
-## API modules
+- **Same input, same answer.** The engine never reads the clock and has no randomness. Input is sorted into a canonical order before anything else happens, and a property test shuffles the input and checks the output doesn't change.
+- **Every number explained.** Each segment names its rule, percentage, award clauses and any rules it overrode. Each issue names its clauses and what to do next.
+- **Reproducible later.** Results carry the rule-set fingerprint and the input hash, and published rule sets can't be edited ([ADR 0003](adr/0003-versioned-immutable-rule-sets.md)).
+- **Exact money.** Amounts are decimal throughout, with rounding at defined stages. Lint rules stop floating-point arithmetic creeping in ([ADR 0004](adr/0004-decimal-money-and-rounding.md)).
+- **No guessing.** Hours the engine can't fully price are left out and flagged, never estimated ([ADR 0008](adr/0008-review-required-over-partial-guesses.md)).
 
-`apps/api` holds the NestJS modules:
+## The API
 
-- identity (sessions, account deletion, audit events);
+`apps/api` is split into NestJS modules:
+
+- identity: accounts, sessions, account deletion and the event log;
 - employments;
-- shifts (including CSV import);
+- shifts, including CSV import;
 - payslips;
-- audits (calculation, reconciliation, immutable snapshots, JSON and PDF reports);
-- dashboard;
-- rules, health and OpenAPI.
+- audits: calculation, reconciliation, stored snapshots, and JSON and PDF reports;
+- the dashboard;
+- rules, health checks and the OpenAPI document.
 
-Award rules are still served from the bundled registry; a database-backed rule store is not built. See the [API](api.md), the [data model](data-model.md) and the [implementation checklist](implementation-checklist.md).
+Each audit read loads only the columns its response needs ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)). Award rules still come from the bundled registry, and a database-backed rule store hasn't been built. See also the [API](api.md) and [data model](data-model.md) docs.

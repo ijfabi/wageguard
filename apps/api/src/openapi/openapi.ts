@@ -322,6 +322,7 @@ const COMMON_ERRORS = {
   413: "Body too large",
   422: "Validation failed",
   429: "Rate limited",
+  503: "Temporarily unavailable (database unreachable); retry after the Retry-After delay",
 } as const;
 
 export function buildOpenApiDocument(version: string): object {

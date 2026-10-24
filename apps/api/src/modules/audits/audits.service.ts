@@ -35,11 +35,19 @@ import {
 import {
   AUDIT_REPOSITORY,
   IdempotencyKeyTaken,
-  type AuditRecord,
+  type AuditDetailRow,
   type AuditRepository,
 } from "./audit.repository.js";
 
 export const RULE_SET_RESOLVER = Symbol("RULE_SET_RESOLVER");
+
+/** Another user's audit and a missing one are indistinguishable: both are 404. */
+function owned<T>(row: T | null): T {
+  if (row === null) {
+    throw ApiError.notFound("Audit");
+  }
+  return row;
+}
 
 export interface CreateAuditOutcome {
   readonly audit: AuditDetail;
@@ -229,15 +237,15 @@ export class AuditsService {
   }
 
   async get(userId: string, id: string): Promise<AuditDetail> {
-    return toAuditDetail(await this.findOwned(userId, id));
+    return toAuditDetail(owned(await this.audits.findDetail(userId, id)));
   }
 
   async lines(userId: string, id: string): Promise<AuditLines> {
-    return toAuditLines(await this.findOwned(userId, id));
+    return toAuditLines(owned(await this.audits.findResult(userId, id)));
   }
 
   async report(userId: string, id: string): Promise<AuditReport> {
-    const audit = await this.findOwned(userId, id);
+    const audit = owned(await this.audits.findComplete(userId, id));
     await this.events.record("REPORT_EXPORTED", userId, { auditId: audit.id, format: "json" });
     telemetry.reportExported("json");
     return toAuditReport(audit, this.clock.now().toString());
@@ -245,22 +253,14 @@ export class AuditsService {
 
   /** The same evidence as {@link report}, laid out as a printable PDF. */
   async reportPdf(userId: string, id: string): Promise<Buffer> {
-    const audit = await this.findOwned(userId, id);
+    const audit = owned(await this.audits.findComplete(userId, id));
     const pdf = await renderAuditPdf(toAuditPdfInput(audit, this.clock.now().toString()));
     await this.events.record("REPORT_EXPORTED", userId, { auditId: audit.id, format: "pdf" });
     telemetry.reportExported("pdf");
     return pdf;
   }
 
-  private async findOwned(userId: string, id: string): Promise<AuditRecord> {
-    const audit = await this.audits.findOwned(userId, id);
-    if (audit === null) {
-      throw ApiError.notFound("Audit");
-    }
-    return audit;
-  }
-
-  private replay(existing: AuditRecord, requestHash: string): CreateAuditOutcome {
+  private replay(existing: AuditDetailRow, requestHash: string): CreateAuditOutcome {
     if (existing.requestHash !== requestHash) {
       throw new ApiError(
         422,

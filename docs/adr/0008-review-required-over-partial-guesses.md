@@ -1,40 +1,29 @@
-# ADR 0008: Price whole shifts or none; never guess unsupported entitlements
+# ADR 0008: Price a whole shift or none of it, and never guess an entitlement
 
 - Status: Accepted
 - Date: 2026-10-22
 
 ## Context
 
-Some conditions mean part of a shift may attract an entitlement WageGuard does not calculate:
+Some situations mean part of a shift might be owed more than the ordinary rate, under rules WageGuard doesn't calculate:
 
-- work outside the span of ordinary hours
-- a declared public holiday
-- a shift shorter than the minimum engagement
-- more than 9 hours in a day, or more than 38 casual hours in a week
-- part-time hours beyond the guaranteed hours
-- less than 12 hours between work days
+- work outside the span of ordinary hours;
+- a public holiday;
+- a shift shorter than the minimum engagement;
+- more than 9 hours in a day, or a casual working more than 38 hours in a week;
+- part-time hours beyond the guaranteed hours;
+- less than 12 hours between one day's work and the next.
 
-Attributing the overtime to specific minutes would require modelling rules that are not implemented, such as the cl. 21.2(b) daily ordering and written variations under cl. 10.6.
+Working out exactly which minutes become overtime would mean modelling rules that aren't implemented, such as the daily ordering in cl. 21.2(b) and written variations under cl. 10.6.
 
 ## Decision
 
-**Pricing scope**
+Any issue more serious than a warning marks the affected shifts as unpriced. They're still split up and classified, so the explanation remains useful, but they carry no dollar amounts. A problem with the employment itself, such as an unsupported contract type, leaves the whole pay period unpriced.
 
-- A blocking issue (any severity except `WARNING`) marks the affected shifts as unpriced.
-- Unpriced shifts are still segmented and classified, so the explanation remains useful, but they carry no amounts.
-- Employment-level scope issues leave the whole pay period unpriced.
+When statuses compete, "not supported" beats "missing information", which beats "needs review", which beats "calculated".
 
-**Status precedence**
-
-- `UNSUPPORTED_SCENARIO` beats `INCOMPLETE_DATA`, which beats `REVIEW_REQUIRED`, which beats `CALCULATED`.
-
-**Reconciliation**
-
-- When some shifts are unpriced, the priced total is a lower bound on the award minimum, because unpriced time can only add to it.
-- Reported pay below that lower bound is reported as `POTENTIAL_UNDERPAYMENT`, with an explanation of the lower-bound basis. Otherwise the result is `REVIEW_REQUIRED`.
-- A `MATCHED` status is never shown for a partial calculation.
+When some shifts are unpriced, the priced total is a floor under the award minimum, because unpriced time can only add to what's owed. If the payslip is below that floor, the audit reports a possible underpayment and explains that the comparison is against a lower bound. Otherwise it says "needs review". A partial calculation is never shown as a match.
 
 ## Consequences
 
-- WageGuard can say less than a full payroll system, but it never presents an unsupported figure as verified.
-- The golden REJECTION scenarios and a property test ("outside-span or holiday minutes are never priced") enforce this.
+WageGuard says less than a full payroll system would, but it never presents a figure it couldn't verify as if it were verified. The golden refusal scenarios and a property test ("time outside the span or on a public holiday is never priced") hold it to that.

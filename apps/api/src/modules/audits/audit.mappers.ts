@@ -15,7 +15,7 @@ import type { Audit } from "../../generated/prisma/client.js";
 import { decimalString } from "../payslips/payslips.service.js";
 import { fromDateColumn } from "../shifts/shift-times.js";
 import type { AuditPdfInput } from "./audit-pdf.js";
-import type { AuditRecord } from "./audit.repository.js";
+import type { AuditDetailRow, AuditResultRow, AuditSummaryRow } from "./audit.repository.js";
 
 export const REPORT_DISCLAIMER =
   "WageGuard is an informational tool, not legal advice. Award rates were transcribed from the official " +
@@ -23,12 +23,12 @@ export const REPORT_DISCLAIMER =
   "professional. Results marked REVIEW_REQUIRED or UNSUPPORTED_SCENARIO are not verified discrepancies.";
 
 /** JSON columns written by this service; typed by the engine package that produced them. */
-const result = (audit: Audit): PayPeriodCalculationResult =>
+const result = (audit: Pick<Audit, "result">): PayPeriodCalculationResult =>
   audit.result as unknown as PayPeriodCalculationResult;
-const reconciliation = (audit: Audit): ReconciliationResult =>
+const reconciliation = (audit: Pick<Audit, "reconciliation">): ReconciliationResult =>
   audit.reconciliation as unknown as ReconciliationResult;
 
-export function toAuditSummary(audit: Audit): AuditSummary {
+export function toAuditSummary(audit: AuditSummaryRow): AuditSummary {
   return {
     id: audit.id,
     employmentId: audit.employmentId,
@@ -47,7 +47,7 @@ export function toAuditSummary(audit: Audit): AuditSummary {
   };
 }
 
-export function toAuditDetail(audit: AuditRecord): AuditDetail {
+export function toAuditDetail(audit: AuditDetailRow): AuditDetail {
   const rec = reconciliation(audit);
   return {
     ...toAuditSummary(audit),
@@ -62,12 +62,12 @@ export function toAuditDetail(audit: AuditRecord): AuditDetail {
   };
 }
 
-export function toAuditLines(audit: Audit): AuditLines {
+export function toAuditLines(audit: AuditResultRow): AuditLines {
   const calc = result(audit);
   return { auditId: audit.id, lines: [...calc.lines], shifts: [...calc.shifts] };
 }
 
-export function toAuditPdfInput(audit: AuditRecord, generatedAt: string): AuditPdfInput {
+export function toAuditPdfInput(audit: Audit, generatedAt: string): AuditPdfInput {
   return {
     audit: toAuditDetail(audit),
     calculation: result(audit),

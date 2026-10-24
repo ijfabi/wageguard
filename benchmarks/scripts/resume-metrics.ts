@@ -14,6 +14,7 @@ import path from "node:path";
 import { compareEngineRuns } from "../lib/comparison.js";
 import { REPO_ROOT } from "../lib/environment.js";
 import { engineLabel, latest, loadRecords, type EngineSizeResult, type LoadedRecord } from "../lib/load.js";
+import { apiComparison, databaseComparison, reliabilityRuns } from "../lib/phase5.js";
 import { round } from "../lib/stats.js";
 
 type Verification = "MEASURED" | "EVIDENCE_REQUIRED";
@@ -135,14 +136,15 @@ const totalTests = testReports.reduce((n, r) => n + r.data.numTotalTests, 0);
 const passedTests = testReports.reduce((n, r) => n + r.data.numPassedTests, 0);
 const allTestsPass = testReports.length > 0 && testReports.every((r) => r.data.numFailedTests === 0);
 
-const B_API = latest(records, (r) => r.benchmark.startsWith("Benchmark B") || r.benchmark === "B-api");
-const C_DB = latest(records, (r) => r.benchmark.startsWith("Benchmark C") || r.benchmark === "C-database");
-const E_REL = latest(
-  records,
-  (r) => r.benchmark.startsWith("Benchmark E") || r.benchmark === "E-reliability",
-);
-const completedOrNull = (r: LoadedRecord | null): LoadedRecord | null =>
-  r?.status === "COMPLETED" ? r : null;
+const api = apiComparison(records);
+const apiAt50 = api?.rows.find((r) => r.clients === 50);
+const db = databaseComparison(records);
+const dbLargest = db?.scales.at(-1);
+const dbRow = (name: string) => dbLargest?.rows.find((r) => r.operation.startsWith(name));
+const historyRow = dbRow("Audit history, first page");
+const dashboardRow = dbRow("Dashboard summary");
+const importRow = dbRow("Shift CSV import");
+const rel = reliabilityRuns(records);
 
 const metrics: Metric[] = [
   metric(
@@ -266,39 +268,119 @@ const metrics: Metric[] = [
   ),
   metric(
     {
-      id: "api-p95-latency",
-      name: "Audit API p95 latency",
+      id: "api-throughput-increase-50",
+      name: "Audit API throughput increase at 50 concurrent clients after query optimisation",
+      unit: "percent",
+      workload:
+        "k6 closed model, 50 virtual users, no think time, 60 s measured after a 10 s warm-up; 30% dashboard, 25% history, 20% detail, 10% lines, 15% audit creation; production API image and PostgreSQL 17.6 on one workstation",
+      methodology:
+        "Benchmark B, baseline versus optimised run with the same workload: (optimised - baseline) / baseline x 100 on requests per second.",
+      resumeSuitability: "Suitable with the qualifier 'local load test on a single workstation'.",
+    },
+    apiAt50 === undefined ? null : provenanceOf(api?.improved ?? null),
+    apiAt50?.throughputIncreasePercent ?? null,
+  ),
+  metric(
+    {
+      id: "api-p95-reduction-50",
+      name: "Audit API p95 latency reduction at 50 concurrent clients",
+      unit: "percent",
+      workload: "As above",
+      methodology:
+        "Benchmark B: (baseline p95 - optimised p95) / baseline p95 x 100, all request types together.",
+      resumeSuitability: "Suitable with the same qualifier; quote the absolute values alongside.",
+    },
+    apiAt50 === undefined ? null : provenanceOf(api?.improved ?? null),
+    apiAt50?.p95ReductionPercent ?? null,
+  ),
+  metric(
+    {
+      id: "api-p95-latency-50",
+      name: "Audit API p95 latency at 50 concurrent clients (optimised)",
       unit: "milliseconds",
-      workload: "k6, 1/10/25/50 concurrent clients",
-      methodology: "Benchmark B",
-      resumeSuitability: "Not available until Benchmark B runs.",
+      workload: "As above; saturated, so latency is mostly queueing in one Node.js process",
+      methodology: "Benchmark B, nearest-rank p95 over every request in the measured phase.",
+      resumeSuitability: "Context only: an absolute latency from one laptop is not a capacity claim.",
     },
-    provenanceOf(completedOrNull(B_API)),
-    null,
+    apiAt50 === undefined ? null : provenanceOf(api?.improved ?? null),
+    apiAt50?.improvedP95Ms ?? null,
   ),
   metric(
     {
-      id: "db-query-improvement",
-      name: "Audit history query latency improvement from indexing",
+      id: "db-history-reduction",
+      name: "Audit history page latency reduction (median)",
       unit: "percent",
-      workload: "Benchmark C",
-      methodology: "Benchmark C with EXPLAIN ANALYZE before/after",
-      resumeSuitability: "Not available until Benchmark C runs.",
+      workload: `${dbLargest?.totalAudits.toLocaleString("en-AU") ?? "?"} synthetic audits (${dbLargest?.measuredUserAudits.toLocaleString("en-AU") ?? "?"} for the measured user), PostgreSQL 17.6`,
+      methodology:
+        "Benchmark C: compiled service call, 30 measured iterations; fix: load summary columns only instead of four JSON snapshots per row.",
+      resumeSuitability: "Suitable with the qualifier 'synthetic dataset, single machine'.",
     },
-    provenanceOf(completedOrNull(C_DB)),
-    null,
+    historyRow === undefined ? null : provenanceOf(db?.improved ?? null),
+    historyRow?.medianReductionPercent ?? null,
   ),
   metric(
     {
-      id: "reliability-recovery",
-      name: "Audit jobs recovered under injected failures",
+      id: "db-dashboard-reduction",
+      name: "Dashboard summary latency reduction (median)",
       unit: "percent",
-      workload: "Benchmark E",
-      methodology: "Benchmark E failure injection",
-      resumeSuitability: "Not available until Benchmark E runs.",
+      workload: "Same dataset",
+      methodology:
+        "Benchmark C with EXPLAIN (ANALYZE, BUFFERS): two aggregates did sequential scans of audits; fix: extend an index so all five queries are index-only.",
+      resumeSuitability: "Suitable with the same qualifier.",
     },
-    provenanceOf(completedOrNull(E_REL)),
-    null,
+    dashboardRow === undefined ? null : provenanceOf(db?.improved ?? null),
+    dashboardRow?.medianReductionPercent ?? null,
+  ),
+  metric(
+    {
+      id: "db-import-statements",
+      name: "SQL statements per 14-row CSV shift import",
+      unit: "statements (baseline -> optimised)",
+      workload: "14 shifts with meal breaks, one transaction",
+      methodology:
+        "Benchmark C: statements counted at the node-postgres driver; fix: two multi-row inserts instead of four statements per row.",
+      resumeSuitability: "Suitable; pair with the measured latency reduction.",
+    },
+    importRow === undefined ? null : provenanceOf(db?.improved ?? null),
+    importRow === undefined ? null : `${importRow.baselineStatements} -> ${importRow.improvedStatements}`,
+  ),
+  metric(
+    {
+      id: "db-import-reduction",
+      name: "CSV shift import latency reduction (median)",
+      unit: "percent",
+      workload: "Same dataset; 14-row imports",
+      methodology: "Benchmark C, 20 measured imports per step.",
+      resumeSuitability: "Suitable with the same qualifier.",
+    },
+    importRow === undefined ? null : provenanceOf(db?.improved ?? null),
+    importRow?.medianReductionPercent ?? null,
+  ),
+  metric(
+    {
+      id: "reliability-completion",
+      name: "Audit submissions completed under injected failures",
+      unit: "percent",
+      workload:
+        "10 clients submitting audits continuously; API process SIGKILLed (restarted by Docker) and PostgreSQL stopped for 10 s, in separate scenarios",
+      methodology:
+        "Benchmark E: clients retry with the same Idempotency-Key; afterwards SQL checks for duplicates, lost acknowledged audits and inconsistent findings.",
+      resumeSuitability: "Suitable, naming the two failure scenarios and the retry policy.",
+    },
+    rel === null ? null : provenanceOf(rel.latest),
+    rel === null ? null : round((rel.completed / rel.submissions) * 100, 2),
+  ),
+  metric(
+    {
+      id: "reliability-integrity-failures",
+      name: "Data integrity failures after failure injection",
+      unit: "count (duplicates, lost acknowledged audits, orphaned or mismatched findings)",
+      workload: "Same scenarios",
+      methodology: "Benchmark E SQL checks after each scenario.",
+      resumeSuitability: "Suitable alongside the completion rate.",
+    },
+    rel === null ? null : provenanceOf(rel.latest),
+    rel?.integrityFailures ?? null,
   ),
 ];
 
@@ -346,18 +428,21 @@ const bullets = [
   ),
   bullet(
     "Optimised PostgreSQL audit queries, reducing p95 retrieval latency by [MEASURED PERCENT] on a [DATASET SIZE]-record dataset.",
-    ["db-query-improvement"],
-    () => "",
+    ["db-history-reduction", "db-dashboard-reduction", "db-import-reduction", "db-import-statements"],
+    (v) =>
+      `Profiled the API's PostgreSQL access with EXPLAIN ANALYZE and driver-level query counts on ${dbLargest?.totalAudits.toLocaleString("en-AU") ?? ""} synthetic audits, then cut median audit-history latency by ${v["db-history-reduction"]}% (stopped loading unused JSON snapshots), dashboard latency by ${v["db-dashboard-reduction"]}% (covering index replacing two sequential scans) and CSV import latency by ${v["db-import-reduction"]}% (${v["db-import-statements"]} SQL statements per 14-row import).`,
   ),
   bullet(
     "Served audit API requests at [p95] ms p95 latency under [N] concurrent clients in a local load test.",
-    ["api-p95-latency"],
-    () => "",
+    ["api-throughput-increase-50", "api-p95-reduction-50"],
+    (v) =>
+      `Load-tested the audit API with k6 at 1 to 50 concurrent clients against the production container image; the query optimisations raised throughput at 50 clients by ${v["api-throughput-increase-50"]}% and cut p95 latency by ${v["api-p95-reduction-50"]}% on an identical workload, with 0% errors (single-workstation test).`,
   ),
   bullet(
     "Built and tested an audit-processing workflow that recovered [MEASURED SUCCESS RATE]% of jobs under [DEFINED FAILURE SCENARIOS].",
-    ["reliability-recovery"],
-    () => "",
+    ["reliability-completion", "reliability-integrity-failures"],
+    (v) =>
+      `Designed idempotent audit submission (unique Idempotency-Key per request, database-enforced) and verified it with failure injection: ${v["reliability-completion"]}% of ${rel?.submissions.toLocaleString("en-AU") ?? ""} audit submissions completed while the API process was killed mid-load and while PostgreSQL was down for 10 s, with ${v["reliability-integrity-failures"]} duplicate, lost or inconsistent records.`,
   ),
 ];
 
