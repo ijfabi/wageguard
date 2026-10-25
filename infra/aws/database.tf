@@ -70,3 +70,26 @@ resource "aws_secretsmanager_secret_version" "migrate_database_url" {
   secret_id     = aws_secretsmanager_secret.migrate_database_url.id
   secret_string = "${local.database_base}?sslmode=require&sslcert=/etc/ssl/rds/global-bundle.pem&sslaccept=strict"
 }
+# Encrypts two-factor secrets at rest. Generated once and kept in state: replacing it would make
+# every enrolled authenticator stop working, so it must never be rotated without re-enrolment.
+resource "random_bytes" "totp_encryption_key" {
+  length = 32
+}
+
+resource "aws_secretsmanager_secret" "totp_encryption_key" {
+  name                    = "${local.name}/totp-encryption-key"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "totp_encryption_key" {
+  secret_id     = aws_secretsmanager_secret.totp_encryption_key.id
+  secret_string = random_bytes.totp_encryption_key.base64
+}
+
+# SMTP relay URL with its credentials (for example Amazon SES SMTP: smtps://USER:PASS@email-smtp...).
+# Terraform creates only the empty secret, so the credentials never enter Terraform state. Set the
+# value before the first deployment (docs/deployment.md).
+resource "aws_secretsmanager_secret" "smtp_url" {
+  name                    = "${local.name}/smtp-url"
+  recovery_window_in_days = 7
+}

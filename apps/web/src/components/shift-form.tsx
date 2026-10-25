@@ -9,7 +9,10 @@ import { FormField } from "@/components/form-field";
 import { NativeSelect } from "@/components/native-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ShiftFormSchema, type ShiftFormValues } from "@/lib/shift-form";
+import { ShiftFormSchema, ambiguousOffsets, toShiftTimes, type ShiftFormValues } from "@/lib/shift-form";
+
+const formatOffset = (minutes: number) =>
+  `UTC+${Math.floor(minutes / 60)}${minutes % 60 === 0 ? "" : `:${String(minutes % 60).padStart(2, "0")}`}`;
 
 interface ShiftFormProps {
   readonly employments: readonly EmploymentResponse[];
@@ -34,8 +37,41 @@ export function ShiftForm({
   const rests = useFieldArray({ control: form.control, name: "restBreaks" });
   const { errors, isSubmitting } = form.formState;
 
+  // When the clocks go back, an hour happens twice: ask which one was meant.
+  const [employmentId, date, start, end] = form.watch(["employmentId", "date", "start", "end"]);
+  const timeZone = employments.find((e) => e.id === employmentId)?.timeZone;
+  const times =
+    timeZone === undefined || !/^\d{4}-\d{2}-\d{2}$/.test(date) || start === "" || end === ""
+      ? null
+      : toShiftTimes({ ...form.getValues(), startOccurrence: "", endOccurrence: "" });
+  const repeated = [
+    {
+      field: "startOccurrence",
+      label: "start",
+      offsets: times === null ? null : ambiguousOffsets(timeZone ?? "", times.start),
+    },
+    {
+      field: "endOccurrence",
+      label: "finish",
+      offsets: times === null ? null : ambiguousOffsets(timeZone ?? "", times.end),
+    },
+  ] as const;
+
   return (
-    <form className="grid gap-5" onSubmit={(e) => void form.handleSubmit(onSubmit)(e)} noValidate>
+    <form
+      className="grid gap-5"
+      onSubmit={(e) =>
+        void form.handleSubmit(async (values) => {
+          const unanswered = repeated.find((r) => r.offsets !== null && values[r.field] === "");
+          if (unanswered !== undefined) {
+            form.setError(unanswered.field, { message: "Choose which one" });
+            return;
+          }
+          await onSubmit(values);
+        })(e)
+      }
+      noValidate
+    >
       <div className="grid gap-4 md:grid-cols-4">
         <FormField label="Employment" error={errors.employmentId?.message}>
           <NativeSelect disabled={lockEmployment} {...form.register("employmentId")}>
@@ -61,6 +97,30 @@ export function ShiftForm({
           <Input type="time" {...form.register("end")} />
         </FormField>
       </div>
+
+      {repeated.map(({ field, label, offsets }) =>
+        offsets === null ? null : (
+          <div
+            key={field}
+            className="border-warning/30 bg-warning-soft grid gap-3 rounded-lg border p-4 sm:max-w-xl"
+          >
+            <p className="text-warning text-sm">
+              Daylight saving ended that night, so the {label} time happened twice. Which one was it?
+            </p>
+            <FormField label={`Which ${label} time?`} error={errors[field]?.message}>
+              <NativeSelect {...form.register(field)}>
+                <option value="">Choose…</option>
+                <option value="EARLIER">
+                  The first one, before the clocks went back ({formatOffset(offsets[0])})
+                </option>
+                <option value="LATER">
+                  The second one, after the clocks went back ({formatOffset(offsets[1])})
+                </option>
+              </NativeSelect>
+            </FormField>
+          </div>
+        ),
+      )}
 
       <fieldset className="rounded-lg border p-4 [&>legend+*]:clear-both">
         <legend className="float-left mb-3 w-full text-sm font-semibold">Unpaid meal break (optional)</legend>

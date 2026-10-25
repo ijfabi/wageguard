@@ -9,6 +9,7 @@ import { throttlerOptions } from "./common/rate-limit.js";
 import { APP_CONFIG, type AppConfig } from "./config/config.js";
 import { CLOCK, systemClock, type Clock } from "./infrastructure/clock.js";
 import { loggerOptions } from "./infrastructure/logging.js";
+import { MAILER, mailerFor, type Mailer } from "./infrastructure/mailer.js";
 import { PrismaService } from "./infrastructure/prisma.service.js";
 import { AuditsModule } from "./modules/audits/audits.module.js";
 import { DashboardModule } from "./modules/dashboard/dashboard.module.js";
@@ -25,6 +26,7 @@ import { OpenApiController } from "./openapi/openapi.controller.js";
 export interface AppOverrides {
   readonly clock?: Clock;
   readonly passwordHasher?: PasswordHasher;
+  readonly mailer?: Mailer;
 }
 
 /** Process-wide infrastructure, available to every module. */
@@ -36,6 +38,7 @@ class InfrastructureModule {
       { provide: APP_CONFIG, useValue: config },
       { provide: CLOCK, useValue: overrides.clock ?? systemClock },
       { provide: PASSWORD_HASHER, useValue: overrides.passwordHasher ?? argon2Hasher },
+      { provide: MAILER, useValue: overrides.mailer ?? mailerFor(config) },
       PrismaService,
     ];
     return { module: InfrastructureModule, providers, exports: providers };
@@ -50,7 +53,10 @@ export class AppModule {
       imports: [
         InfrastructureModule.forRoot(config, overrides),
         LoggerModule.forRoot(loggerOptions(config)),
-        ThrottlerModule.forRoot(throttlerOptions(config)),
+        ThrottlerModule.forRootAsync({
+          inject: [PrismaService, CLOCK],
+          useFactory: (prisma: PrismaService, clock: Clock) => throttlerOptions(config, prisma, clock),
+        }),
         IdentityModule,
         EmploymentsModule,
         ShiftsModule,

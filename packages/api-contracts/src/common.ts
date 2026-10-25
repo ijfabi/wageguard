@@ -67,6 +67,18 @@ export const ApiErrorCode = {
   FORBIDDEN_ORIGIN: "FORBIDDEN_ORIGIN",
   NOT_FOUND: "NOT_FOUND",
   EMAIL_TAKEN: "EMAIL_TAKEN",
+  /** The password was right but the email address has not been confirmed yet. */
+  EMAIL_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
+  /** An email link that is unknown, expired or already used. */
+  TOKEN_INVALID: "TOKEN_INVALID",
+  /** A wrong or reused two-factor code. */
+  TWO_FACTOR_INVALID: "TWO_FACTOR_INVALID",
+  /** The session is waiting for a two-factor code and can't be used for anything else yet. */
+  TWO_FACTOR_REQUIRED: "TWO_FACTOR_REQUIRED",
+  /** Two-factor is already on, or not on, for an operation that needs the opposite. */
+  TWO_FACTOR_STATE: "TWO_FACTOR_STATE",
+  /** The server has no encryption key for two-factor secrets. */
+  TWO_FACTOR_UNAVAILABLE: "TWO_FACTOR_UNAVAILABLE",
   VERSION_CONFLICT: "VERSION_CONFLICT",
   SHIFT_OVERLAP: "SHIFT_OVERLAP",
   IDEMPOTENCY_KEY_REQUIRED: "IDEMPOTENCY_KEY_REQUIRED",

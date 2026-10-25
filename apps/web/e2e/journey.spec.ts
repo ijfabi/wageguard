@@ -29,7 +29,7 @@ test("a new user audits a payslip end to end and exports the report", async ({ p
   await expect(
     page.getByRole("table", { name: "Pay lines" }).getByRole("cell", { name: "$333.76" }),
   ).toBeVisible(); // Saturday line
-  await expect(page.getByText("MA000004/2026-07-01/r1")).toBeVisible();
+  await expect(page.getByText("MA000004/2026-07-01/r2").first()).toBeVisible();
   await expect(page.getByText(/not been reviewed by a payroll or legal professional/).first()).toBeVisible();
 
   // Full calculation explanation.

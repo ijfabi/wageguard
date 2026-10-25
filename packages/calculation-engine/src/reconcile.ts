@@ -77,13 +77,20 @@ const CENT = new Decimal("0.01");
 export function reconcile(calculation: PayPeriodCalculationResult, payslip: Payslip): ReconciliationResult {
   const itemised = payslip.lines.length > 0;
   const comparisonBasis = itemised ? ComparisonBasis.ITEMISED_TIME_WORKED : ComparisonBasis.GROSS_PAY;
+  // Allowance and leave lines are compared only when WageGuard calculated those categories too.
+  const nonZero = (value: string | undefined) => value !== undefined && !Money.of(value).isZero();
+  const compared = [
+    PayslipLineCategory.HOURS_WORKED,
+    PayslipLineCategory.OVERTIME,
+    ...(nonZero(calculation.totals.allowanceAmount) ? [PayslipLineCategory.ALLOWANCE] : []),
+    ...(nonZero(calculation.totals.leaveAmount) ? [PayslipLineCategory.LEAVE] : []),
+  ];
   const reported = itemised
-    ? payslipCategoryTotal(payslip, PayslipLineCategory.HOURS_WORKED).add(
-        payslipCategoryTotal(payslip, PayslipLineCategory.OVERTIME),
-      )
+    ? Money.sum(compared.map((category) => payslipCategoryTotal(payslip, category)))
     : payslip.grossPay;
+  const expected = itemised ? comparableExpected(calculation, compared) : Money.of(calculation.totals.amount);
   const tolerance = roundingTolerance(calculation);
-  const notes = comparisonNotes(payslip, itemised);
+  const notes = comparisonNotes(payslip, itemised, compared);
 
   const periodMismatch =
     payslip.payPeriod.startDate.toString() !== calculation.payPeriod.startDate ||
@@ -95,7 +102,7 @@ export function reconcile(calculation: PayPeriodCalculationResult, payslip: Pays
     .map(({ calculationIssue, issueIndex }, n) => findingForIssue(calculationIssue, n + 1, issueIndex));
   const period = periodMismatch
     ? mismatchFinding(calculation, payslip, reported)
-    : periodFinding(calculation, reported, tolerance, comparisonBasis);
+    : periodFinding(calculation, reported, expected, tolerance, comparisonBasis);
 
   return {
     status: period.status,
@@ -109,9 +116,26 @@ export function reconcile(calculation: PayPeriodCalculationResult, payslip: Pays
   };
 }
 
+/** The calculated amount for the payslip categories being compared. Engine 1 results have time only. */
+function comparableExpected(
+  calculation: PayPeriodCalculationResult,
+  compared: readonly PayslipLineCategory[],
+): Money {
+  const { totals } = calculation;
+  if (totals.timeAmount === undefined) {
+    return Money.of(totals.amount);
+  }
+  return Money.sum([
+    Money.of(totals.timeAmount),
+    ...(compared.includes(PayslipLineCategory.ALLOWANCE) ? [Money.of(totals.allowanceAmount ?? "0.00")] : []),
+    ...(compared.includes(PayslipLineCategory.LEAVE) ? [Money.of(totals.leaveAmount ?? "0.00")] : []),
+  ]);
+}
+
 function periodFinding(
   calculation: PayPeriodCalculationResult,
   reported: Money,
+  expected: Money,
   tolerance: Money,
   basis: ComparisonBasis,
 ): AuditFinding {
@@ -124,7 +148,6 @@ function periodFinding(
     evidenceRefs: ["/totals", "/lines", "/metadata"],
     reportedAmount: reported.toString(),
   };
-  const expected = Money.of(calculation.totals.amount);
   const difference = reported.subtract(expected);
 
   if (
@@ -162,8 +185,10 @@ function periodFinding(
         ? `WageGuard priced ${calculation.totals.pricedMinutes} of ${calculation.totals.paidMinutes} paid minutes at ${expected.toString()}. ` +
           `Reported pay of ${reported.toString()} is already below that partial minimum, before the remaining ` +
           `${calculation.totals.unpricedMinutes} minutes are counted.`
-        : `WageGuard priced ${calculation.totals.pricedMinutes} of ${calculation.totals.paidMinutes} paid minutes at ${expected.toString()}. ` +
-          `The remaining ${calculation.totals.unpricedMinutes} minutes may attract entitlements WageGuard does not calculate, so the full minimum is unknown.`,
+        : calculation.totals.pricedMinutes === 0
+          ? `None of the ${calculation.totals.paidMinutes} paid minutes could be priced until the items below are resolved, so there is no minimum to compare with yet.`
+          : `WageGuard priced ${calculation.totals.pricedMinutes} of ${calculation.totals.paidMinutes} paid minutes at ${expected.toString()}. ` +
+            `The remaining ${calculation.totals.unpricedMinutes} minutes may attract entitlements WageGuard does not calculate, so the full minimum is unknown.`,
       expectedAmount: expected.toString(),
       difference: difference.toString(),
       evidenceRefs: [...base.evidenceRefs, "/issues"],
@@ -209,7 +234,7 @@ function periodFinding(
     explanation:
       `Reported pay of ${reported.toString()} is ${difference.toString()} above the calculated minimum of ${expected.toString()}. ` +
       (basis === ComparisonBasis.GROSS_PAY
-        ? "Gross pay may include allowances or leave that WageGuard does not calculate."
+        ? "Gross pay may include allowances, leave or other payments that were not entered here."
         : "Paying above the award minimum is lawful; this is not necessarily an error."),
     expectedAmount: expected.toString(),
     difference: difference.toString(),
@@ -284,20 +309,28 @@ function roundingTolerance(calculation: PayPeriodCalculationResult): Money {
   return Money.fromDecimal(CENT.times(Math.max(1, groups)), RoundingMode.HALF_UP);
 }
 
-function comparisonNotes(payslip: Payslip, itemised: boolean): string[] {
+function comparisonNotes(
+  payslip: Payslip,
+  itemised: boolean,
+  compared: readonly PayslipLineCategory[],
+): string[] {
   if (!itemised) {
     return [
       "Compared against gross pay because no itemised lines were entered. Gross pay may include allowances or leave.",
     ];
   }
   const excluded = [PayslipLineCategory.ALLOWANCE, PayslipLineCategory.LEAVE, PayslipLineCategory.OTHER]
+    .filter((category) => !compared.includes(category))
     .map((category) => ({ category, total: payslipCategoryTotal(payslip, category) }))
     .filter(({ total }) => !total.isZero())
     .map(
       ({ category, total }) =>
         `${category} lines totalling ${total.toString()} were excluded from the comparison.`,
     );
-  return ["Compared against payslip lines for time worked (hours worked and overtime).", ...excluded];
+  const names = compared.map((c) => c.toLowerCase().replace("_", " "));
+  const list =
+    names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1) ?? ""}` : (names[0] ?? "");
+  return [`Compared against the payslip's ${list} lines.`, ...excluded];
 }
 
 function firstNextStep(issues: readonly CalculationIssue[], severity: IssueSeverity): string {

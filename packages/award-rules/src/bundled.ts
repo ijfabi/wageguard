@@ -1,9 +1,11 @@
 import ma000004_2026_07_01_r1 from "./data/MA000004/2026-07-01.r1.json" with { type: "json" };
+import ma000004_2026_07_01_r2 from "./data/MA000004/2026-07-01.r2.json" with { type: "json" };
 import publishedFingerprints from "./published-fingerprints.json" with { type: "json" };
 import { AwardRuleRegistry } from "./registry.js";
 
 /** Every rule set shipped with this build, oldest first. Never edit a published file in place. */
-export const BUNDLED_RULE_SETS: readonly unknown[] = [ma000004_2026_07_01_r1];
+/** r2 supersedes r1 for the same period; r1 stays loadable so audits made with it can be explained. */
+export const BUNDLED_RULE_SETS: readonly unknown[] = [ma000004_2026_07_01_r1, ma000004_2026_07_01_r2];
 
 export const PUBLISHED_FINGERPRINTS: Readonly<Record<string, string>> = publishedFingerprints;
 

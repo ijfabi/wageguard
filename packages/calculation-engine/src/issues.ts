@@ -33,11 +33,11 @@ export const ISSUE_DEFINITIONS = {
   },
   CLASSIFICATION_NOT_SUPPORTED: {
     severity: IssueSeverity.UNSUPPORTED,
-    nextStep: "Only Retail Employee Level 1 is currently supported.",
+    nextStep: "This classification is not supported by the rule set in force for this pay period.",
   },
   EMPLOYMENT_TYPE_NOT_SUPPORTED: {
     severity: IssueSeverity.UNSUPPORTED,
-    nextStep: "Only casual and part-time employment are currently supported.",
+    nextStep: "This employment type is not supported by the rule set in force for this pay period.",
   },
   TIME_ZONE_NOT_SUPPORTED: {
     severity: IssueSeverity.UNSUPPORTED,
@@ -121,6 +121,65 @@ export const ISSUE_DEFINITIONS = {
     severity: IssueSeverity.WARNING,
     nextStep:
       "Your employer cannot require more than 5 hours of work without a meal break (cl. 16.5(c)). This does not change the calculated pay.",
+  },
+  DATE_OF_BIRTH_MISSING: {
+    severity: IssueSeverity.INCOMPLETE_DATA,
+    nextStep: "Add your date of birth to the employment profile so junior rates can be applied (cl. 17.2).",
+  },
+  EMPLOYMENT_START_DATE_MISSING: {
+    severity: IssueSeverity.INCOMPLETE_DATA,
+    nextStep:
+      "At 20, the junior rate depends on whether you have worked for this employer for more than 6 months. Add your start date to the employment profile.",
+  },
+  BAKING_PRODUCTION_NOT_SUPPORTED: {
+    severity: IssueSeverity.UNSUPPORTED,
+    nextStep:
+      "Baking production shift rates (cl. 24.2, 25.2) are not calculated. Use the Fair Work Pay Calculator.",
+  },
+  APPRENTICE_NOT_SUPPORTED: {
+    severity: IssueSeverity.UNSUPPORTED,
+    nextStep:
+      "Apprentice and trainee rates (cl. 17.3 to 17.7) are not calculated. Use the Fair Work Pay Calculator.",
+  },
+  AVERAGING_ROSTER_WEEKLY_HOURS: {
+    severity: IssueSeverity.REVIEW_REQUIRED,
+    nextStep:
+      "Your hours average 38 a week over a roster cycle, so this week's extra hours may not be overtime. Check the hours over the whole cycle with your employer.",
+  },
+  OVERTIME_CALCULATED: {
+    severity: IssueSeverity.WARNING,
+    nextStep:
+      "Overtime was calculated from the hours recorded. If you agreed in writing to work extra hours at ordinary rates (cl. 10.6), or to take time off instead (cl. 21.3), your payslip may show it differently.",
+  },
+  MINIMUM_ENGAGEMENT_TOPPED_UP: {
+    severity: IssueSeverity.WARNING,
+    nextStep:
+      "Short shifts must be paid as the minimum engagement (cl. 10.9, 11.2). Check this was included in your pay.",
+  },
+  BREAK_BETWEEN_WORK_DAYS_RATE_APPLIED: {
+    severity: IssueSeverity.WARNING,
+    nextStep:
+      "Work before a 12-hour break (or 10 hours by agreement) is paid at the higher rate in cl. 16.6(b). Check how this shift was paid.",
+  },
+  PUBLIC_HOLIDAY_RATE_APPLIED: {
+    severity: IssueSeverity.WARNING,
+    nextStep:
+      "Work on a public holiday is paid at the public holiday rate. A full-time or part-time employee may have agreed to ordinary pay plus a day off instead (cl. 22.2).",
+  },
+  NO_PAID_REST_BREAK_RECORDED: {
+    severity: IssueSeverity.WARNING,
+    nextStep:
+      "Shifts of 4 hours or more include a paid 10-minute rest break (cl. 16.2). Rest breaks are paid, so this does not change the calculated pay.",
+  },
+  ANNUAL_LEAVE_LOADING_MINIMUM: {
+    severity: IssueSeverity.WARNING,
+    nextStep:
+      "Annual leave loading is the greater of 17.5% and the penalty rates you would have earned (cl. 28.3). WageGuard shows the 17.5% minimum.",
+  },
+  CASUAL_PAID_LEAVE_NOT_APPLICABLE: {
+    severity: IssueSeverity.WARNING,
+    nextStep:
+      "Casual employees are not entitled to paid annual or personal leave; the casual loading is paid instead.",
   },
 } as const satisfies Record<string, IssueDefinition>;
 

@@ -21,7 +21,8 @@ export default function NewShiftPage() {
 
   async function onSubmit(values: ShiftFormValues) {
     try {
-      await create.mutateAsync({ employmentId: values.employmentId, ...toShiftTimes(values) });
+      const timeZone = employments.data?.items.find((e) => e.id === values.employmentId)?.timeZone;
+      await create.mutateAsync({ employmentId: values.employmentId, ...toShiftTimes(values, timeZone) });
       toast.success("Shift saved");
       router.push(`/shifts?employmentId=${values.employmentId}`);
     } catch (error: unknown) {
@@ -62,6 +63,8 @@ export default function NewShiftPage() {
                 mealStart: "",
                 mealEnd: "",
                 restBreaks: [],
+                startOccurrence: "",
+                endOccurrence: "",
               }}
               submitLabel="Save shift"
               onSubmit={onSubmit}

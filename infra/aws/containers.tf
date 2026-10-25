@@ -25,7 +25,7 @@ resource "aws_ecs_cluster" "main" {
   }
 }
 
-# Task execution role: pulls images, writes logs, and reads only the two database URL secrets.
+# Task execution role: pulls images, writes logs, and reads only the application secrets below.
 data "aws_iam_policy_document" "ecs_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -48,8 +48,13 @@ resource "aws_iam_role_policy_attachment" "execution" {
 
 data "aws_iam_policy_document" "read_database_url" {
   statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.database_url.arn, aws_secretsmanager_secret.migrate_database_url.arn]
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_secretsmanager_secret.database_url.arn,
+      aws_secretsmanager_secret.migrate_database_url.arn,
+      aws_secretsmanager_secret.totp_encryption_key.arn,
+      aws_secretsmanager_secret.smtp_url.arn,
+    ]
   }
 }
 
@@ -73,8 +78,12 @@ locals {
     }
   }
 
-  database_secret = [{ name = "DATABASE_URL", valueFrom = aws_secretsmanager_secret.database_url.arn }]
-  migrate_secret  = [{ name = "DATABASE_URL", valueFrom = aws_secretsmanager_secret.migrate_database_url.arn }]
+  api_secrets = [
+    { name = "DATABASE_URL", valueFrom = aws_secretsmanager_secret.database_url.arn },
+    { name = "TOTP_ENCRYPTION_KEY", valueFrom = aws_secretsmanager_secret.totp_encryption_key.arn },
+    { name = "SMTP_URL", valueFrom = aws_secretsmanager_secret.smtp_url.arn },
+  ]
+  migrate_secret = [{ name = "DATABASE_URL", valueFrom = aws_secretsmanager_secret.migrate_database_url.arn }]
 }
 
 resource "aws_ecs_task_definition" "api" {
@@ -96,8 +105,11 @@ resource "aws_ecs_task_definition" "api" {
       { name = "ALLOWED_ORIGINS", value = local.origin },
       # One trusted hop: the load balancer. Rate limits then apply per real client.
       { name = "TRUST_PROXY", value = "1" },
+      # Links in sign-up and password reset emails point at the public site.
+      { name = "APP_BASE_URL", value = local.origin },
+      { name = "MAIL_FROM", value = var.mail_from },
     ]
-    secrets          = local.database_secret
+    secrets          = local.api_secrets
     logConfiguration = local.log_config["api"]
     stopTimeout      = 30
   }])

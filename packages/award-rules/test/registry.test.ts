@@ -44,11 +44,32 @@ describe("bundled registry", () => {
 
   it("resolves by pay period start using first-full-pay-period semantics", () => {
     const registry = bundledRegistry();
+    // r2 supersedes r1 for the same period, so new calculations use r2.
     expect(registry.resolveForPayPeriod("MA000004", LocalDate.parse("2026-07-01"))?.ruleSet.version).toBe(
-      "MA000004/2026-07-01/r1",
+      "MA000004/2026-07-01/r2",
     );
     expect(registry.resolveForPayPeriod("MA000004", LocalDate.parse("2026-06-29"))).toBeNull();
     expect(registry.resolveForPayPeriod("MA000009", LocalDate.parse("2026-07-06"))).toBeNull();
+  });
+
+  it("keeps a superseded revision loadable and says what replaced it", () => {
+    const registry = bundledRegistry();
+    expect(registry.get("MA000004/2026-07-01/r1")?.ruleSet.version).toBe("MA000004/2026-07-01/r1");
+    expect(registry.list().map((s) => [s.version, s.supersededBy])).toEqual([
+      ["MA000004/2026-07-01/r1", "MA000004/2026-07-01/r2"],
+      ["MA000004/2026-07-01/r2", null],
+    ]);
+  });
+
+  it("only lets a revision supersede one loaded for exactly the same period", () => {
+    const [r1, r2] = BUNDLED_RULE_SETS.map((raw) => structuredClone(AwardRuleSetSchema.parse(raw)));
+    const create = (...sets: unknown[]) =>
+      AwardRuleRegistry.create(sets, { publishedFingerprints: {}, allowUnpublished: true });
+    expect(() => create(r2)).toThrow(/must be loaded/);
+    expect(() => create(r1, { ...r2!, effective: { ...r2!.effective, from: "2026-07-02" } })).toThrow(
+      /same effective period/,
+    );
+    expect(() => create(r1, { ...r2!, supersedes: undefined })).toThrow(/overlaps/);
   });
 });
 
@@ -139,7 +160,13 @@ describe("schema and semantic validation", () => {
     expectInvalid((r) => {
       const ot = r.rateRules.find((x) => x.category === "OVERTIME")!;
       ot.status = "ENABLED";
-    }, /reference-only/);
+    }, /which days or public holidays/);
+  });
+
+  it("requires derived rules to record how they were derived", () => {
+    expectInvalid((r) => {
+      r.rateRules[0]!.verification = { status: "DERIVED_FROM_SOURCE", humanReview: "PENDING" };
+    }, /record how they were derived/);
   });
 
   it("rejects missing percentages, reversed windows and duplicate ids", () => {

@@ -77,6 +77,13 @@ function toInputs(specs: readonly ShiftSpec[], periodStart: LocalDate): ShiftInp
 const employmentArb: fc.Arbitrary<EmploymentInput> = fc.oneof(
   fc.constant(casual()),
   fc.constant(partTime({ MON: 480, TUE: 480, WED: 480, THU: 480, FRI: 480, SAT: 480, SUN: 480 })),
+  fc.constant(casual({ employmentType: "FULL_TIME", classificationCode: "RETAIL_EMPLOYEE_LEVEL_5" })),
+  fc.constant(
+    casual({
+      dateOfBirth: "2009-03-15",
+      declarations: { ...casual().declarations, ageBand: "UNDER_21" },
+    }),
+  ),
 );
 
 const JULY = LocalDate.parse("2026-07-06");
@@ -125,7 +132,12 @@ describe("calculation engine invariants (property-based)", () => {
         expect(lineTotal.toString()).toBe(result.totals.amount);
         expect(Money.of(result.totals.amount).isNegative()).toBe(false);
         expect(result.totals.pricedMinutes + result.totals.unpricedMinutes).toBe(result.totals.paidMinutes);
-        expect(result.lines.reduce((sum, l) => sum + l.minutes, 0)).toBe(
+        const timeLines = result.lines.filter((l) => l.category !== "MINIMUM_ENGAGEMENT");
+        const topUps = result.lines.filter((l) => l.category === "MINIMUM_ENGAGEMENT");
+        expect(topUps.reduce((sum, l) => sum + l.minutes, 0)).toBe(
+          result.shifts.reduce((sum, s) => sum + (s.topUpMinutes ?? 0), 0),
+        );
+        expect(timeLines.reduce((sum, l) => sum + l.minutes, 0)).toBe(
           result.shifts
             .filter((s) => s.priced)
             .reduce(
@@ -189,19 +201,20 @@ describe("calculation engine invariants (property-based)", () => {
   });
 
   it("never prices unsupported or unconfirmed employment", () => {
+    const yes = { ...casual().declarations, shiftworker: "YES" as const };
     const unsupported: fc.Arbitrary<EmploymentInput> = fc.oneof(
-      fc.constant(casual({ employmentType: "FULL_TIME" })),
-      fc.constant(casual({ classificationCode: "RETAIL_EMPLOYEE_LEVEL_3" })),
+      fc.constant(casual({ classificationCode: "RETAIL_EMPLOYEE_LEVEL_9" })),
       fc
         .constantFrom("APPLIES", "UNSURE")
         .map((v) => casual({ declarations: { ...casual().declarations, enterpriseAgreement: v } })),
+      // Without a date of birth, a junior (or unconfirmed) age can't be priced.
       fc
         .constantFrom("UNDER_21", "UNSURE")
         .map((v) => casual({ declarations: { ...casual().declarations, ageBand: v } })),
-      fc
-        .constantFrom("YES", "UNSURE")
-        .map((v) => casual({ declarations: { ...casual().declarations, shiftworker: v } })),
+      fc.constant(casual({ declarations: { ...casual().declarations, shiftworker: "UNSURE" } })),
       fc.constant(casual({ declarations: { ...casual().declarations, awardCoverage: "UNSURE" } })),
+      fc.constant(casual({ apprentice: true })),
+      fc.constant(casual({ bakingProduction: true, declarations: yes })),
     );
     fc.assert(
       fc.property(unsupported, shiftsArb, (employment, specs) => {

@@ -10,37 +10,48 @@
  */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.208 0.042 265.755);
+  /* Canvas and surfaces: a cool grey page with white panels, so content reads as distinct layers. */
+  --background: oklch(0.982 0.004 255);
+  --foreground: oklch(0.205 0.035 266);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.205 0.035 266);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.208 0.042 265.755);
-  --primary: oklch(0.38 0.12 262);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.446 0.043 257.281);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.205 0.035 266);
+  --primary: oklch(0.44 0.16 267);
+  --primary-foreground: oklch(0.99 0.004 260);
+  --secondary: oklch(0.962 0.008 260);
+  --secondary-foreground: oklch(0.24 0.04 266);
+  --muted: oklch(0.962 0.008 260);
+  --muted-foreground: oklch(0.47 0.03 262);
+  --accent: oklch(0.955 0.014 265);
+  --accent-foreground: oklch(0.24 0.06 266);
   --destructive: oklch(0.505 0.213 27.518);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.869 0.022 252.894);
-  --ring: oklch(0.38 0.12 262);
+  --border: oklch(0.915 0.01 262);
+  --input: oklch(0.86 0.016 262);
+  --ring: oklch(0.52 0.17 267);
   --chart-1: oklch(0.45 0.13 262);
   --chart-2: oklch(0.55 0.2 27);
   --chart-3: oklch(0.7 0.15 75);
   --chart-4: oklch(0.55 0.04 257);
   --chart-5: oklch(0.6 0.12 300);
   --info: oklch(0.45 0.13 262);
-  --info-soft: oklch(0.95 0.025 262);
+  --info-soft: oklch(0.955 0.022 262);
   --warning: oklch(0.47 0.11 60);
-  --warning-soft: oklch(0.96 0.05 85);
+  --warning-soft: oklch(0.965 0.045 85);
   --danger: oklch(0.5 0.19 27);
-  --danger-soft: oklch(0.96 0.03 27);
+  --danger-soft: oklch(0.965 0.025 27);
   --neutral: oklch(0.42 0.03 257);
-  --neutral-soft: oklch(0.95 0.008 257);
+  --neutral-soft: oklch(0.955 0.008 257);
+  /* Brand accent from the homepage (cyan), for highlights only: never as a result colour. */
+  --brand: oklch(0.7 0.12 215);
+  /* The app's navigation rail shares the homepage's deep navy. */
+  --sidebar: oklch(0.2 0.045 268);
+  --sidebar-foreground: oklch(0.95 0.01 260);
+  --sidebar-muted: oklch(0.76 0.03 262);
+  --sidebar-accent: oklch(0.28 0.055 268);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --shadow-panel: 0 1px 2px oklch(0.25 0.03 265 / 0.05), 0 1px 3px oklch(0.25 0.03 265 / 0.07);
+  --shadow-raised: 0 4px 12px -2px oklch(0.25 0.03 265 / 0.1), 0 2px 4px -2px oklch(0.25 0.03 265 / 0.06);
 }
 
 .dark {
@@ -72,6 +83,14 @@
   --danger-soft: oklch(0.32 0.08 25);
   --neutral: oklch(0.82 0.02 257);
   --neutral-soft: oklch(0.3 0.02 257);
+  --brand: oklch(0.8 0.11 215);
+  --sidebar: oklch(0.14 0.03 266);
+  --sidebar-foreground: oklch(0.95 0.01 260);
+  --sidebar-muted: oklch(0.74 0.03 262);
+  --sidebar-accent: oklch(0.24 0.05 268);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --shadow-panel: 0 0 0 1px oklch(1 0 0 / 4%);
+  --shadow-raised: 0 8px 24px -6px oklch(0 0 0 / 0.5);
 }
 
 /*
@@ -234,8 +253,10 @@ html[data-motion="reduce"] *::after {
 }
 
 @theme inline {
+  /* Inter is self-hosted (layout.tsx), so text measures the same on every platform. */
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -272,6 +293,14 @@ html[data-motion="reduce"] *::after {
   --color-danger-soft: var(--danger-soft);
   --color-neutral: var(--neutral);
   --color-neutral-soft: var(--neutral-soft);
+  --color-brand: var(--brand);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --shadow-panel: var(--shadow-panel);
+  --shadow-raised: var(--shadow-raised);
 }
 
 @layer base {
@@ -280,6 +309,15 @@ html[data-motion="reduce"] *::after {
   }
   body {
     @apply bg-background text-foreground antialiased;
+    /* Inter's open digits and single-storey a read better in dense financial tables. */
+    font-feature-settings:
+      "cv11" 1,
+      "ss01" 1;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
   /* Visible keyboard focus everywhere, not only on shadcn components. */
   :focus-visible {

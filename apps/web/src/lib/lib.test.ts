@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -12,10 +12,24 @@ import {
   applyDisplayPreferences,
   parseDisplayPreferences,
 } from "./display-preferences";
-import { parseDuration, toCreateEmploymentRequest, EMPTY_EMPLOYMENT_FORM } from "./employment-form";
+import { DEFAULT_ALLOWANCES, DEFAULT_WORK_CONDITIONS } from "@wageguard/api-contracts";
+
+import {
+  EMPTY_EMPLOYMENT_FORM,
+  EmploymentFormSchema,
+  parseDuration,
+  toCreateEmploymentRequest,
+  toEmploymentFormValues,
+} from "./employment-form";
 import { PayslipFormSchema } from "./payslip-form";
 import { safeRedirect } from "./safe-redirect";
-import { ShiftFormSchema, fromShiftResponse, toShiftTimes, type ShiftFormValues } from "./shift-form";
+import {
+  ShiftFormSchema,
+  ambiguousOffsets,
+  fromShiftResponse,
+  toShiftTimes,
+  type ShiftFormValues,
+} from "./shift-form";
 import { FINDING_STATUS, TONE_CLASSES } from "./status";
 
 describe("shift form mapping", () => {
@@ -27,6 +41,8 @@ describe("shift form mapping", () => {
     mealStart: "12:00",
     mealEnd: "12:30",
     restBreaks: [{ start: "10:30", end: "10:40" }],
+    startOccurrence: "",
+    endOccurrence: "",
   };
 
   it("maps a same-day shift with breaks", () => {
@@ -75,6 +91,50 @@ describe("shift form mapping", () => {
     };
     expect(fromShiftResponse(stored)).toEqual(base);
   });
+
+  it("finds the repeated hour when daylight saving ends, and only then", () => {
+    // Sydney's clocks go back from 3:00 to 2:00 on Sunday 5 April 2026.
+    expect(ambiguousOffsets("Australia/Sydney", "2026-04-05T02:30")).toEqual([660, 600]);
+    expect(ambiguousOffsets("Australia/Sydney", "2026-04-05T03:30")).toBeNull();
+    expect(ambiguousOffsets("Australia/Sydney", "2026-07-06T02:30")).toBeNull();
+    // Adelaide is half an hour behind Sydney; Brisbane has no daylight saving.
+    expect(ambiguousOffsets("Australia/Adelaide", "2026-04-05T02:15")).toEqual([630, 570]);
+    expect(ambiguousOffsets("Australia/Brisbane", "2026-04-05T02:30")).toBeNull();
+  });
+
+  it("sends the chosen offset for an ambiguous time, and none otherwise", () => {
+    const overnight: ShiftFormValues = {
+      ...base,
+      date: "2026-04-04",
+      start: "22:00",
+      end: "02:30",
+      mealStart: "",
+      mealEnd: "",
+      restBreaks: [],
+      endOccurrence: "LATER",
+    };
+    expect(toShiftTimes(overnight, "Australia/Sydney")).toMatchObject({
+      end: "2026-04-05T02:30",
+      endUtcOffsetMinutes: 600,
+    });
+    expect(toShiftTimes(overnight, "Australia/Sydney")).not.toHaveProperty("startUtcOffsetMinutes");
+    expect(
+      toShiftTimes({ ...overnight, endOccurrence: "EARLIER" }, "Australia/Sydney").endUtcOffsetMinutes,
+    ).toBe(660);
+    const stored = {
+      id: "s",
+      employmentId: base.employmentId,
+      ...toShiftTimes(overnight, "Australia/Sydney"),
+      startUtcOffsetMinutes: null,
+      endUtcOffsetMinutes: 600,
+      startAt: "",
+      endAt: "",
+      version: 1,
+      createdAt: "",
+      updatedAt: "",
+    };
+    expect(fromShiftResponse(stored, "Australia/Sydney").endOccurrence).toBe("LATER");
+  });
 });
 
 describe("employment form mapping", () => {
@@ -96,6 +156,66 @@ describe("employment form mapping", () => {
       guaranteed: { ...EMPTY_EMPLOYMENT_FORM.guaranteed, MON: "5:30", SAT: "8:00" },
     });
     expect(partTime.partTimeGuaranteedMinutes).toEqual({ MON: 330, SAT: 480 });
+  });
+
+  it("sends the state, dates and conditions, and round-trips a saved employment", () => {
+    const request = toCreateEmploymentRequest({
+      ...EMPTY_EMPLOYMENT_FORM,
+      label: "Newsagency",
+      state: "VIC",
+      timeZone: "Australia/Melbourne",
+      ageBand: "UNDER_21",
+      dateOfBirth: "2009-03-14",
+      spanException: "NEWSAGENCY",
+      schoolStudent: true,
+      laundersSpecialClothing: true,
+    });
+    expect(request).toMatchObject({
+      state: "VIC",
+      dateOfBirth: "2009-03-14",
+      conditions: { spanException: "NEWSAGENCY", schoolStudent: true },
+      allowances: { laundersSpecialClothing: true, brokenHill: false },
+    });
+    expect(request).not.toHaveProperty("employmentStartDate");
+    // A school student who isn't casual is never sent as one.
+    expect(
+      toCreateEmploymentRequest({
+        ...EMPTY_EMPLOYMENT_FORM,
+        label: "x",
+        employmentType: "PART_TIME",
+        schoolStudent: true,
+      }).conditions?.schoolStudent,
+    ).toBe(false);
+
+    const saved = {
+      id: "e",
+      ...request,
+      partTimeGuaranteedMinutes: null,
+      dateOfBirth: "2009-03-14",
+      employmentStartDate: null,
+      conditions: request.conditions ?? DEFAULT_WORK_CONDITIONS,
+      allowances: request.allowances ?? DEFAULT_ALLOWANCES,
+      createdAt: "",
+      updatedAt: "",
+    } as const;
+    expect(toEmploymentFormValues(saved)).toMatchObject({
+      label: "Newsagency",
+      state: "VIC",
+      dateOfBirth: "2009-03-14",
+      employmentStartDate: "",
+      spanException: "NEWSAGENCY",
+      laundersSpecialClothing: true,
+    });
+  });
+
+  it("needs a date of birth for junior rates", () => {
+    const result = EmploymentFormSchema.safeParse({
+      ...EMPTY_EMPLOYMENT_FORM,
+      label: "x",
+      ageBand: "UNDER_21",
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["dateOfBirth"]);
   });
 });
 
@@ -234,29 +354,35 @@ describe("status presentation", () => {
   });
 });
 
-describe("homepage award quotes", () => {
-  const award = readFileSync(
-    new URL(
-      "../../../../docs/award-sources/MA000004/MA000004-consolidated-retrieved-2026-10-22.txt",
-      import.meta.url,
-    ),
-    "utf8",
-  );
-  // The retrieved text wraps lines and pads clause numbers with spaces; compare on single spaces.
-  const flatten = (text: string) => text.replace(/\s+/g, " ").trim();
+/**
+ * The retrieved award is Commonwealth copyright, so it is kept locally and not committed. On a clean
+ * checkout (CI) this check is skipped; packages/award-rules runs the same comparison for rule sources.
+ */
+const AWARD_TEXT = new URL(
+  "../../../../docs/award-sources/MA000004/MA000004-consolidated-retrieved-2026-10-22.txt",
+  import.meta.url,
+);
 
-  it("quotes the award word for word, with the clause each sentence comes from", () => {
-    const { quotes, awardTitle } = homepageQuotes();
-    expect(awardTitle).toBe("General Retail Industry Award 2020");
-    expect(quotes.length).toBeGreaterThanOrEqual(4);
-    const source = flatten(award);
-    for (const quote of quotes) {
-      const at = source.indexOf(flatten(quote.text));
-      expect(at, `clause ${quote.clause} is not word for word`).toBeGreaterThan(-1);
-      // "16.6(a)" sits under the "16.6" heading, so look for the clause number just before the text.
-      const clauseNumber = quote.clause.replace(/\(.*$/, "");
-      expect(source.slice(Math.max(0, at - 300), at).includes(`${clauseNumber} `), quote.clause).toBe(true);
-    }
-    expect(new Set(quotes.map((q) => q.clause)).size).toBe(quotes.length);
-  });
-});
+describe.skipIf(!existsSync(AWARD_TEXT))(
+  "homepage award quotes (against the locally retrieved award)",
+  () => {
+    const award = readFileSync(AWARD_TEXT, "utf8");
+    // The retrieved text wraps lines and pads clause numbers with spaces; compare on single spaces.
+    const flatten = (text: string) => text.replace(/\s+/g, " ").trim();
+
+    it("quotes the award word for word, with the clause each sentence comes from", () => {
+      const { quotes, awardTitle } = homepageQuotes();
+      expect(awardTitle).toBe("General Retail Industry Award 2020");
+      expect(quotes.length).toBeGreaterThanOrEqual(4);
+      const source = flatten(award);
+      for (const quote of quotes) {
+        const at = source.indexOf(flatten(quote.text));
+        expect(at, `clause ${quote.clause} is not word for word`).toBeGreaterThan(-1);
+        // "16.6(a)" sits under the "16.6" heading, so look for the clause number just before the text.
+        const clauseNumber = quote.clause.replace(/\(.*$/, "");
+        expect(source.slice(Math.max(0, at - 300), at).includes(`${clauseNumber} `), quote.clause).toBe(true);
+      }
+      expect(new Set(quotes.map((q) => q.clause)).size).toBe(quotes.length);
+    });
+  },
+);

@@ -11,9 +11,10 @@
 /* global __ENV -- provided by the k6 runtime */
 import exec from "k6/execution";
 import http from "k6/http";
-import { check } from "k6";
+import { check, sleep } from "k6";
 
 const BASE = __ENV.API_URL || "http://api:3001/api/v1";
+const MAILPIT = __ENV.MAILPIT_URL || "http://mailpit:8025";
 const ORIGIN = "http://localhost:3000";
 const LEVELS = (__ENV.LEVELS || "1,10,25,50").split(",").map(Number);
 const WARMUP_SECONDS = Number(__ENV.WARMUP_SECONDS || 10);
@@ -89,19 +90,46 @@ function mustSucceed(res, label) {
   return res;
 }
 
+/** The confirmation link from the sign-up email, read from Mailpit (the stack's mail catcher). */
+function emailedToken(email) {
+  for (let attempt = 0; attempt < 75; attempt += 1) {
+    const search = http.get(`${MAILPIT}/api/v1/search?limit=1&query=${encodeURIComponent(`to:"${email}"`)}`, {
+      tags: { name: "setup" },
+    });
+    const messages = search.status === 200 ? search.json("messages") : [];
+    if (messages.length > 0) {
+      const text = http
+        .get(`${MAILPIT}/api/v1/message/${messages[0].ID}`, { tags: { name: "setup" } })
+        .json("Text");
+      const match = /\/verify-email#token=([A-Za-z0-9_-]{43})/.exec(text);
+      if (match) {
+        return match[1];
+      }
+    }
+    sleep(0.2);
+  }
+  throw new Error(`setup: no confirmation email for ${email}`);
+}
+
 /** One synthetic account per virtual user: employment, a fortnight of shifts, a payslip, an audit. */
 export function setup() {
   const run = Date.now();
   const users = [];
   for (let u = 0; u < USERS; u += 1) {
     const email = `bench-${run}-${u}@bench.example`;
-    const reg = mustSucceed(
+    mustSucceed(
       http.post(`${BASE}/auth/register`, JSON.stringify({ email, password: PASSWORD }), headers(""), {
         tags: { name: "setup" },
       }),
       "register",
     );
-    const setCookie = reg.headers["Set-Cookie"] || "";
+    const verified = mustSucceed(
+      http.post(`${BASE}/auth/verify-email`, JSON.stringify({ token: emailedToken(email) }), headers(""), {
+        tags: { name: "setup" },
+      }),
+      "verify email",
+    );
+    const setCookie = verified.headers["Set-Cookie"] || "";
     const cookie = setCookie.split(";")[0];
     const employment = mustSucceed(
       http.post(
@@ -111,6 +139,7 @@ export function setup() {
           awardCode: "MA000004",
           classificationCode: "RETAIL_EMPLOYEE_LEVEL_1",
           employmentType: "CASUAL",
+          state: "NSW",
           timeZone: "Australia/Sydney",
           declarations: {
             awardCoverage: "CONFIRMED",

@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
-import { G009_CSV, addCasualEmployment, enterPayslip, importCsv, signUp } from "./helpers";
+import { G009_CSV, addCasualEmployment, enterPayslip, importCsv, signOut, signUp } from "./helpers";
 
 test.describe("access control", () => {
   test("signed-out visitors are sent to sign-in and returned afterwards", async ({ page }) => {
@@ -11,8 +11,7 @@ test.describe("access control", () => {
 
   test("the post-sign-in redirect cannot point to another site", async ({ page }) => {
     await signUp(page);
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page).toHaveURL(/\/sign-in$/);
+    await signOut(page);
     await page.goto("/sign-in?next=//evil.example/phish");
     await page.getByLabel("Email").fill("nobody@example.test");
     await page.getByLabel("Password").fill("wrong-password-123");

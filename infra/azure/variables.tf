@@ -67,3 +67,8 @@ variable "log_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "mail_from" {
+  description = "Sender for account emails, for example \"WageGuard <no-reply@example.com>\". The domain must be verified with the SMTP provider."
+  type        = string
+}

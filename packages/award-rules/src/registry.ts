@@ -40,6 +40,8 @@ export interface RuleSetSummary {
   readonly sourceUrl: string;
   readonly enabledRuleCount: number;
   readonly disabledRuleCount: number;
+  /** The revision that replaced this one, if any. Superseded rule sets stay loadable for old audits. */
+  readonly supersededBy: string | null;
 }
 
 export interface RegistryOptions {
@@ -75,7 +77,7 @@ export class AwardRuleRegistry {
   resolveForPayPeriod(awardCode: string, payPeriodStart: LocalDate): RegisteredRuleSet | null {
     for (const entry of this.byVersion.values()) {
       const { ruleSet } = entry;
-      if (ruleSet.awardCode !== awardCode) {
+      if (ruleSet.awardCode !== awardCode || this.supersededBy(ruleSet.version) !== null) {
         continue;
       }
       const from = LocalDate.parse(ruleSet.effective.from);
@@ -100,8 +102,18 @@ export class AwardRuleRegistry {
         sourceUrl: ruleSet.source.url,
         enabledRuleCount: ruleSet.rateRules.filter((r) => r.status === "ENABLED").length,
         disabledRuleCount: ruleSet.rateRules.filter((r) => r.status === "DISABLED").length,
+        supersededBy: this.supersededBy(ruleSet.version),
       }))
       .sort((a, b) => (a.version < b.version ? -1 : a.version > b.version ? 1 : 0));
+  }
+
+  private supersededBy(version: string): string | null {
+    for (const { ruleSet } of this.byVersion.values()) {
+      if (ruleSet.supersedes === version) {
+        return ruleSet.version;
+      }
+    }
+    return null;
   }
 }
 
@@ -179,7 +191,14 @@ function ambiguousWindowProblems(rules: readonly RateRule[]): string[] {
       const sharesType = a.appliesTo.employmentTypes.some((t) => b.appliesTo.employmentTypes.includes(t));
       const sharesClass = a.appliesTo.classifications.some((c) => b.appliesTo.classifications.includes(c));
       const overlaps = a.when.from < b.when.to && b.when.from < a.when.to;
-      if (sharesDay && sharesType && sharesClass && overlaps) {
+      // Rules limited to different cl. 15.2 exceptions never apply to the same employment.
+      const aExceptions = a.appliesTo.spanExceptions;
+      const bExceptions = b.appliesTo.spanExceptions;
+      const sharesException =
+        aExceptions === undefined ||
+        bExceptions === undefined ||
+        aExceptions.some((e) => bExceptions.includes(e));
+      if (sharesDay && sharesType && sharesClass && overlaps && sharesException) {
         problems.push(`rules ${a.id} and ${b.id} overlap with equal precedence ${a.precedence}`);
       }
     }
@@ -204,9 +223,25 @@ function assertNonOverlappingEffectivePeriods(entries: readonly RegisteredRuleSe
   }
   for (const sets of byAward.values()) {
     const sorted = [...sets].sort((a, b) => (a.effective.from < b.effective.from ? -1 : 1));
-    for (let i = 1; i < sorted.length; i += 1) {
-      const previous = sorted[i - 1] as AwardRuleSet;
-      const current = sorted[i] as AwardRuleSet;
+    const live = sorted.filter((s) => !sets.some((other) => other.supersedes === s.version));
+    for (const set of sets) {
+      if (set.supersedes === undefined) {
+        continue;
+      }
+      const replaced = sets.find((s) => s.version === set.supersedes);
+      if (
+        replaced === undefined ||
+        replaced.effective.from !== set.effective.from ||
+        replaced.effective.until !== set.effective.until
+      ) {
+        throw new RuleSetValidationError(set.version, [
+          `supersedes ${set.supersedes}, which must be loaded and cover exactly the same effective period`,
+        ]);
+      }
+    }
+    for (let i = 1; i < live.length; i += 1) {
+      const previous = live[i - 1] as AwardRuleSet;
+      const current = live[i] as AwardRuleSet;
       if (previous.effective.until === null || previous.effective.until > current.effective.from) {
         throw new RuleSetValidationError(current.version, [
           `effective period overlaps ${previous.version}; close the earlier version with an 'until' date`,

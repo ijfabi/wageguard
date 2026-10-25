@@ -96,7 +96,22 @@ const ISSUE_TITLES: Readonly<Record<string, string>> = {
   CASUAL_WEEKLY_HOURS_EXCEEDED: "More than 38 hours in a week",
   INSUFFICIENT_BREAK_BETWEEN_WORK_DAYS: "Less than 12 hours between work days",
   NO_MEAL_BREAK_AFTER_FIVE_HOURS: "Long stretch without a meal break",
+  DATE_OF_BIRTH_MISSING: "Date of birth needed for junior rates",
+  EMPLOYMENT_START_DATE_MISSING: "Start date needed for the age-20 rate",
+  BAKING_PRODUCTION_NOT_SUPPORTED: "Baking production not supported",
+  APPRENTICE_NOT_SUPPORTED: "Apprentice rates not supported",
+  AVERAGING_ROSTER_WEEKLY_HOURS: "Over 38 hours under an averaging roster",
+  OVERTIME_CALCULATED: "Overtime calculated",
+  MINIMUM_ENGAGEMENT_TOPPED_UP: "Short shift topped up to the minimum",
+  BREAK_BETWEEN_WORK_DAYS_RATE_APPLIED: "Short break between work days paid at 200%",
+  PUBLIC_HOLIDAY_RATE_APPLIED: "Public holiday rate applied",
+  NO_PAID_REST_BREAK_RECORDED: "No paid rest break recorded",
+  ANNUAL_LEAVE_LOADING_MINIMUM: "Annual leave loading at the 17.5% minimum",
+  CASUAL_PAID_LEAVE_NOT_APPLICABLE: "Casuals don't get paid leave",
 };
+
+/** Codes with a written title, so a test can check every engine code has one. */
+export const TITLED_ISSUE_CODES: readonly string[] = Object.keys(ISSUE_TITLES);
 
 export function issueTitle(code: string): string {
   return (

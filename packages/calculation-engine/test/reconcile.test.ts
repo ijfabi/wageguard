@@ -10,7 +10,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { ComparisonBasis, FindingStatus, reconcile } from "../src/index.js";
-import { FORTNIGHT, calc, casual, input, shift } from "./helpers.js";
+import { FORTNIGHT, calc, casual, input, partTime, r1Context, shift } from "./helpers.js";
 
 const period = PayPeriod.of(LocalDate.parse(FORTNIGHT.startDate), LocalDate.parse(FORTNIGHT.endDate));
 const grossOnly = (gross: string): Payslip =>
@@ -35,12 +35,13 @@ const complete = calc(
     shift("sat", "2026-07-11T08:00", "2026-07-11T16:30", ["2026-07-11T12:00", "2026-07-11T12:30"]),
   ]),
 );
-// Monday priced at 260.70; Tuesday 19:00-22:00 needs review.
+// Under rule set r1: Monday priced at 260.70; Tuesday 19:00-22:00 needs review (r1 doesn't price overtime).
 const partial = calc(
   input(casual(), [
     shift("mon", "2026-07-06T09:00", "2026-07-06T17:00", ["2026-07-06T12:00", "2026-07-06T12:30"]),
     shift("tue", "2026-07-07T19:00", "2026-07-07T22:00"),
   ]),
+  r1Context,
 );
 
 describe("reconcile: complete calculations", () => {
@@ -80,7 +81,9 @@ describe("reconcile: complete calculations", () => {
   });
 
   it("explains an apparent overpayment differently for gross-only and itemised payslips", () => {
-    expect(reconcile(complete, grossOnly("650.00")).findings[0]?.explanation).toMatch(/allowances or leave/);
+    expect(reconcile(complete, grossOnly("650.00")).findings[0]?.explanation).toMatch(
+      /allowances, leave or other payments/,
+    );
     const result = reconcile(complete, itemised([PayslipLineCategory.HOURS_WORKED, "650.00"]));
     expect(result.status).toBe(FindingStatus.POTENTIAL_OVERPAYMENT);
     expect(result.findings[0]?.explanation).toMatch(/lawful/);
@@ -98,7 +101,7 @@ describe("reconcile: complete calculations", () => {
     expect(result.status).toBe(FindingStatus.MATCHED);
     expect(result.comparisonBasis).toBe(ComparisonBasis.ITEMISED_TIME_WORKED);
     expect(result.notes).toEqual([
-      "Compared against payslip lines for time worked (hours worked and overtime).",
+      "Compared against the payslip's hours worked and overtime lines.",
       "ALLOWANCE lines totalling 20.00 were excluded from the comparison.",
       "LEAVE lines totalling 50.00 were excluded from the comparison.",
     ]);
@@ -136,7 +139,9 @@ describe("reconcile: partial, unsupported and incomplete calculations", () => {
 
   it("produces no expected amount for unsupported scenarios", () => {
     const unsupported = calc(
-      input(casual({ employmentType: "FULL_TIME" }), [shift("s1", "2026-07-06T09:00", "2026-07-06T17:00")]),
+      input(casual({ classificationCode: "RETAIL_EMPLOYEE_LEVEL_9" }), [
+        shift("s1", "2026-07-06T09:00", "2026-07-06T17:00"),
+      ]),
     );
     const result = reconcile(unsupported, grossOnly("100.00"));
     expect(result).toMatchObject({
@@ -144,7 +149,7 @@ describe("reconcile: partial, unsupported and incomplete calculations", () => {
       expectedAmount: null,
       difference: null,
     });
-    expect(result.findings[0]?.nextStep).toMatch(/casual and part-time/);
+    expect(result.findings[0]?.nextStep).toMatch(/classification is not supported/);
     expect(result.findings[1]).toMatchObject({
       scope: "PAY_PERIOD",
       status: FindingStatus.UNSUPPORTED_SCENARIO,
@@ -172,7 +177,34 @@ describe("reconcile: partial, unsupported and incomplete calculations", () => {
 
   it("ignores warnings when creating findings", () => {
     const withWarning = calc(input(casual(), [shift("s1", "2026-07-06T09:00", "2026-07-06T17:00")]));
-    expect(withWarning.issues.map((i) => i.severity)).toEqual(["WARNING"]);
+    expect(withWarning.issues.length).toBeGreaterThan(0);
+    expect(withWarning.issues.every((i) => i.severity === "WARNING")).toBe(true);
     expect(reconcile(withWarning, grossOnly("278.08")).findings).toHaveLength(1);
+  });
+
+  it("compares allowance and leave lines when WageGuard calculated them too", () => {
+    // Part-time Tuesday 4h x 27.81 = 111.24; annual leave 211.36 + loading 37.01 = 248.37. Expected 359.61.
+    const withLeave = calc(
+      input(partTime({ TUE: 240 }), [shift("s1", "2026-07-07T09:00", "2026-07-07T13:00")], {
+        leave: [{ kind: "ANNUAL", minutes: 456 }],
+      }),
+    );
+    const result = reconcile(
+      withLeave,
+      itemised(
+        [PayslipLineCategory.HOURS_WORKED, "111.24"],
+        [PayslipLineCategory.LEAVE, "248.37"],
+        [PayslipLineCategory.ALLOWANCE, "5.00"],
+      ),
+    );
+    expect(result).toMatchObject({
+      status: FindingStatus.MATCHED,
+      expectedAmount: "359.61",
+      reportedAmount: "359.61",
+    });
+    expect(result.notes).toEqual([
+      "Compared against the payslip's hours worked, overtime and leave lines.",
+      "ALLOWANCE lines totalling 5.00 were excluded from the comparison.",
+    ]);
   });
 });

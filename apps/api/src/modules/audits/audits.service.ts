@@ -13,14 +13,16 @@ import {
   type PayPeriodCalculationInput,
   type RuleSetResolver,
 } from "@wageguard/calculation-engine";
+import { publicHolidaysBetween } from "@wageguard/award-rules";
 import { contentHash } from "@wageguard/domain";
 
 import { ApiError } from "../../common/api-error.js";
 import { decodeCursor, toPage } from "../../common/pagination.js";
+import type { Shift, ShiftBreak } from "../../generated/prisma/client.js";
 import { CLOCK, type Clock } from "../../infrastructure/clock.js";
 import { PrismaService } from "../../infrastructure/prisma.service.js";
 import { telemetry } from "../../infrastructure/telemetry.js";
-import { EmploymentsService } from "../employments/employments.service.js";
+import { EmploymentsService, toEngineEmployment } from "../employments/employments.service.js";
 import { AuditEventsService } from "../identity/audit-events.service.js";
 import { PayslipsService, toDomainPayslip, toPayslipResponse } from "../payslips/payslips.service.js";
 import { localDateColumn } from "../shifts/shift-times.js";
@@ -40,6 +42,28 @@ import {
 } from "./audit.repository.js";
 
 export const RULE_SET_RESOLVER = Symbol("RULE_SET_RESOLVER");
+
+/** Days before the pay period whose shifts count towards weekly limits and breaks (never priced). */
+const CONTEXT_DAYS = 13;
+
+type ShiftRow = Shift & { breaks: ShiftBreak[] };
+
+function toEngineShift(s: ShiftRow): PayPeriodCalculationInput["shifts"][number] {
+  return {
+    id: s.id,
+    start: s.startLocal,
+    end: s.endLocal,
+    ...(s.startUtcOffsetMinutes === null ? {} : { startUtcOffsetMinutes: s.startUtcOffsetMinutes }),
+    ...(s.endUtcOffsetMinutes === null ? {} : { endUtcOffsetMinutes: s.endUtcOffsetMinutes }),
+    breaks: s.breaks.map((b) => ({
+      kind: b.kind,
+      start: b.startLocal,
+      end: b.endLocal,
+      ...(b.startUtcOffsetMinutes === null ? {} : { startUtcOffsetMinutes: b.startUtcOffsetMinutes }),
+      ...(b.endUtcOffsetMinutes === null ? {} : { endUtcOffsetMinutes: b.endUtcOffsetMinutes }),
+    })),
+  };
+}
 
 /** Another user's audit and a missing one are indistinguishable: both are 404. */
 function owned<T>(row: T | null): T {
@@ -83,9 +107,24 @@ export class AuditsService {
       employmentId: request.employmentId,
       payslipId: request.payslipId,
       declaredPublicHolidays: [...(request.declaredPublicHolidays ?? [])].sort(),
+      // Older requests had only the fields above; their hash must not change, so the rest is added
+      // only when present.
+      ...(request.publicHolidays === undefined
+        ? {}
+        : { publicHolidays: [...request.publicHolidays].sort((a, b) => a.date.localeCompare(b.date)) }),
+      ...(request.guaranteedHoursVariations === undefined
+        ? {}
+        : {
+            guaranteedHoursVariations: [...request.guaranteedHoursVariations].sort((a, b) =>
+              a.date.localeCompare(b.date),
+            ),
+          }),
+      ...(request.allowanceClaims === undefined ? {} : { allowanceClaims: request.allowanceClaims }),
+      ...(request.leave === undefined ? {} : { leave: request.leave }),
     });
+    const now = new Date(this.clock.now().epochMs);
 
-    const existing = await this.audits.findByIdempotencyKey(userId, idempotencyKey);
+    const existing = await this.audits.findByIdempotencyKey(userId, idempotencyKey, now);
     if (existing !== null) {
       return this.replay(existing, requestHash);
     }
@@ -102,59 +141,51 @@ export class AuditsService {
       ]);
     }
     const domainPayslip = toDomainPayslip(payslip);
-    const shifts = await this.prisma.shift.findMany({
+    const periodStart = domainPayslip.payPeriod.startDate;
+    const shiftRows = await this.prisma.shift.findMany({
       where: {
         userId,
         employmentId: employment.id,
-        startDate: { gte: payslip.periodStart, lte: payslip.periodEnd },
+        // Shifts in the 13 days before the period count towards weekly hours and the 12-hour break.
+        startDate: {
+          gte: localDateColumn(periodStart.plusDays(-CONTEXT_DAYS).toString()),
+          lte: payslip.periodEnd,
+        },
       },
       include: { breaks: { orderBy: { position: "asc" } } },
       orderBy: [{ startAt: "asc" }, { id: "asc" }],
     });
+    const inPeriod = (s: (typeof shiftRows)[number]) => s.startDate >= payslip.periodStart;
+    const shifts = shiftRows.filter(inPeriod);
+    const context = shiftRows.filter((s) => !inPeriod(s));
+
+    const period = {
+      startDate: periodStart.toString(),
+      endDate: domainPayslip.payPeriod.endDate.toString(),
+    };
+    const publicHolidays =
+      request.publicHolidays ??
+      (employment.state === null
+        ? []
+        : publicHolidaysBetween(employment.state, period.startDate, period.endDate)
+            .filter((h) => h.scope === "STATEWIDE")
+            .map((h) => ({ date: h.date, name: h.name, ...(h.from === undefined ? {} : { from: h.from }) })));
 
     const input: PayPeriodCalculationInput = {
-      employment: {
-        employmentId: employment.id,
-        awardCode: employment.awardCode,
-        classificationCode: employment.classificationCode,
-        employmentType: employment.employmentType,
-        timeZone: employment.timeZone,
-        declarations: {
-          awardCoverage: employment.awardCoverage,
-          enterpriseAgreement: employment.enterpriseAgreement,
-          ageBand: employment.ageBand,
-          shiftworker: employment.shiftworker,
-        },
-        ...(employment.partTimeGuaranteedMinutes === null
-          ? {}
-          : {
-              partTimeGuaranteedMinutes:
-                employment.partTimeGuaranteedMinutes as PayPeriodCalculationInput["employment"]["partTimeGuaranteedMinutes"],
-            }),
-      },
-      payPeriod: {
-        startDate: domainPayslip.payPeriod.startDate.toString(),
-        endDate: domainPayslip.payPeriod.endDate.toString(),
-      },
-      shifts: shifts.map((s) => ({
-        id: s.id,
-        start: s.startLocal,
-        end: s.endLocal,
-        ...(s.startUtcOffsetMinutes === null ? {} : { startUtcOffsetMinutes: s.startUtcOffsetMinutes }),
-        ...(s.endUtcOffsetMinutes === null ? {} : { endUtcOffsetMinutes: s.endUtcOffsetMinutes }),
-        breaks: s.breaks.map((b) => ({
-          kind: b.kind,
-          start: b.startLocal,
-          end: b.endLocal,
-          ...(b.startUtcOffsetMinutes === null ? {} : { startUtcOffsetMinutes: b.startUtcOffsetMinutes }),
-          ...(b.endUtcOffsetMinutes === null ? {} : { endUtcOffsetMinutes: b.endUtcOffsetMinutes }),
-        })),
-      })),
+      employment: toEngineEmployment(employment),
+      payPeriod: period,
+      shifts: shifts.map(toEngineShift),
+      ...(context.length === 0 ? {} : { contextShifts: context.map(toEngineShift) }),
       ...(request.declaredPublicHolidays === undefined
         ? {}
         : { declaredPublicHolidays: request.declaredPublicHolidays }),
+      ...(publicHolidays.length === 0 ? {} : { publicHolidays }),
+      ...(request.guaranteedHoursVariations === undefined
+        ? {}
+        : { guaranteedHoursVariations: request.guaranteedHoursVariations }),
+      ...(request.allowanceClaims === undefined ? {} : { allowanceClaims: request.allowanceClaims }),
+      ...(request.leave === undefined ? {} : { leave: request.leave }),
     };
-
     const calculatedAt = this.clock.now();
     const { calculation, reconciliation } = telemetry.measureCalculation(
       { "wageguard.shift_count": shifts.length },
@@ -170,45 +201,48 @@ export class AuditsService {
     );
 
     try {
-      const audit = await this.audits.insert({
-        userId,
-        employmentId: employment.id,
-        payslipId: payslip.id,
-        idempotencyKey,
-        requestHash,
-        status: "COMPLETED",
-        periodStart: localDateColumn(calculation.payPeriod.startDate),
-        periodEnd: localDateColumn(calculation.payPeriod.endDate),
-        findingStatus: reconciliation.status,
-        calculationStatus: calculation.status,
-        expectedAmount: reconciliation.expectedAmount,
-        reportedAmount: reconciliation.reportedAmount,
-        difference: reconciliation.difference,
-        shiftCount: shifts.length,
-        ruleSetVersion: calculation.metadata.ruleSetVersion,
-        ruleSetFingerprint: calculation.metadata.ruleSetFingerprint,
-        engineVersion: calculation.metadata.engineVersion,
-        inputHash: calculation.metadata.inputHash,
-        inputSnapshot: toJson(input),
-        payslipSnapshot: toJson(toPayslipResponse(payslip)),
-        result: toJson(calculation),
-        reconciliation: toJson(reconciliation),
-        calculatedAt: new Date(calculatedAt.epochMs),
-        findings: reconciliation.findings.map((f, position) => ({
-          position,
-          code: f.title.slice(0, 100),
-          scope: f.scope,
-          status: f.status,
-          explanation: f.explanation,
-          expectedAmount: f.expectedAmount,
-          reportedAmount: f.reportedAmount,
-          difference: f.difference,
-          shiftIds: [...f.shiftIds],
-          clauseRefs: [...f.clauseRefs],
-          evidenceRefs: [...f.evidenceRefs],
-          nextStep: f.nextStep,
-        })),
-      });
+      const audit = await this.audits.insert(
+        {
+          userId,
+          employmentId: employment.id,
+          payslipId: payslip.id,
+          idempotencyKey,
+          requestHash,
+          status: "COMPLETED",
+          periodStart: localDateColumn(calculation.payPeriod.startDate),
+          periodEnd: localDateColumn(calculation.payPeriod.endDate),
+          findingStatus: reconciliation.status,
+          calculationStatus: calculation.status,
+          expectedAmount: reconciliation.expectedAmount,
+          reportedAmount: reconciliation.reportedAmount,
+          difference: reconciliation.difference,
+          shiftCount: shifts.length,
+          ruleSetVersion: calculation.metadata.ruleSetVersion,
+          ruleSetFingerprint: calculation.metadata.ruleSetFingerprint,
+          engineVersion: calculation.metadata.engineVersion,
+          inputHash: calculation.metadata.inputHash,
+          inputSnapshot: toJson(input),
+          payslipSnapshot: toJson(toPayslipResponse(payslip)),
+          result: toJson(calculation),
+          reconciliation: toJson(reconciliation),
+          calculatedAt: new Date(calculatedAt.epochMs),
+          findings: reconciliation.findings.map((f, position) => ({
+            position,
+            code: f.title.slice(0, 100),
+            scope: f.scope,
+            status: f.status,
+            explanation: f.explanation,
+            expectedAmount: f.expectedAmount,
+            reportedAmount: f.reportedAmount,
+            difference: f.difference,
+            shiftIds: [...f.shiftIds],
+            clauseRefs: [...f.clauseRefs],
+            evidenceRefs: [...f.evidenceRefs],
+            nextStep: f.nextStep,
+          })),
+        },
+        now,
+      );
       await this.events.record("AUDIT_CREATED", userId, {
         auditId: audit.id,
         findingStatus: audit.findingStatus,
@@ -222,7 +256,7 @@ export class AuditsService {
     } catch (error: unknown) {
       if (error instanceof IdempotencyKeyTaken) {
         // A concurrent request with the same key committed first: return its audit.
-        const winner = await this.audits.findByIdempotencyKey(userId, idempotencyKey);
+        const winner = await this.audits.findByIdempotencyKey(userId, idempotencyKey, now);
         if (winner !== null) {
           return this.replay(winner, requestHash);
         }

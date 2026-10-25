@@ -56,11 +56,18 @@ export class IdempotencyKeyTaken extends Error {
   }
 }
 
+/** How long an Idempotency-Key keeps returning the audit it produced. After that it can be reused. */
+export const IDEMPOTENCY_KEY_TTL_MS = 24 * 60 * 60 * 1000;
+
 /** Port: persistence for immutable audit snapshots. */
 export interface AuditRepository {
-  findByIdempotencyKey(userId: string, key: string): Promise<AuditDetailRow | null>;
-  /** Inserts the audit and its findings atomically. Throws IdempotencyKeyTaken on a key collision. */
-  insert(audit: NewAudit): Promise<AuditDetailRow>;
+  /** The audit an unexpired key produced, if any. */
+  findByIdempotencyKey(userId: string, key: string, now: Date): Promise<AuditDetailRow | null>;
+  /**
+   * Inserts the audit, its findings and its idempotency key atomically (an expired key is released
+   * first). Throws IdempotencyKeyTaken when a live key already exists.
+   */
+  insert(audit: NewAudit, now: Date): Promise<AuditDetailRow>;
   findDetail(userId: string, id: string): Promise<AuditDetailRow | null>;
   findResult(userId: string, id: string): Promise<AuditResultRow | null>;
   /** The complete snapshot, for evidence reports. */
@@ -74,20 +81,37 @@ export const AUDIT_REPOSITORY = Symbol("AUDIT_REPOSITORY");
 export class PrismaAuditRepository implements AuditRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  findByIdempotencyKey(userId: string, key: string): Promise<AuditDetailRow | null> {
-    return this.prisma.audit.findUnique({
-      where: { userId_idempotencyKey: { userId, idempotencyKey: key } },
-      select: AUDIT_DETAIL_COLUMNS,
+  async findByIdempotencyKey(userId: string, key: string, now: Date): Promise<AuditDetailRow | null> {
+    const entry = await this.prisma.idempotencyKey.findUnique({
+      where: { userId_key: { userId, key } },
+      select: { expiresAt: true, audit: { select: AUDIT_DETAIL_COLUMNS } },
     });
+    return entry === null || entry.expiresAt <= now ? null : entry.audit;
   }
 
-  async insert(audit: NewAudit): Promise<AuditDetailRow> {
+  async insert(audit: NewAudit, now: Date): Promise<AuditDetailRow> {
     const { findings, ...row } = audit;
     try {
-      // A nested create is a single atomic write: the audit never exists without its findings.
-      return await this.prisma.audit.create({
-        data: { ...row, findings: { create: findings } },
-        select: AUDIT_DETAIL_COLUMNS,
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.idempotencyKey.deleteMany({
+          where: { userId: row.userId, key: row.idempotencyKey, expiresAt: { lte: now } },
+        });
+        // A nested create is a single atomic write: the audit never exists without its findings.
+        const created = await tx.audit.create({
+          data: { ...row, findings: { create: findings } },
+          select: AUDIT_DETAIL_COLUMNS,
+        });
+        // The primary key (user, key) makes a concurrent duplicate fail here and roll everything back.
+        await tx.idempotencyKey.create({
+          data: {
+            userId: row.userId,
+            key: row.idempotencyKey,
+            requestHash: row.requestHash,
+            auditId: created.id,
+            expiresAt: new Date(now.getTime() + IDEMPOTENCY_KEY_TTL_MS),
+          },
+        });
+        return created;
       });
     } catch (error: unknown) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {

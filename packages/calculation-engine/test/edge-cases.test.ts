@@ -2,7 +2,8 @@ import { AwardRuleSetSchema, BUNDLED_RULE_SETS, type WeeklyWindowRule } from "@w
 import { describe, expect, it } from "vitest";
 
 import { createPricer, minutesToHours, percentFor } from "../src/pricing.js";
-import { calc, casual } from "./helpers.js";
+import { parseCalculationInput } from "../src/input.js";
+import { calc, casual, input } from "./helpers.js";
 
 const ruleSet = AwardRuleSetSchema.parse(BUNDLED_RULE_SETS[0]);
 
@@ -49,7 +50,10 @@ describe("DST-ambiguous wall-clock times with explicit offsets (daylight saving 
 
 describe("pricing guards", () => {
   it("rejects a classification missing from the rule set", () => {
-    expect(() => createPricer(ruleSet, "NOPE", "CASUAL")).toThrow(/missing from rule set/);
+    const employment = parseCalculationInput(input(casual(), [])).employment;
+    expect(() => createPricer(ruleSet, { ...employment, classificationCode: "NOPE" })).toThrow(
+      /missing from rule set/,
+    );
   });
 
   it("rejects a rule without a percentage for the employment type", () => {

@@ -138,6 +138,7 @@ const EMPLOYMENT = {
   awardCode: "MA000004",
   classificationCode: "RETAIL_EMPLOYEE_LEVEL_1",
   employmentType: "CASUAL",
+  state: "NSW",
   timeZone: "Australia/Sydney",
   declarations: {
     awardCoverage: "CONFIRMED",

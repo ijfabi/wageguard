@@ -1,4 +1,5 @@
 import { calculatePayPeriod, isBlocking, type CalculationContext } from "@wageguard/calculation-engine";
+import { Money } from "@wageguard/domain";
 
 import { GOLDEN_SCENARIOS, type GoldenKind, type GoldenScenario } from "./scenarios.js";
 
@@ -58,7 +59,7 @@ function evaluateOne(scenario: GoldenScenario, context: CalculationContext): Gol
   const actual = {
     status: result.status,
     totalAmount: result.totals.amount,
-    lines: Object.fromEntries(result.lines.map((l) => [l.ruleId, l.amount])),
+    lines: linesByRule(result.lines),
     blockingIssueCodes: [...new Set(result.issues.filter(isBlocking).map((i) => i.code))].sort(),
   };
   const { expected } = scenario;
@@ -96,6 +97,17 @@ function evaluateOne(scenario: GoldenScenario, context: CalculationContext): Gol
     sources: scenario.sources,
     humanReview: scenario.verification.humanReview,
   };
+}
+
+/** Amount per rule. A rule paid at two rates (a junior's birthday mid-period) is summed. */
+function linesByRule(
+  lines: readonly { readonly ruleId: string; readonly amount: string }[],
+): Record<string, string> {
+  const totals = new Map<string, Money>();
+  for (const line of lines) {
+    totals.set(line.ruleId, (totals.get(line.ruleId) ?? Money.zero()).add(Money.of(line.amount)));
+  }
+  return Object.fromEntries([...totals].map(([id, amount]) => [id, amount.toString()]));
 }
 
 function sortKeys(record: Readonly<Record<string, string>>): Record<string, string> {

@@ -10,6 +10,7 @@ import {
   ListShiftsQuerySchema,
   MoneySchema,
   RegisterRequestSchema,
+  TwoFactorLoginRequestSchema,
   UpdateShiftRequestSchema,
 } from "../src/index.js";
 
@@ -18,6 +19,7 @@ const employment = {
   awardCode: "MA000004",
   classificationCode: "RETAIL_EMPLOYEE_LEVEL_1",
   employmentType: "PART_TIME",
+  state: "NSW",
   timeZone: "Australia/Sydney",
   declarations: {
     awardCoverage: "CONFIRMED",
@@ -71,6 +73,39 @@ describe("request contracts", () => {
         partTimeGuaranteedMinutes: { MON: 240 },
       }).success,
     ).toBe(false);
+  });
+
+  it("require the state, and keep school-student engagement and dates consistent", () => {
+    const withoutState = Object.fromEntries(Object.entries(employment).filter(([key]) => key !== "state"));
+    expect(CreateEmploymentRequestSchema.safeParse(withoutState).success).toBe(false);
+    const conditions = {
+      spanException: "NONE",
+      schoolStudent: true,
+      reducedBreakAgreed: false,
+      averagingRoster: false,
+      bakingProduction: false,
+      apprentice: false,
+    };
+    expect(CreateEmploymentRequestSchema.safeParse({ ...employment, conditions }).success).toBe(false);
+    expect(
+      CreateEmploymentRequestSchema.safeParse({ ...employment, employmentType: "CASUAL", conditions })
+        .success,
+    ).toBe(true);
+    expect(
+      CreateEmploymentRequestSchema.safeParse({
+        ...employment,
+        dateOfBirth: "2010-05-01",
+        employmentStartDate: "2010-05-01",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accept six-digit and recovery codes for two-factor sign-in, ignoring spaces and case", () => {
+    expect(TwoFactorLoginRequestSchema.parse({ code: " 123 456 " }).code).toBe("123456");
+    expect(TwoFactorLoginRequestSchema.parse({ code: "K7QM-2XPD-9FNE" }).code).toBe("k7qm-2xpd-9fne");
+    for (const bad of ["12345", "1234567", "abcdef", "k7qm2xpd9fne"]) {
+      expect(TwoFactorLoginRequestSchema.safeParse({ code: bad }).success, bad).toBe(false);
+    }
   });
 
   it("accept money only as non-negative strings with at most 2 decimals", () => {

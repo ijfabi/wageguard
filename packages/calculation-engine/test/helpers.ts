@@ -2,6 +2,7 @@ import {
   AwardRuleRegistry,
   AwardRuleSetSchema,
   BUNDLED_RULE_SETS,
+  PUBLISHED_FINGERPRINTS,
   bundledRegistry,
   type AwardRuleSet,
 } from "@wageguard/award-rules";
@@ -17,7 +18,16 @@ import {
 } from "../src/index.js";
 
 export const CALCULATED_AT = Instant.parse("2026-10-22T00:00:00Z");
+/** The bundled rule sets: r2 is in force for pay periods from 1 July 2026. */
 export const context: CalculationContext = { rules: bundledRegistry(), calculatedAt: CALCULATED_AT };
+/**
+ * Only r1, as published. r1 flags overtime, public holidays, short engagements and short breaks for
+ * review instead of pricing them; these tests keep that behaviour covered for audits made with it.
+ */
+export const r1Context: CalculationContext = {
+  rules: AwardRuleRegistry.create([BUNDLED_RULE_SETS[0]], { publishedFingerprints: PUBLISHED_FINGERPRINTS }),
+  calculatedAt: CALCULATED_AT,
+};
 
 export const casual = (overrides: Partial<EmploymentInput> = {}): EmploymentInput => ({
   employmentId: "emp-1",

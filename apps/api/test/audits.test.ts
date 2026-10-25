@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   FORTNIGHT,
+  NO_CONDITIONS,
   createEmployment,
   createPayslip,
   createShift,
@@ -61,8 +62,8 @@ describe("audit workflow", () => {
       reportedAmount: "862.15",
       difference: "0.00",
       shiftCount: 3,
-      ruleSetVersion: "MA000004/2026-07-01/r1",
-      engineVersion: "0.1.0",
+      ruleSetVersion: "MA000004/2026-07-01/r2",
+      engineVersion: "0.2.0",
       calculatedAt: "2026-10-22T01:02:03.000Z",
       comparisonBasis: "GROSS_PAY",
     });
@@ -85,7 +86,10 @@ describe("audit workflow", () => {
 
   it("never shows MATCHED for scenarios WageGuard cannot verify", async () => {
     const { agent } = await signedInUser(t);
-    const employmentId = await createEmployment(agent, { employmentType: "FULL_TIME" });
+    // Apprentice rates are outside what the rule set prices.
+    const employmentId = await createEmployment(agent, {
+      conditions: { ...NO_CONDITIONS, apprentice: true },
+    });
     await createShift(agent, employmentId, "2026-07-06T09:00", "2026-07-06T13:00");
     const payslipId = await createPayslip(agent, employmentId, "100.00");
     const res = await agent
@@ -189,33 +193,35 @@ describe("audit workflow", () => {
       return (await extractText(new Uint8Array(pdf.body as Buffer), { mergePages: true })).text;
     };
 
-    // Partial: Friday evening work runs past 9 pm, outside the span of ordinary hours.
-    const casual = await createEmployment(agent);
-    await createShift(agent, casual, "2026-07-06T09:00", "2026-07-06T17:00", [
-      "2026-07-06T12:00",
-      "2026-07-06T12:30",
-    ]);
-    await createShift(agent, casual, "2026-07-10T17:00", "2026-07-10T22:00");
+    // Partial: under an averaging roster, the first week's 40 hours are held for review, while the
+    // second week's Monday shift is priced (4 h x $34.76 = $139.04).
+    const casual = await createEmployment(agent, { conditions: { ...NO_CONDITIONS, averagingRoster: true } });
+    for (const day of ["06", "07", "08", "09", "10"]) {
+      await createShift(agent, casual, `2026-07-${day}T07:00`, `2026-07-${day}T15:30`, [
+        `2026-07-${day}T12:00`,
+        `2026-07-${day}T12:30`,
+      ]);
+    }
+    await createShift(agent, casual, "2026-07-13T09:00", "2026-07-13T13:00");
     const partial = await pages("pdf-partial-0001", casual, await createPayslip(agent, casual, "450.00"));
     for (const expected of [
       "Needs review",
       "Difference vs checked shifts",
-      "+$189.30",
+      "+$310.96",
       "Not a verified overpayment",
-      "Work outside ordinary hours",
       "Not priced",
     ]) {
       expect(partial, expected).toContain(expected);
     }
-    expect(partial).not.toContain("OUTSIDE_SPAN_OF_ORDINARY_HOURS");
+    expect(partial).not.toContain("AVERAGING_ROSTER_WEEKLY_HOURS");
 
-    // Unsupported: full-time employment is outside the supported scope, so nothing is priced.
-    const fullTime = await createEmployment(agent, { employmentType: "FULL_TIME" });
-    await createShift(agent, fullTime, "2026-07-06T09:00", "2026-07-06T13:00");
+    // Unsupported: apprentice rates are not priced, so nothing is.
+    const apprentice = await createEmployment(agent, { conditions: { ...NO_CONDITIONS, apprentice: true } });
+    await createShift(agent, apprentice, "2026-07-06T09:00", "2026-07-06T13:00");
     const unsupported = await pages(
       "pdf-unsupported1",
-      fullTime,
-      await createPayslip(agent, fullTime, "100.00"),
+      apprentice,
+      await createPayslip(agent, apprentice, "100.00"),
     );
     for (const expected of ["Not calculated", "No shifts could be priced, so there are no pay lines.", "—"]) {
       expect(unsupported, expected).toContain(expected);

@@ -43,6 +43,10 @@ export default function ExplanationPage({ params }: { params: Promise<{ id: stri
   return (
     <>
       <PageHeader
+        breadcrumbs={[
+          { label: "Audits", href: "/audits" },
+          { label: "Audit", href: `/audits/${id}` },
+        ]}
         title="How this was calculated"
         description={`Pay period ${formatDate(calculation.payPeriod.startDate)} – ${formatDate(calculation.payPeriod.endDate)}`}
         actions={

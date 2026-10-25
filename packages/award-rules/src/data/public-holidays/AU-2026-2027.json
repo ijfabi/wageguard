@@ -1,0 +1,1199 @@
+{
+  "sources": [
+    {
+      "year": 2026,
+      "url": "https://www.fairwork.gov.au/employment-conditions/public-holidays/2026-public-holidays",
+      "retrievedOn": "2026-10-25",
+      "sha256": "c261ea7c58e28f2e6f4dbb4d1df8cf32f05a919fc12a9260ed347cb90cce877a"
+    },
+    {
+      "year": 2027,
+      "url": "https://www.fairwork.gov.au/employment-conditions/public-holidays/2027-public-holidays",
+      "retrievedOn": "2026-10-25",
+      "sha256": "f0781a5f69092bad43313254b5c51cdba93f93cda361e838ab5f97b95f6e8db4"
+    }
+  ],
+  "holidays": {
+    "ACT": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-03-09",
+        "name": "Canberra Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-04",
+        "name": "Easter Saturday – the day after Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-05",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-27",
+        "name": "Additional public holiday for Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-06-01",
+        "name": "Reconciliation Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-06-08",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-10-05",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-08",
+        "name": "Canberra Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-26",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-27",
+        "name": "Easter Saturday – the day after Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-28",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-29",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-25",
+        "name": "Additional public holiday for Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-26",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-05-31",
+        "name": "Reconciliation Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-06-14",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-10-04",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-27",
+        "name": "Additional public holiday for Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      }
+    ],
+    "NSW": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-04",
+        "name": "Easter Saturday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-05",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-27",
+        "name": "Additional public holiday for Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-06-08",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-10-05",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-26",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-27",
+        "name": "Easter Saturday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-28",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-29",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-26",
+        "name": "Additional public holiday for Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-06-14",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-10-04",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-27",
+        "name": "Additional public holiday for Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      }
+    ],
+    "NT": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-04",
+        "name": "Easter Saturday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-05",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-05-04",
+        "name": "May Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-06-08",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-08-03",
+        "name": "Picnic Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-24",
+        "name": "Christmas Eve",
+        "from": "19:00",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-31",
+        "name": "New Year's Eve",
+        "from": "19:00",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-26",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-27",
+        "name": "Easter Saturday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-28",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-29",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-26",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-05-03",
+        "name": "May Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-06-14",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-08-02",
+        "name": "Picnic Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-24",
+        "name": "Christmas Eve",
+        "from": "19:00",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-27",
+        "name": "Additional public holiday for Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-31",
+        "name": "New Year's Eve",
+        "from": "19:00",
+        "scope": "STATEWIDE"
+      }
+    ],
+    "QLD": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-04",
+        "name": "The day after Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-05",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-05-04",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-08-12",
+        "name": "Royal Queensland Show (Brisbane area only)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2026-10-05",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-24",
+        "name": "Christmas Eve",
+        "from": "18:00",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-26",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-27",
+        "name": "The day after Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-28",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-29",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-26",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-05-03",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-08-11",
+        "name": "Royal Queensland Show (Brisbane area only)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2027-10-04",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-24",
+        "name": "Christmas Eve",
+        "from": "18:00",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-27",
+        "name": "Additional public holiday for Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      }
+    ],
+    "SA": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-03-09",
+        "name": "Adelaide Cup Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-04",
+        "name": "Easter Saturday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-05",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-06-08",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-10-05",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-24",
+        "name": "Christmas Eve",
+        "from": "19:00",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-26",
+        "name": "Proclamation Day holiday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Additional public holiday for Proclamation Day holiday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-31",
+        "name": "New Year's Eve",
+        "from": "19:00",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-08",
+        "name": "Adelaide Cup Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-26",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-27",
+        "name": "Easter Saturday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-28",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-29",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-06-14",
+        "name": "King’s Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-10-04",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-24",
+        "name": "Christmas Eve",
+        "from": "19:00",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-26",
+        "name": "Proclamation Day holiday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-27",
+        "name": "Additional public holiday for Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-28",
+        "name": "Additional public holiday for Proclamation Day holiday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-31",
+        "name": "New Year's Eve",
+        "from": "19:00",
+        "scope": "STATEWIDE"
+      }
+    ],
+    "TAS": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-02-09",
+        "name": "Royal Hobart Regatta (only observed in certain areas of the state, including Hobart)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2026-03-09",
+        "name": "Eight Hours Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-07",
+        "name": "Easter Tuesday (generally Tasmanian Public Service only)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-06-08",
+        "name": "King's Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-10-22",
+        "name": "Royal Hobart Show (only observed in certain areas of the state, including Hobart)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2026-11-02",
+        "name": "Recreation Day (areas of the state that don’t observe Royal Hobart Regatta)",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-02-08",
+        "name": "Royal Hobart Regatta (only observed in certain areas of the state)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2027-03-08",
+        "name": "Eight Hours Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-26",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-29",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-30",
+        "name": "Easter Tuesday (generally Tasmanian Public Service only)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2027-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-06-14",
+        "name": "King's Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-10-21",
+        "name": "Royal Hobart Show (only observed in certain areas of the state, including Hobart)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2027-11-01",
+        "name": "Recreation Day (areas of the state that don’t observe Royal Hobart Regatta)",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-27",
+        "name": "Additional public holiday for Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-28",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      }
+    ],
+    "VIC": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-03-09",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-04",
+        "name": "Saturday before Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-05",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-06-08",
+        "name": "King's Birthday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-09-25",
+        "name": "Friday before the AFL Grand Final",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-11-03",
+        "name": "Melbourne Cup (some regional areas in Victoria hold the Melbourne Cup public holiday on a different date)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-08",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-26",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-27",
+        "name": "Saturday before Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-28",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-29",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-06-14",
+        "name": "King's Birthday Subject to AFL schedule (date TBC): Friday before the AFL Grand Final",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-11-02",
+        "name": "Melbourne Cup (some regional areas in Victoria hold the Melbourne Cup public holiday on a different date)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2027-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-27",
+        "name": "Additional public holiday for Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      }
+    ],
+    "WA": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-03-02",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-03",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-05",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-06",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-04-27",
+        "name": "Additional public holiday for Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-06-01",
+        "name": "Western Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-09-28",
+        "name": "King's Birthday (some regional areas in WA hold the King's Birthday public holiday on a different date)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2026-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2026-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-01",
+        "name": "New Year's Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-01-26",
+        "name": "Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-01",
+        "name": "Labour Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-26",
+        "name": "Good Friday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-28",
+        "name": "Easter Sunday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-03-29",
+        "name": "Easter Monday",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-25",
+        "name": "Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-04-26",
+        "name": "Additional public holiday for Anzac Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-06-07",
+        "name": "Western Australia Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-09-27",
+        "name": "King's Birthday (some regional areas in WA hold the King's Birthday public holiday on a different date)",
+        "scope": "REGIONAL"
+      },
+      {
+        "date": "2027-12-25",
+        "name": "Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-26",
+        "name": "Boxing Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-27",
+        "name": "Additional public holiday for Christmas Day",
+        "scope": "STATEWIDE"
+      },
+      {
+        "date": "2027-12-28",
+        "name": "Additional public holiday for Boxing Day",
+        "scope": "STATEWIDE"
+      }
+    ]
+  }
+}

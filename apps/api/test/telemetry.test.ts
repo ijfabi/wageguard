@@ -74,7 +74,7 @@ describe("application telemetry", () => {
       "wageguard.shift_count": 1,
       "wageguard.calculation_status": "CALCULATED",
       "wageguard.finding_status": "MATCHED",
-      "wageguard.rule_set_version": "MA000004/2026-07-01/r1",
+      "wageguard.rule_set_version": "MA000004/2026-07-01/r2",
     });
 
     expect(await points("wageguard.audits.created")).toEqual([
@@ -83,7 +83,7 @@ describe("application telemetry", () => {
         attributes: {
           "wageguard.finding_status": "MATCHED",
           "wageguard.calculation_status": "CALCULATED",
-          "wageguard.rule_set_version": "MA000004/2026-07-01/r1",
+          "wageguard.rule_set_version": "MA000004/2026-07-01/r2",
         },
       }),
     ]);

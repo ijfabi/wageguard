@@ -40,7 +40,21 @@ export interface SegmentResult {
   readonly overriddenRuleIds: readonly string[];
   /** Null when the shift is not priced. */
   readonly hourlyRate: string | null;
+  /** Why these minutes are overtime (engine 2+). Absent when they are not. */
+  readonly overtimeReason?: OvertimeReason;
+  /** True when the minutes fall on a public holiday (engine 2+). */
+  readonly publicHoliday?: boolean;
+  /** The base rate the percentage applied to (engine 2+): adult, or a junior band. */
+  readonly baseRate?: { readonly band: string; readonly hourlyRate: string; readonly juniorPercent: string };
 }
+
+/**
+ * - SPAN: outside the span of ordinary hours (Table 10 (ii)).
+ * - DAILY: beyond 9 ordinary hours in a day, or 11 on one day a week (cl. 15.4, 15.5, Table 10).
+ * - GUARANTEED: part-time hours beyond the guaranteed hours for the day (cl. 10.8).
+ * - WEEKLY: beyond 38 ordinary hours in a Monday-to-Sunday week (Table 10 (i)).
+ */
+export type OvertimeReason = "SPAN" | "DAILY" | "GUARANTEED" | "WEEKLY";
 
 export interface ShiftResult {
   readonly shiftId: string;
@@ -57,6 +71,8 @@ export interface ShiftResult {
    */
   readonly indicativeAmount: string | null;
   readonly issueCodes: readonly string[];
+  /** Unworked minutes paid to reach the minimum engagement (engine 2+). */
+  readonly topUpMinutes?: number;
 }
 
 /** One pay line per rule for the whole pay period, as a payslip would present it. */
@@ -73,6 +89,12 @@ export interface PayLine {
   readonly amount: string;
   readonly clauseRefs: readonly string[];
   readonly shiftIds: readonly string[];
+  /**
+   * Engine 2+: what the line counts. HOUR lines are priced from `minutes`; other units (allowances
+   * paid per week, shift or kilometre) carry their count in `quantity` and leave `minutes` at 0.
+   */
+  readonly unit?: "HOUR" | "WEEK" | "SHIFT" | "KILOMETRE" | "OCCASION";
+  readonly quantity?: string;
 }
 
 export interface RoundingPolicySnapshot {
@@ -138,6 +160,10 @@ export interface PayPeriodCalculationResult {
     readonly paidMinutes: number;
     /** True only when status is CALCULATED: the amount covers every paid minute. */
     readonly isComplete: boolean;
+    /** Engine 2+: the amount split into time worked, allowances and leave. */
+    readonly timeAmount?: string;
+    readonly allowanceAmount?: string;
+    readonly leaveAmount?: string;
   };
   readonly lines: readonly PayLine[];
   readonly shifts: readonly ShiftResult[];

@@ -1,38 +1,57 @@
+import type { AuditDetail } from "@wageguard/api-contracts";
+
 import {
-  CALCULATION_STATUS,
   FINDING_STATUS,
   TONE_CLASSES,
-  type CalculationStatus,
+  calculationStatusPresentation,
   type FindingStatus,
+  type Tone,
 } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-export function FindingStatusBadge({ status, className }: { status: FindingStatus; className?: string }) {
-  const presentation = FINDING_STATUS[status];
+const DOT: Readonly<Record<Tone, string>> = {
+  info: "bg-info",
+  warning: "bg-warning",
+  danger: "bg-danger",
+  neutral: "bg-neutral",
+};
+
+function Pill({
+  tone,
+  label,
+  title,
+  className,
+}: {
+  tone: Tone;
+  label: string;
+  title?: string;
+  className?: string | undefined;
+}) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        TONE_CLASSES[presentation.tone],
+        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        TONE_CLASSES[tone],
         className,
       )}
+      title={title}
     >
-      {presentation.label}
+      <span className={cn("size-1.5 rounded-full", DOT[tone])} aria-hidden />
+      {label}
     </span>
   );
 }
 
-export function CalculationStatusBadge({ status }: { status: CalculationStatus }) {
-  const presentation = CALCULATION_STATUS[status];
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-        TONE_CLASSES[presentation.tone],
-      )}
-      title={presentation.description}
-    >
-      {presentation.label}
-    </span>
-  );
+export function FindingStatusBadge({ status, className }: { status: FindingStatus; className?: string }) {
+  const presentation = FINDING_STATUS[status];
+  return <Pill tone={presentation.tone} label={presentation.label} className={className} />;
+}
+
+export function CalculationStatusBadge({
+  audit,
+}: {
+  audit: Pick<AuditDetail, "calculationStatus" | "expectedAmount">;
+}) {
+  const presentation = calculationStatusPresentation(audit);
+  return <Pill tone={presentation.tone} label={presentation.label} title={presentation.description} />;
 }

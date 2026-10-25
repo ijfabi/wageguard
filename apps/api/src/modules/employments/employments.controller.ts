@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Inject, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Inject, Param, Patch, Post, Query } from "@nestjs/common";
 import {
   CreateEmploymentRequestSchema,
   IdSchema,
   PageQuerySchema,
+  UpdateEmploymentRequestSchema,
   type CreateEmploymentRequest,
+  type UpdateEmploymentRequest,
   type EmploymentResponse,
 } from "@wageguard/api-contracts";
 import type { z } from "zod";
@@ -38,5 +40,14 @@ export class EmploymentsController {
     @Param("id", new ZodPipe(IdSchema)) id: string,
   ): Promise<EmploymentResponse> {
     return this.employments.get(user.id, id);
+  }
+
+  @Patch(":id")
+  update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id", new ZodPipe(IdSchema)) id: string,
+    @Body(new ZodPipe(UpdateEmploymentRequestSchema)) body: UpdateEmploymentRequest,
+  ): Promise<EmploymentResponse> {
+    return this.employments.update(user.id, id, body);
   }
 }

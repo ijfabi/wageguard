@@ -132,8 +132,14 @@ export function resolveShift(record: ShiftRecord, zone: TimeZone, path = "shift"
   });
 }
 
-/** Time actually paid: the shift minus unpaid meal breaks. Paid rest breaks remain paid time. */
-export function paidIntervals(shift: ResolvedShift): Interval[] {
+/**
+ * Time actually paid: the shift minus unpaid meal breaks. Paid rest breaks remain paid time. When
+ * `allBreaksPaid` is set (shiftworkers, MA000004 cl. 26) the whole shift is paid.
+ */
+export function paidIntervals(shift: ResolvedShift, allBreaksPaid = false): Interval[] {
+  if (allBreaksPaid) {
+    return [shift.interval];
+  }
   const unpaid = shift.breaks.filter((b) => b.kind === BreakKind.UNPAID_MEAL).map((b) => b.interval);
   return shift.interval.subtractAll(unpaid);
 }

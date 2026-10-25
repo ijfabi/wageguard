@@ -59,23 +59,43 @@ export function scopeIssues(employment: EmploymentTerms, ruleSet: AwardRuleSet):
       }),
     );
   }
-  if (declarations.ageBand === "UNDER_21") {
+  const juniorsModelled = ruleSet.juniorRates !== undefined;
+  if (declarations.ageBand === "UNDER_21" && !juniorsModelled) {
     issues.push(
       issue("JUNIOR_RATES_NOT_SUPPORTED", "Junior rates apply under 21 years of age.", {
         clauseRefs: ["17.2"],
       }),
     );
-  } else if (declarations.ageBand === "UNSURE") {
+  } else if (declarations.ageBand === "UNDER_21" && employment.dateOfBirth === null) {
+    issues.push(
+      issue("DATE_OF_BIRTH_MISSING", "A date of birth is needed to apply junior rates.", {
+        clauseRefs: ["17.2"],
+      }),
+    );
+  } else if (declarations.ageBand === "UNSURE" && (employment.dateOfBirth === null || !juniorsModelled)) {
     issues.push(
       issue("AGE_UNCONFIRMED", "It is not confirmed that adult rates applied for the whole period.", {
         clauseRefs: ["2"],
       }),
     );
   }
-  if (declarations.shiftworker === "YES") {
+  if (employment.apprentice) {
+    issues.push(
+      issue("APPRENTICE_NOT_SUPPORTED", "Apprentice and trainee rates are not calculated.", {
+        clauseRefs: ["12", "17.3", "17.4", "17.7"],
+      }),
+    );
+  }
+  if (declarations.shiftworker === "YES" && ruleSet.supportedScope.shiftwork !== true) {
     issues.push(
       issue("SHIFTWORKER_NOT_SUPPORTED", "Shiftworker rates are not supported.", {
         clauseRefs: ["23", "25"],
+      }),
+    );
+  } else if (declarations.shiftworker === "YES" && employment.bakingProduction) {
+    issues.push(
+      issue("BAKING_PRODUCTION_NOT_SUPPORTED", "Baking production shift rates are not calculated.", {
+        clauseRefs: ["24.2", "25.2"],
       }),
     );
   } else if (declarations.shiftworker === "UNSURE") {

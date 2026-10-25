@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { MAIL_OUTBOX_DIR } from "./e2e/outbox";
+
 /**
  * End-to-end tests against the real stack: the compiled API (apps/api/dist) on :3001 with a real
  * PostgreSQL (DATABASE_URL, migrated), and the production web build (`next start`) on :3000.
@@ -36,6 +38,12 @@ export default defineConfig({
         // Many sign-ups from one IP during the suite; production limits are tested in the API suite.
         AUTH_RATE_LIMIT_PER_MINUTE: "1000",
         RATE_LIMIT_PER_MINUTE: "10000",
+        // Emails are written to files the tests read, instead of being sent.
+        MAIL_TRANSPORT: "outbox",
+        MAIL_OUTBOX_DIR,
+        APP_BASE_URL: "http://localhost:3000",
+        // Test-only key (32 bytes of 0x02), so two-factor sign-in can be exercised.
+        TOTP_ENCRYPTION_KEY: Buffer.alloc(32, 2).toString("base64"),
       },
     },
     {

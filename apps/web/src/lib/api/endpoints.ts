@@ -1,4 +1,5 @@
 import type {
+  AcceptedResponse,
   AuditDetail,
   AuditLines,
   AuditReport,
@@ -12,10 +13,17 @@ import type {
   ImportShiftsResponse,
   ListAuditsQuery,
   LoginRequest,
+  LoginResponse,
   MeResponse,
   PayslipResponse,
+  PublicHolidaysQuery,
+  PublicHolidaysResponse,
+  RecoveryCodesResponse,
   RegisterRequest,
+  SessionListResponse,
   ShiftResponse,
+  TwoFactorSetupResponse,
+  UpdateEmploymentRequest,
   UpdateShiftRequest,
 } from "@wageguard/api-contracts";
 
@@ -36,16 +44,47 @@ export interface RuleSetSummary {
   readonly sourceUrl: string;
   readonly enabledRuleCount: number;
   readonly disabledRuleCount: number;
+  readonly supersededBy: string | null;
 }
 
 /** Typed wrappers for every API route the UI uses. Types come from @wageguard/api-contracts. */
 export const api = {
-  register: (body: RegisterRequest) => apiRequest<MeResponse>("/auth/register", { method: "POST", body }),
-  login: (body: LoginRequest) => apiRequest<MeResponse>("/auth/login", { method: "POST", body }),
+  register: (body: RegisterRequest) =>
+    apiRequest<AcceptedResponse>("/auth/register", { method: "POST", body }),
+  verifyEmail: (token: string) =>
+    apiRequest<MeResponse>("/auth/verify-email", { method: "POST", body: { token } }),
+  resendVerification: (email: string) =>
+    apiRequest<AcceptedResponse>("/auth/verify-email/resend", { method: "POST", body: { email } }),
+  login: (body: LoginRequest) => apiRequest<LoginResponse>("/auth/login", { method: "POST", body }),
+  loginTwoFactor: (code: string) =>
+    apiRequest<MeResponse>("/auth/login/two-factor", { method: "POST", body: { code } }),
+  requestPasswordReset: (email: string) =>
+    apiRequest<AcceptedResponse>("/auth/password-reset", { method: "POST", body: { email } }),
+  resetPassword: (token: string, password: string) =>
+    apiRequest<undefined>("/auth/password-reset/confirm", { method: "POST", body: { token, password } }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiRequest<undefined>("/auth/password", { method: "POST", body: { currentPassword, newPassword } }),
   logout: () => apiRequest<undefined>("/auth/logout", { method: "POST" }),
   me: () => apiRequest<MeResponse>("/auth/me"),
   deleteAccount: (password: string) =>
     apiRequest<undefined>("/auth/me", { method: "DELETE", body: { password } }),
+  sessions: () => apiRequest<SessionListResponse>("/auth/sessions"),
+  revokeSession: (id: string) =>
+    apiRequest<undefined>(`/auth/sessions/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  revokeOtherSessions: () => apiRequest<undefined>("/auth/sessions", { method: "DELETE" }),
+  setupTwoFactor: (password: string) =>
+    apiRequest<TwoFactorSetupResponse>("/auth/two-factor/setup", { method: "POST", body: { password } }),
+  enableTwoFactor: (code: string) =>
+    apiRequest<RecoveryCodesResponse>("/auth/two-factor/enable", { method: "POST", body: { code } }),
+  disableTwoFactor: (password: string, code: string) =>
+    apiRequest<undefined>("/auth/two-factor/disable", { method: "POST", body: { password, code } }),
+  regenerateRecoveryCodes: (password: string, code: string) =>
+    apiRequest<RecoveryCodesResponse>("/auth/two-factor/recovery-codes", {
+      method: "POST",
+      body: { password, code },
+    }),
+  publicHolidays: (query: PublicHolidaysQuery) =>
+    apiRequest<PublicHolidaysResponse>("/public-holidays", { query: { ...query } }),
 
   dashboard: () => apiRequest<DashboardResponse>("/dashboard"),
   ruleVersions: () => apiRequest<{ items: RuleSetSummary[] }>("/rules/versions"),
@@ -54,6 +93,8 @@ export const api = {
   employment: (id: string) => apiRequest<EmploymentResponse>(`/employments/${encodeURIComponent(id)}`),
   createEmployment: (body: CreateEmploymentRequest) =>
     apiRequest<EmploymentResponse>("/employments", { method: "POST", body }),
+  updateEmployment: (id: string, body: UpdateEmploymentRequest) =>
+    apiRequest<EmploymentResponse>(`/employments/${encodeURIComponent(id)}`, { method: "PATCH", body }),
 
   shifts: (params: {
     employmentId?: string;

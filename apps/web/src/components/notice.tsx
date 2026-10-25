@@ -4,7 +4,7 @@ import { Info } from "lucide-react";
 export function VerificationNotice() {
   return (
     <aside
-      className="border-info/30 bg-info-soft flex gap-3 rounded-lg border p-4 text-sm"
+      className="bg-card text-muted-foreground flex gap-3 rounded-xl border p-4 text-xs leading-relaxed"
       aria-label="About these results"
     >
       <Info className="text-info mt-0.5 size-4 shrink-0" aria-hidden />

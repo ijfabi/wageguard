@@ -3,11 +3,17 @@ import { describe, expect, it } from "vitest";
 import { toPdfText } from "../src/modules/audits/audit-pdf.js";
 
 describe("toPdfText", () => {
-  it("keeps everything the standard PDF fonts can draw", () => {
+  it("keeps Western European punctuation", () => {
     expect(toPdfText("Café – “quoted” · $1,234.50 — ok…")).toBe("Café – “quoted” · $1,234.50 — ok…");
   });
 
-  it("replaces characters outside Windows-1252 instead of drawing the wrong glyph", () => {
+  it("keeps the scripts the embedded font covers", () => {
+    for (const text of ["Łódź Żabka", "Ελληνικό καφέ", "Кафе «Москва»", "חנות", "Nguyễn Văn"]) {
+      expect(toPdfText(text), text).toBe(text);
+    }
+  });
+
+  it("replaces characters the font has no glyph for instead of drawing an empty box", () => {
     expect(toPdfText("Shift 🕘 at 東京 store")).toBe("Shift ? at ?? store");
   });
 

@@ -19,6 +19,7 @@ import {
   resolveShift,
   type EmploymentTerms,
   type ShiftRecord,
+  NO_ALLOWANCES,
 } from "../src/index.js";
 
 const sydney = TimeZone.of("Australia/Sydney");
@@ -246,6 +247,15 @@ describe("createEmploymentTerms", () => {
       shiftworker: "NO",
     },
     partTimeGuaranteedMinutes: new Map([["MON", 360]]),
+    dateOfBirth: null,
+    employmentStartDate: null,
+    spanException: "NONE",
+    schoolStudent: false,
+    reducedBreakAgreed: false,
+    averagingRoster: false,
+    bakingProduction: false,
+    apprentice: false,
+    allowances: NO_ALLOWANCES,
   };
 
   it("accepts valid part-time terms and freezes them", () => {

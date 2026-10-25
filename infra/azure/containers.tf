@@ -74,6 +74,18 @@ resource "azurerm_container_app" "api" {
     identity            = azurerm_user_assigned_identity.apps.id
   }
 
+  secret {
+    name                = "totp-encryption-key"
+    key_vault_secret_id = azurerm_key_vault_secret.totp_encryption_key.versionless_id
+    identity            = azurerm_user_assigned_identity.apps.id
+  }
+
+  secret {
+    name                = "smtp-url"
+    key_vault_secret_id = azurerm_key_vault_secret.smtp_url.versionless_id
+    identity            = azurerm_user_assigned_identity.apps.id
+  }
+
   # Internal only: reachable from the web app, never from the internet.
   ingress {
     external_enabled = false
@@ -87,7 +99,8 @@ resource "azurerm_container_app" "api" {
   }
 
   template {
-    # A single replica: rate-limit counters are in memory (docs/known-limitations.md).
+    # Rate-limit counters are shared in PostgreSQL, so more replicas would be correct; one keeps
+    # the demonstration cheap.
     min_replicas = 1
     max_replicas = 1
 
@@ -112,6 +125,23 @@ resource "azurerm_container_app" "api" {
       env {
         name        = "DATABASE_URL"
         secret_name = "database-url"
+      }
+      env {
+        name        = "TOTP_ENCRYPTION_KEY"
+        secret_name = "totp-encryption-key"
+      }
+      env {
+        name        = "SMTP_URL"
+        secret_name = "smtp-url"
+      }
+      env {
+        name  = "MAIL_FROM"
+        value = var.mail_from
+      }
+      # Links in sign-up and password reset emails point at the public site.
+      env {
+        name  = "APP_BASE_URL"
+        value = local.origin
       }
 
       liveness_probe {

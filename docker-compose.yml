@@ -1,6 +1,7 @@
 # Local stack: `docker compose up --build` starts PostgreSQL and Redis, applies database
 # migrations, then starts the API on http://localhost:3001 (OpenAPI at /api/v1/openapi.json) and
-# the web app on http://localhost:3000.
+# the web app on http://localhost:3000. Email from the API (sign-up and password reset links) is
+# caught by Mailpit, whose inbox is at http://localhost:8025. Nothing is sent to the internet.
 # Optional tracing and metrics: see docs/observability.md
 #   OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4318 docker compose --profile observability up --build
 # Credentials here are for local development only; never reuse them elsewhere.
@@ -36,6 +37,17 @@ services:
       timeout: 3s
       retries: 20
 
+  # Local mail catcher: accepts SMTP from the API and shows every message in a web inbox.
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    ports:
+      - "127.0.0.1:8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   migrate:
     build:
       context: .
@@ -61,11 +73,19 @@ services:
       COOKIE_SECURE: "true"
       # Empty (the default) leaves OpenTelemetry off.
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      APP_BASE_URL: http://localhost:3000
+      SMTP_URL: smtp://mailpit:1025
+      MAIL_FROM: WageGuard <no-reply@wageguard.localhost>
+      # Encrypts two-factor secrets. Local-only key; generate your own for anything else
+      # (for example `openssl rand -base64 32`).
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:-ITn2pgAnCcM0lQKphttK/Zd/XUaNE+fmyOl6VHx/Jb0=}
     ports:
       - "127.0.0.1:3001:3001"
     depends_on:
       migrate:
         condition: service_completed_successfully
+      mailpit:
+        condition: service_healthy
     restart: unless-stopped
 
   web:

@@ -19,7 +19,12 @@ describe("operations endpoints", () => {
 
   it("lists the published rule sets without authentication", async () => {
     const res = await t.agent().get("/api/v1/rules/versions").expect(200);
-    expect(res.body).toMatchObject({ items: [{ version: "MA000004/2026-07-01/r1", awardCode: "MA000004" }] });
+    expect(res.body).toMatchObject({
+      items: [
+        { version: "MA000004/2026-07-01/r1", supersededBy: "MA000004/2026-07-01/r2" },
+        { version: "MA000004/2026-07-01/r2", supersededBy: null },
+      ],
+    });
   });
 });
 

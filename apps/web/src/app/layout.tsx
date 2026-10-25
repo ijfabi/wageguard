@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
@@ -7,6 +8,14 @@ import { Providers } from "@/components/providers";
 import { DISPLAY_BOOTSTRAP_SCRIPT } from "@/lib/display-preferences";
 
 import "./globals.css";
+
+/** Inter (SIL Open Font License), served from this origin; nothing is fetched from a font CDN. */
+const inter = localFont({
+  src: "../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
+  weight: "100 900",
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
   title: { default: "WageGuard", template: "%s · WageGuard" },
@@ -23,7 +32,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     // The display script sets classes and data attributes on <html> before hydration.
-    <html lang="en-AU" suppressHydrationWarning>
+    <html lang="en-AU" className={inter.variable} suppressHydrationWarning>
       <head>
         {/* A constant string from our own code, allowed by the per-request CSP nonce. */}
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: DISPLAY_BOOTSTRAP_SCRIPT }} />

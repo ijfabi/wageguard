@@ -60,8 +60,9 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <>
       <PageHeader
+        breadcrumbs={[{ label: "Audits", href: "/audits" }]}
         title={`Audit: ${formatDate(a.payPeriod.startDate)} – ${formatDate(a.payPeriod.endDate)}`}
-        description={`Run ${formatInstant(a.createdAt)} · ${a.shiftCount} ${a.shiftCount === 1 ? "shift" : "shifts"}`}
+        description={`Run ${formatInstant(a.createdAt)} · ${a.shiftCount} ${a.shiftCount === 1 ? "shift" : "shifts"} · rule set ${a.ruleSetVersion}`}
         actions={
           <>
             <Button asChild variant="outline">
@@ -88,24 +89,34 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
       <div className="space-y-6">
         <section
           aria-labelledby="result-heading"
-          className={cn("rounded-lg border p-5", TONE_CLASSES[status.tone])}
+          className="bg-card shadow-panel relative overflow-hidden rounded-xl border"
         >
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 id="result-heading" className="text-lg font-semibold">
-              {status.label}
-            </h2>
-            <CalculationStatusBadge status={a.calculationStatus} />
+          <span className={cn("absolute inset-y-0 left-0 w-1", RESULT_EDGE[status.tone])} aria-hidden />
+          <div className={cn("border-b px-6 py-5", TONE_CLASSES[status.tone], "border-x-0 border-t-0")}>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 id="result-heading" className="text-xl font-semibold tracking-tight">
+                {status.label}
+              </h2>
+              <CalculationStatusBadge audit={a} />
+            </div>
+            <p className="text-foreground mt-2 max-w-3xl text-sm leading-relaxed">
+              {periodFinding?.explanation ?? status.description}
+            </p>
+            {periodFinding === undefined ? null : (
+              <p className="text-foreground mt-2 max-w-3xl text-sm font-medium">
+                Next step: {periodFinding.nextStep}
+              </p>
+            )}
           </div>
-          <p className="text-foreground mt-2 text-sm">{periodFinding?.explanation ?? status.description}</p>
-          {periodFinding === undefined ? null : (
-            <p className="text-foreground mt-2 text-sm font-medium">Next step: {periodFinding.nextStep}</p>
-          )}
-        </section>
-
-        <section aria-label="Amounts" className="grid gap-4 sm:grid-cols-3">
-          {auditAmounts(a).map((amount) => (
-            <Amount key={amount.label} {...amount} />
-          ))}
+          <div
+            aria-label="Amounts"
+            role="group"
+            className="divide-border/70 grid divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+          >
+            {auditAmounts(a).map((amount) => (
+              <Amount key={amount.label} {...amount} />
+            ))}
+          </div>
         </section>
 
         {a.notes.length === 0 ? null : (
@@ -177,21 +188,26 @@ export default function AuditDetailPage({ params }: { params: Promise<{ id: stri
   );
 }
 
+const RESULT_EDGE = {
+  info: "bg-info",
+  warning: "bg-warning",
+  danger: "bg-danger",
+  neutral: "bg-neutral",
+} as const;
+
 function Amount({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl tabular-nums">{value}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-muted-foreground text-xs">{detail}</CardContent>
-    </Card>
+    <div className="px-6 py-5">
+      <p className="text-muted-foreground text-sm font-medium">{label}</p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="text-muted-foreground mt-1 text-xs">{detail}</p>
+    </div>
   );
 }
 
 function PayLines({ lines }: { lines: ReturnType<typeof useAuditLines> }) {
   return (
-    <Card>
+    <Card className="pb-0">
       <CardHeader>
         <CardTitle>
           <h2>Rules applied</h2>
@@ -200,13 +216,15 @@ function PayLines({ lines }: { lines: ReturnType<typeof useAuditLines> }) {
           One line per award rule for the whole pay period, as a payslip would show it.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 pb-0 sm:px-0">
         {lines.isPending ? (
           <LoadingState rows={2} />
         ) : lines.isError ? (
           <ErrorState error={lines.error} onRetry={() => void lines.refetch()} />
         ) : lines.data.lines.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No hours could be priced for this audit.</p>
+          <p className="text-muted-foreground px-5 pb-5 text-sm sm:px-6">
+            No hours could be priced for this audit.
+          </p>
         ) : (
           <Table>
             <caption className="sr-only">Pay lines</caption>
@@ -258,7 +276,7 @@ function ShiftBreakdown({ lines }: { lines: ReturnType<typeof useAuditLines> }) 
     return null;
   }
   return (
-    <Card>
+    <Card className="pb-0">
       <CardHeader>
         <CardTitle>
           <h2>Shift by shift</h2>
@@ -268,7 +286,7 @@ function ShiftBreakdown({ lines }: { lines: ReturnType<typeof useAuditLines> }) 
           cents.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 sm:px-0">
         <Table>
           <caption className="sr-only">Shift-by-shift breakdown</caption>
           <TableHeader>

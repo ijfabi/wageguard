@@ -26,11 +26,13 @@ import { execFileSync } from "node:child_process";
 import { performance } from "node:perf_hooks";
 
 import { REPO_ROOT, captureEnvironment, sampleCpuBusyPercent } from "../lib/environment.js";
+import { emailedToken } from "../lib/mailpit.js";
 import { environmentMarkdown, saveRecord } from "../lib/results.js";
 import { distribution, round } from "../lib/stats.js";
 
 const LABEL = process.env["BENCHMARK_LABEL"] ?? "unlabelled";
 const API = "http://127.0.0.1:3101/api/v1";
+const MAILPIT = "http://127.0.0.1:8125";
 const ORIGIN = "http://localhost:3000";
 const COMPOSE = ["compose", "-f", `${REPO_ROOT}/benchmarks/k6/docker-compose.yml`];
 const CLIENTS = 10;
@@ -91,15 +93,20 @@ const SHIFTS_CSV = [
 ].join("\n");
 
 async function createAccount(index: number): Promise<Account> {
-  const register = await call("POST", "/auth/register", {
-    type: "application/json",
-    body: JSON.stringify({
-      email: `reliability-${Date.now()}-${index}@bench.example`,
-      password: "benchmark only passphrase",
+  const email = `reliability-${Date.now()}-${index}@bench.example`;
+  await json(
+    await call("POST", "/auth/register", {
+      type: "application/json",
+      body: JSON.stringify({ email, password: "benchmark only passphrase" }),
     }),
+    "register",
+  );
+  const verified = await call("POST", "/auth/verify-email", {
+    type: "application/json",
+    body: JSON.stringify({ token: await emailedToken(MAILPIT, email, "verify-email") }),
   });
-  await json(register, "register");
-  const cookie = (register.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
+  await json(verified, "verify email");
+  const cookie = (verified.headers.get("set-cookie") ?? "").split(";")[0] ?? "";
   const employment = await json<{ id: string }>(
     await call("POST", "/employments", {
       cookie,
@@ -109,6 +116,7 @@ async function createAccount(index: number): Promise<Account> {
         awardCode: "MA000004",
         classificationCode: "RETAIL_EMPLOYEE_LEVEL_1",
         employmentType: "CASUAL",
+        state: "NSW",
         timeZone: "Australia/Sydney",
         declarations: {
           awardCoverage: "CONFIRMED",

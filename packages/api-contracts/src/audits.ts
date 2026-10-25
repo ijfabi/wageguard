@@ -24,11 +24,83 @@ export const CalculationStatusSchema = z.enum([
   "INCOMPLETE_DATA",
 ]);
 
+const HhMmSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Expected HH:MM");
+
+export const AuditPublicHolidaySchema = z.strictObject({
+  date: LocalDateSchema,
+  /** Part-day holidays start at this local time. */
+  from: HhMmSchema.optional(),
+  name: z.string().trim().min(1).max(120).optional(),
+});
+
+export const LeaveEntrySchema = z.strictObject({
+  kind: z.enum(["ANNUAL", "PERSONAL_CARERS", "COMPASSIONATE", "PUBLIC_HOLIDAY_NOT_WORKED"]),
+  minutes: z
+    .number()
+    .int()
+    .positive()
+    .max(31 * 24 * 60),
+});
+
+export const AllowanceClaimsSchema = z.strictObject({
+  coldWorkMinutes: z
+    .number()
+    .int()
+    .min(0)
+    .max(31 * 24 * 60)
+    .optional(),
+  belowZeroMinutes: z
+    .number()
+    .int()
+    .min(0)
+    .max(31 * 24 * 60)
+    .optional(),
+  vehicleKilometres: z
+    .string()
+    .regex(/^\d{1,5}(\.\d)?$/, "Up to one decimal place")
+    .optional(),
+  /** Dates with overtime required without 24 hours' notice and no meal supplied (cl. 19.2). */
+  mealAllowanceDates: z.array(LocalDateSchema).max(31).optional(),
+});
+
 /** The pay period is taken from the payslip, so the timesheet and payslip always cover the same dates. */
 export const CreateAuditRequestSchema = z.strictObject({
   employmentId: IdSchema,
   payslipId: IdSchema,
+  /** Whole-day holidays, kept for older clients. Merged with `publicHolidays`. */
   declaredPublicHolidays: z.array(LocalDateSchema).max(31).optional(),
+  /**
+   * The public holidays that applied where the work was done. When omitted, the state-wide holidays
+   * from the calendar for the employment's state are used.
+   */
+  publicHolidays: z.array(AuditPublicHolidaySchema).max(31).optional(),
+  /** Part-time: guaranteed hours varied in writing for particular dates (cl. 10.6). */
+  guaranteedHoursVariations: z
+    .array(z.strictObject({ date: LocalDateSchema, minutes: z.number().int().min(0).max(1440) }))
+    .max(31)
+    .optional(),
+  allowanceClaims: AllowanceClaimsSchema.optional(),
+  leave: z.array(LeaveEntrySchema).max(10).optional(),
+});
+
+export const PublicHolidaysQuerySchema = z.strictObject({
+  state: z.enum(["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"]),
+  from: LocalDateSchema,
+  to: LocalDateSchema,
+});
+
+export const PublicHolidaysResponseSchema = z.strictObject({
+  holidays: z.array(
+    z.strictObject({
+      date: LocalDateSchema,
+      name: z.string(),
+      from: HhMmSchema.optional(),
+      scope: z.enum(["STATEWIDE", "REGIONAL"]),
+    }),
+  ),
+  /** Calendar years the list covers; dates outside them return no holidays. */
+  coveredYears: z.array(z.number().int()),
+  source: z.string(),
 });
 
 export const IDEMPOTENCY_KEY_HEADER = "idempotency-key";
@@ -96,3 +168,8 @@ export type AuditDetail = z.infer<typeof AuditDetailSchema>;
 export type AuditLines = z.infer<typeof AuditLinesSchema>;
 export type AuditReport = z.infer<typeof AuditReportSchema>;
 export type ListAuditsQuery = z.infer<typeof ListAuditsQuerySchema>;
+export type PublicHolidaysQuery = z.infer<typeof PublicHolidaysQuerySchema>;
+export type PublicHolidaysResponse = z.infer<typeof PublicHolidaysResponseSchema>;
+export type LeaveEntry = z.infer<typeof LeaveEntrySchema>;
+export type AllowanceClaims = z.infer<typeof AllowanceClaimsSchema>;
+export type AuditPublicHoliday = z.infer<typeof AuditPublicHolidaySchema>;

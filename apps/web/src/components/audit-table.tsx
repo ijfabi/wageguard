@@ -3,7 +3,13 @@ import Link from "next/link";
 
 import { FindingStatusBadge } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatAud, formatDate, formatDifference, formatInstant } from "@wageguard/presentation";
+import {
+  formatAud,
+  formatDate,
+  formatDifference,
+  formatInstant,
+  nothingPriced,
+} from "@wageguard/presentation";
 
 /**
  * Audit summaries as a table; each row links to the audit detail. On narrow screens the result
@@ -42,13 +48,13 @@ export function AuditTable({ audits, caption }: { audits: readonly AuditSummary[
               <FindingStatusBadge status={audit.findingStatus} />
             </TableCell>
             <TableCell className="hidden text-right tabular-nums md:table-cell">
-              {audit.expectedAmount === null ? "—" : formatAud(audit.expectedAmount)}
+              {audit.expectedAmount === null || nothingPriced(audit) ? "—" : formatAud(audit.expectedAmount)}
             </TableCell>
             <TableCell className="hidden text-right tabular-nums md:table-cell">
               {formatAud(audit.reportedAmount)}
             </TableCell>
             <TableCell className="text-right align-top tabular-nums sm:align-middle">
-              {audit.difference === null ? "—" : formatDifference(audit.difference)}
+              {audit.difference === null || nothingPriced(audit) ? "—" : formatDifference(audit.difference)}
             </TableCell>
             <TableCell className="text-muted-foreground hidden text-sm lg:table-cell">
               {formatInstant(audit.createdAt)}

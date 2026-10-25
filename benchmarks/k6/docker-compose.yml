@@ -18,6 +18,19 @@ services:
       timeout: 3s
       retries: 30
 
+  # Catches sign-up emails, so setup can confirm each synthetic account. Its API is published on
+  # localhost for Benchmark E's client, which runs on the host.
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    mem_limit: 256m
+    ports:
+      - "127.0.0.1:8125:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   migrate:
     build:
       context: ../..
@@ -53,9 +66,13 @@ services:
       ALLOWED_ORIGINS: http://localhost:3000
       RATE_LIMIT_PER_MINUTE: "10000000"
       AUTH_RATE_LIMIT_PER_MINUTE: "100000"
+      SMTP_URL: smtp://mailpit:1025
+      MAIL_FROM: WageGuard benchmark <no-reply@bench.example>
     depends_on:
       migrate:
         condition: service_completed_successfully
+      mailpit:
+        condition: service_healthy
 
   # Raw output is written to /tmp inside this container and copied out with `docker cp`. A host
   # bind mount stalled k6 after about 2.5 minutes of sustained writes (seen twice), and a named

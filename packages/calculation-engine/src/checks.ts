@@ -8,6 +8,7 @@ import {
 } from "@wageguard/domain";
 
 import { issue, type CalculationIssue } from "./issues.js";
+import { weekKey } from "./overtime.js";
 import type { Segment } from "./segmentation.js";
 
 export interface SegmentedShift {
@@ -15,23 +16,33 @@ export interface SegmentedShift {
   readonly segments: readonly Segment[];
 }
 
+/** Which entitlements the rule set prices, as opposed to flagging them for review. */
+export interface PricedFeatures {
+  readonly overtime: boolean;
+  readonly publicHolidays: boolean;
+  readonly minimumEngagement: boolean;
+  readonly breakBetweenWorkDays: boolean;
+}
+
 const clauses = (constraint: RuleConstraint): string[] => constraint.sources.map((s) => s.clause);
 
 /**
- * Conditions under which part or all of a shift may attract an entitlement WageGuard does not
- * calculate (overtime, public holiday rates, minimum engagement, cl. 16.6 rates). Each produces a
- * REVIEW_REQUIRED issue naming the affected shifts; it never alters the classification itself.
+ * Conditions under which part or all of a shift may attract an entitlement the rule set does not
+ * price. Each produces a REVIEW_REQUIRED issue naming the affected shifts. When the rule set prices
+ * the entitlement, the check is skipped here and the pricing itself explains the result.
  */
 export function entitlementIssues(
   segmented: readonly SegmentedShift[],
   employment: EmploymentTerms,
   ruleSet: AwardRuleSet,
+  features: PricedFeatures,
 ): CalculationIssue[] {
   return [
-    ...segmented.flatMap((s) => shiftLevelIssues(s, employment, ruleSet)),
-    ...dailyIssues(segmented, employment, ruleSet),
-    ...casualWeeklyIssues(segmented, employment, ruleSet),
-    ...breakBetweenWorkDaysIssues(segmented, ruleSet),
+    ...segmented.flatMap((s) => shiftLevelIssues(s, employment, ruleSet, features)),
+    ...(features.overtime ? [] : dailyIssues(segmented, employment, ruleSet)),
+    ...(features.overtime ? [] : casualWeeklyIssues(segmented, employment, ruleSet)),
+    ...(features.breakBetweenWorkDays ? [] : breakBetweenWorkDaysIssues(segmented, ruleSet)),
+    ...restBreakWarnings(segmented, ruleSet),
   ];
 }
 
@@ -39,12 +50,13 @@ function shiftLevelIssues(
   { shift, segments }: SegmentedShift,
   employment: EmploymentTerms,
   ruleSet: AwardRuleSet,
+  features: PricedFeatures,
 ): CalculationIssue[] {
   const id = shift.record.id;
   const issues: CalculationIssue[] = [];
 
   const outside = segments.filter((s) => s.classification.kind === "OUTSIDE_SPAN");
-  if (outside.length > 0) {
+  if (outside.length > 0 && !features.overtime) {
     const minutes = outside.reduce((sum, s) => sum + s.interval.durationMinutes(), 0);
     issues.push(
       issue(
@@ -55,20 +67,26 @@ function shiftLevelIssues(
     );
   }
 
-  const holiday = segments.filter((s) => s.classification.kind === "PUBLIC_HOLIDAY");
+  const holiday = segments.filter((s) => s.publicHoliday);
   if (holiday.length > 0) {
     issues.push(
-      issue("PUBLIC_HOLIDAY_NOT_SUPPORTED", `Shift ${id} includes work on a declared public holiday.`, {
-        clauseRefs: ["22.1", "32"],
-        shiftIds: [id],
-        date: (holiday[0] as Segment).localDate.toString(),
-      }),
+      features.publicHolidays
+        ? issue("PUBLIC_HOLIDAY_RATE_APPLIED", `Shift ${id} includes work on a public holiday.`, {
+            clauseRefs: ["22.1", "22.2", "33.3"],
+            shiftIds: [id],
+            date: (holiday[0] as Segment).localDate.toString(),
+          })
+        : issue("PUBLIC_HOLIDAY_NOT_SUPPORTED", `Shift ${id} includes work on a declared public holiday.`, {
+            clauseRefs: ["22.1", "33.3"],
+            shiftIds: [id],
+            date: (holiday[0] as Segment).localDate.toString(),
+          }),
     );
   }
 
   const engagement = ruleSet.constraints.minimumEngagement[employment.employmentType];
   const elapsed = shift.interval.durationMinutes();
-  if (engagement !== undefined && elapsed < engagement.minutes) {
+  if (engagement !== undefined && elapsed < engagement.minutes && !features.minimumEngagement) {
     issues.push(
       issue(
         "MINIMUM_ENGAGEMENT_SHORTFALL",
@@ -170,8 +188,7 @@ function casualWeeklyIssues(
   const byWeek = new Map<string, { minutes: number; shiftIds: Set<string> }>();
   for (const { shift, segments } of segmented) {
     for (const segment of segments) {
-      const mondayOffset = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].indexOf(segment.weekday);
-      const key = segment.localDate.plusDays(-mondayOffset).toString();
+      const key = weekKey(segment.localDate, segment.weekday);
       const entry = byWeek.get(key) ?? { minutes: 0, shiftIds: new Set<string>() };
       entry.minutes += segment.interval.durationMinutes();
       entry.shiftIds.add(shift.record.id);
@@ -217,4 +234,29 @@ function breakBetweenWorkDaysIssues(
     }
   }
   return issues;
+}
+
+/** cl. 16.2 Table 3: one informational note listing long shifts with no paid rest break recorded. */
+function restBreakWarnings(segmented: readonly SegmentedShift[], ruleSet: AwardRuleSet): CalculationIssue[] {
+  const threshold = ruleSet.constraints.paidRestBreakFrom;
+  if (threshold === undefined) {
+    return [];
+  }
+  const ids = segmented
+    .filter(
+      ({ shift }) =>
+        shift.interval.durationMinutes() >= threshold.minutes &&
+        !shift.breaks.some((b) => b.kind === BreakKind.PAID_REST),
+    )
+    .map(({ shift }) => shift.record.id);
+  if (ids.length === 0) {
+    return [];
+  }
+  return [
+    issue(
+      "NO_PAID_REST_BREAK_RECORDED",
+      `${ids.length} shift(s) of 4 hours or more have no paid rest break recorded.`,
+      { clauseRefs: clauses(threshold), shiftIds: ids },
+    ),
+  ];
 }

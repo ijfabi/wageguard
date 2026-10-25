@@ -30,3 +30,6 @@ infra/**/*.tfstate
 infra/**/*.tfstate.*
 infra/**/*.tfvars
 !infra/**/*.tfvars.example
+
+# Emails written by the API in development and end-to-end tests instead of being sent
+.mail-outbox/

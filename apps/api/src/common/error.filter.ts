@@ -44,6 +44,16 @@ export class ErrorFilter implements ExceptionFilter {
     };
     if (mapped.retryAfterSeconds !== undefined) {
       response.setHeader("Retry-After", String(mapped.retryAfterSeconds));
+    } else if (exception instanceof ThrottlerException) {
+      // Named throttlers set Retry-After-<name>; clients look for the standard header.
+      const waits = response
+        .getHeaderNames()
+        .filter((h) => h.startsWith("retry-after"))
+        .map((h) => Number(response.getHeader(h)))
+        .filter((n) => Number.isFinite(n));
+      if (waits.length > 0) {
+        response.setHeader("Retry-After", String(Math.max(...waits)));
+      }
     }
     response.status(mapped.status).json(body);
   }

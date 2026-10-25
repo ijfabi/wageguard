@@ -8,6 +8,7 @@ import {
   CalculationStatus,
   ENGINE_VERSION,
   calculatePayPeriod,
+  isBlocking,
   type PayPeriodCalculationResult,
 } from "../src/index.js";
 import {
@@ -19,12 +20,15 @@ import {
   draftRuleSet,
   input,
   partTime,
+  r1Context,
   shift,
 } from "./helpers.js";
 
 const lineAmounts = (result: PayPeriodCalculationResult): Record<string, string> =>
   Object.fromEntries(result.lines.map((l) => [l.ruleId, l.amount]));
 const issueCodes = (result: PayPeriodCalculationResult): string[] => result.issues.map((i) => i.code);
+const blockingCodes = (result: PayPeriodCalculationResult): string[] =>
+  result.issues.filter(isBlocking).map((i) => i.code);
 const validationCodes = (fn: () => unknown): string[] => {
   try {
     fn();
@@ -45,7 +49,7 @@ describe("supported scenarios (expected values derived by hand from Schedule B p
       ]),
     );
     expect(result.status).toBe(CalculationStatus.CALCULATED);
-    expect(result.totals).toEqual({
+    expect(result.totals).toMatchObject({
       amount: "260.70",
       pricedMinutes: 450,
       unpricedMinutes: 0,
@@ -159,10 +163,10 @@ describe("metadata and explanation trace", () => {
 
   it("records award, rule-set version, fingerprint, source, rounding, engine version and input hash", () => {
     expect(result.metadata).toMatchObject({
-      resultSchemaVersion: 1,
+      resultSchemaVersion: 2,
       engineVersion: ENGINE_VERSION,
       awardCode: "MA000004",
-      ruleSetVersion: "MA000004/2026-07-01/r1",
+      ruleSetVersion: "MA000004/2026-07-01/r2",
       ruleSetEffectiveFrom: "2026-07-01",
       ruleSetEffectiveBasis: "FIRST_FULL_PAY_PERIOD_ON_OR_AFTER",
       sourceUrl: "https://awards.fairwork.gov.au/MA000004.html",
@@ -209,9 +213,11 @@ describe("metadata and explanation trace", () => {
   });
 });
 
-describe("review-required scenarios are detected and never priced", () => {
+describe("rule set r1: entitlements it does not price are flagged for review, never priced", () => {
+  const calcR1 = (value: Parameters<typeof calc>[0]) => calc(value, r1Context);
+
   it("work after 9 pm Monday-Friday is outside the span of ordinary hours", () => {
-    const result = calc(input(casual(), [shift("s1", "2026-07-06T19:00", "2026-07-06T22:00")]));
+    const result = calcR1(input(casual(), [shift("s1", "2026-07-06T19:00", "2026-07-06T22:00")]));
     expect(result.status).toBe(CalculationStatus.REVIEW_REQUIRED);
     expect(issueCodes(result)).toEqual(["OUTSIDE_SPAN_OF_ORDINARY_HOURS"]);
     expect(result.totals).toMatchObject({
@@ -228,7 +234,7 @@ describe("review-required scenarios are detected and never priced", () => {
   });
 
   it("splits cross-midnight shifts by local date", () => {
-    const result = calc(input(casual(), [shift("s1", "2026-07-10T20:00", "2026-07-11T02:00")]));
+    const result = calcR1(input(casual(), [shift("s1", "2026-07-10T20:00", "2026-07-11T02:00")]));
     expect(result.shifts[0]?.segments.map((s) => [s.localDate, s.classification.kind, s.minutes])).toEqual([
       ["2026-07-10", "RULE", 60],
       ["2026-07-10", "OUTSIDE_SPAN", 180],
@@ -237,13 +243,13 @@ describe("review-required scenarios are detected and never priced", () => {
   });
 
   it("flags shifts shorter than the 3-hour minimum engagement", () => {
-    const result = calc(input(casual(), [shift("s1", "2026-07-07T10:00", "2026-07-07T12:00")]));
+    const result = calcR1(input(casual(), [shift("s1", "2026-07-07T10:00", "2026-07-07T12:00")]));
     expect(issueCodes(result)).toEqual(["MINIMUM_ENGAGEMENT_SHORTFALL"]);
     expect(result.issues[0]?.clauseRefs).toEqual(["11.2"]);
   });
 
   it("flags declared public holidays instead of applying an unverified holiday rate", () => {
-    const result = calc(
+    const result = calcR1(
       input(casual(), [shift("s1", "2026-07-06T09:00", "2026-07-06T13:00")], {
         declaredPublicHolidays: ["2026-07-06"],
       }),
@@ -254,7 +260,7 @@ describe("review-required scenarios are detected and never priced", () => {
   });
 
   it("flags part-time hours beyond the guaranteed hours for the weekday", () => {
-    const result = calc(
+    const result = calcR1(
       input(partTime({ MON: 240 }), [
         shift("s1", "2026-07-06T09:00", "2026-07-06T17:00", ["2026-07-06T12:00", "2026-07-06T12:30"]),
       ]),
@@ -264,12 +270,14 @@ describe("review-required scenarios are detected and never priced", () => {
   });
 
   it("treats a part-time shift on a day with no guaranteed hours as exceeding them", () => {
-    const result = calc(input(partTime({ MON: 480 }), [shift("s1", "2026-07-07T09:00", "2026-07-07T13:00")]));
+    const result = calcR1(
+      input(partTime({ MON: 480 }), [shift("s1", "2026-07-07T09:00", "2026-07-07T13:00")]),
+    );
     expect(issueCodes(result)).toEqual(["PART_TIME_HOURS_EXCEED_GUARANTEED"]);
   });
 
   it("flags more than 9 paid hours in a day and warns about long stretches without a meal break", () => {
-    const result = calc(
+    const result = calcR1(
       input(casual(), [
         shift("s1", "2026-07-07T07:00", "2026-07-07T18:00", ["2026-07-07T12:00", "2026-07-07T12:30"]),
       ]),
@@ -280,7 +288,7 @@ describe("review-required scenarios are detected and never priced", () => {
 
   it("flags casual weeks over 38 hours and every shift in that week", () => {
     const days = ["2026-07-06", "2026-07-07", "2026-07-08", "2026-07-09", "2026-07-10"];
-    const result = calc(
+    const result = calcR1(
       input(
         casual(),
         days.map((d, i) => shift(`s${i}`, `${d}T09:00`, `${d}T17:30`, [`${d}T12:00`, `${d}T12:30`])),
@@ -293,7 +301,7 @@ describe("review-required scenarios are detected and never priced", () => {
   });
 
   it("flags less than 12 hours between work days and prices only the unaffected shift", () => {
-    const result = calc(
+    const result = calcR1(
       input(casual(), [
         shift("mon", "2026-07-06T12:00", "2026-07-06T21:00", ["2026-07-06T16:00", "2026-07-06T16:30"]),
         shift("tue", "2026-07-07T07:00", "2026-07-07T12:00"),
@@ -312,7 +320,7 @@ describe("review-required scenarios are detected and never priced", () => {
   });
 
   it("does not apply the 12-hour rule to two shifts on the same day", () => {
-    const result = calc(
+    const result = calcR1(
       input(casual(), [
         shift("a", "2026-07-06T07:00", "2026-07-06T10:00"),
         shift("b", "2026-07-06T15:00", "2026-07-06T18:00"),
@@ -326,8 +334,11 @@ describe("unsupported or incomplete employment is never calculated", () => {
   it.each([
     [{ employmentType: "FULL_TIME" as const }, "EMPLOYMENT_TYPE_NOT_SUPPORTED"],
     [{ classificationCode: "RETAIL_EMPLOYEE_LEVEL_2" }, "CLASSIFICATION_NOT_SUPPORTED"],
-  ])("%j -> %s with no segments", (overrides, code) => {
-    const result = calc(input(casual(overrides), [shift("s1", "2026-07-06T09:00", "2026-07-06T17:00")]));
+  ])("r1: %j -> %s with no segments", (overrides, code) => {
+    const result = calc(
+      input(casual(overrides), [shift("s1", "2026-07-06T09:00", "2026-07-06T17:00")]),
+      r1Context,
+    );
     expect(result.status).toBe(CalculationStatus.UNSUPPORTED_SCENARIO);
     expect(issueCodes(result)).toContain(code);
     expect(result.shifts[0]).toMatchObject({ priced: false, segments: [], paidMinutes: 480 });
@@ -350,12 +361,13 @@ describe("unsupported or incomplete employment is never calculated", () => {
     [{ awardCoverage: "UNSURE" as const }, "AWARD_COVERAGE_UNCONFIRMED", CalculationStatus.REVIEW_REQUIRED],
     [{ ageBand: "UNSURE" as const }, "AGE_UNCONFIRMED", CalculationStatus.REVIEW_REQUIRED],
     [{ shiftworker: "UNSURE" as const }, "SHIFTWORKER_STATUS_UNCONFIRMED", CalculationStatus.REVIEW_REQUIRED],
-  ])("declaration %j -> %s (%s), classified but unpriced", (declaration, code, status) => {
+  ])("r1: declaration %j -> %s (%s), classified but unpriced", (declaration, code, status) => {
     const employment = casual();
     const result = calc(
       input({ ...employment, declarations: { ...employment.declarations, ...declaration } }, [
         shift("s1", "2026-07-06T09:00", "2026-07-06T13:00"),
       ]),
+      r1Context,
     );
     expect(result.status).toBe(status);
     expect(issueCodes(result)).toEqual([code]);
@@ -366,7 +378,7 @@ describe("unsupported or incomplete employment is never calculated", () => {
 
   it("rejects award codes and time zones outside scope", () => {
     expect(
-      issueCodes(
+      blockingCodes(
         calc(
           input(casual({ timeZone: "Pacific/Auckland" }), [
             shift("s1", "2026-07-06T09:00", "2026-07-06T13:00"),

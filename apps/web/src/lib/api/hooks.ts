@@ -1,7 +1,13 @@
 "use client";
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateAuditRequest, ListAuditsQuery, UpdateShiftRequest } from "@wageguard/api-contracts";
+import type {
+  CreateAuditRequest,
+  ListAuditsQuery,
+  PublicHolidaysQuery,
+  UpdateEmploymentRequest,
+  UpdateShiftRequest,
+} from "@wageguard/api-contracts";
 
 import { api } from "./endpoints";
 
@@ -18,6 +24,8 @@ export const keys = {
   audit: (id: string) => ["audit", id] as const,
   auditLines: (id: string) => ["audit", id, "lines"] as const,
   auditReport: (id: string) => ["audit", id, "report"] as const,
+  sessions: ["sessions"] as const,
+  publicHolidays: (query: PublicHolidaysQuery) => ["public-holidays", query] as const,
 };
 
 export const useMe = () => useQuery({ queryKey: keys.me, queryFn: api.me, retry: false, staleTime: 60_000 });
@@ -36,6 +44,28 @@ export function useCreateEmployment() {
     onSuccess: () => client.invalidateQueries({ queryKey: keys.employments }),
   });
 }
+
+export function useUpdateEmployment(id: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateEmploymentRequest) => api.updateEmployment(id, body),
+    onSuccess: (updated) => {
+      client.setQueryData(keys.employment(id), updated);
+      return client.invalidateQueries({ queryKey: keys.employments });
+    },
+  });
+}
+
+export const useSessions = () => useQuery({ queryKey: keys.sessions, queryFn: api.sessions });
+
+/** Public holidays for a state and date range. Reference data, so it is kept for the session. */
+export const usePublicHolidays = (query: PublicHolidaysQuery | null) =>
+  useQuery({
+    queryKey: keys.publicHolidays(query ?? { state: "NSW", from: "", to: "" }),
+    queryFn: () => api.publicHolidays(query as PublicHolidaysQuery),
+    enabled: query !== null,
+    staleTime: Infinity,
+  });
 
 export function useShifts(filters: { employmentId?: string; from?: string; to?: string }) {
   return useInfiniteQuery({

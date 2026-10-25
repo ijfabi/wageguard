@@ -2,13 +2,15 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState, type SyntheticEvent } from "react";
+import { useState, type ReactNode, type SyntheticEvent } from "react";
 import { toast } from "sonner";
 
 import { DisplayPreferencesForm } from "@/components/accessibility-menu";
+import { DescriptionList } from "@/components/description-list";
 import { PageHeader } from "@/components/page-header";
+import { ChangePasswordForm, SessionList, TwoFactorSettings } from "@/components/security-settings";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -28,84 +30,121 @@ import { formatDate, formatInstant, shortHash } from "@wageguard/presentation";
 
 const CONFIRMATION = "delete my account";
 
+/** A settings block: what it is on the left, the controls on the right. */
+function Section({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby={id}
+      className="grid gap-x-10 gap-y-4 border-t py-8 first:border-t-0 first:pt-0 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]"
+    >
+      <div>
+        <h2 id={id} className="text-sm font-semibold tracking-tight">
+          {title}
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{description}</p>
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
+
 export default function SettingsPage() {
   const me = useMe();
   const rules = useRuleVersions();
 
   return (
     <>
-      <PageHeader title="Settings" />
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>
-              <h2>Accessibility and display</h2>
-            </CardTitle>
-            <CardDescription>
-              Saved on this device. Also available from the Accessibility button on every page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <PageHeader title="Settings" description="Your account, security and display preferences." />
+      <Card>
+        <CardContent>
+          <Section id="settings-account" title="Account" description="The address you sign in with.">
+            <DescriptionList
+              items={[
+                [
+                  "Email",
+                  <span key="email" className="[overflow-wrap:anywhere]">
+                    {me.data?.email}
+                  </span>,
+                ],
+                ["Created", me.data === undefined ? "—" : formatInstant(me.data.createdAt)],
+              ]}
+            />
+          </Section>
+          <Section
+            id="settings-password"
+            title="Password"
+            description="Changing it signs you out on every other device."
+          >
+            <ChangePasswordForm />
+          </Section>
+          <Section
+            id="settings-two-factor"
+            title="Two-step verification"
+            description="Ask for a code from an authenticator app as well as your password when you sign in."
+          >
+            <TwoFactorSettings />
+          </Section>
+          <Section
+            id="settings-sessions"
+            title="Signed-in devices"
+            description="Everywhere your account is signed in now. Sign out of anything you don't recognise."
+          >
+            <SessionList />
+          </Section>
+          <Section
+            id="settings-display"
+            title="Accessibility and display"
+            description="Saved on this device. Also available from the Accessibility button on every page."
+          >
             <DisplayPreferencesForm />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2>Account</h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-2 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Email</dt>
-                <dd className="[overflow-wrap:anywhere]">{me.data?.email}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Created</dt>
-                <dd>{me.data === undefined ? "—" : formatInstant(me.data.createdAt)}</dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h2>Award rule sets</h2>
-            </CardTitle>
-            <CardDescription>The published, versioned rules WageGuard calculates with.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid gap-2 text-sm">
+          </Section>
+          <Section
+            id="settings-rules"
+            title="Award rule sets"
+            description="The published, versioned rules WageGuard calculates with. A newer revision replaces an older one for the same dates."
+          >
+            <ul className="divide-border/70 divide-y rounded-lg border">
               {(rules.data?.items ?? []).map((r) => (
-                <li key={r.version}>
-                  <p className="font-mono text-xs">{r.version}</p>
-                  <p className="text-muted-foreground text-xs">
+                <li key={r.version} className="px-4 py-3">
+                  <p className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                    {r.version}
+                    {r.supersededBy === null ? (
+                      <span className="bg-info-soft text-info rounded-full px-2 py-0.5 font-sans font-medium">
+                        In use
+                      </span>
+                    ) : (
+                      <span className="bg-neutral-soft text-neutral rounded-full px-2 py-0.5 font-sans font-medium">
+                        Replaced by {r.supersededBy.split("/").at(-1)}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
                     From {formatDate(r.effectiveFrom)} · {r.enabledRuleCount} rules in use,{" "}
                     {r.disabledRuleCount} flagged for review · fingerprint {shortHash(r.fingerprint)}
                   </p>
                 </li>
               ))}
             </ul>
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>
-              <h2>Your data</h2>
-            </CardTitle>
-            <CardDescription>
-              Your shifts, payslips and audits are visible only to you. Deleting your account permanently
-              removes all of them, including saved audits.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          </Section>
+          <Section
+            id="settings-data"
+            title="Delete your data"
+            description="Your shifts, payslips and audits are visible only to you. Deleting your account permanently removes all of them, including saved audits."
+          >
             <DeleteAccount />
-          </CardContent>
-        </Card>
-      </div>
+          </Section>
+        </CardContent>
+      </Card>
     </>
   );
 }

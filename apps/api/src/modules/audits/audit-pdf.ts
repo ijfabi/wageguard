@@ -1,8 +1,10 @@
+import { createRequire } from "node:module";
+
 import type { AuditDetail, PayslipResponse } from "@wageguard/api-contracts";
 import type { PayPeriodCalculationResult } from "@wageguard/calculation-engine";
 import {
   FINDING_STATUS,
-  CALCULATION_STATUS,
+  calculationStatusPresentation,
   auditAmounts,
   formatAud,
   formatDate,
@@ -13,6 +15,7 @@ import {
   issueTitle,
   type Tone,
 } from "@wageguard/presentation";
+import { openSync, type Font } from "fontkit";
 import PDFDocument from "pdfkit";
 
 export interface AuditPdfInput {
@@ -25,8 +28,18 @@ export interface AuditPdfInput {
 }
 
 const MARGIN = 48;
-const FONT = "Helvetica";
-const BOLD = "Helvetica-Bold";
+/**
+ * DejaVu Sans, embedded (subsetted by pdfkit). Unlike the 14 standard PDF fonts it covers Latin
+ * Extended, Greek, Cyrillic, Hebrew and more, so names and descriptions in any of those scripts
+ * print as typed instead of as "?".
+ */
+const require = createRequire(import.meta.url);
+const FONT_FILES = {
+  body: require.resolve("dejavu-fonts-ttf/ttf/DejaVuSans.ttf"),
+  bold: require.resolve("dejavu-fonts-ttf/ttf/DejaVuSans-Bold.ttf"),
+} as const;
+const FONT = "body";
+const BOLD = "bold";
 const INK = "#1a1a1a";
 const MUTED = "#555555";
 const RULE = "#d0d0d0";
@@ -38,15 +51,19 @@ const TONE_COLOURS: Readonly<Record<Tone, string>> = {
   neutral: "#444444",
 };
 
-/** Characters the standard PDF fonts can draw (Windows-1252). Everything else becomes "?". */
-const CP1252_EXTRAS = new Set("€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ");
+/** Both embedded faces come from the same family and cover the same characters. */
+const BODY_FACE = openSync(FONT_FILES.body) as Font;
+
+/**
+ * Text as the embedded font can draw it: any character without a glyph (emoji, CJK and other
+ * scripts DejaVu Sans doesn't cover) becomes "?" rather than an empty box, and line breaks and
+ * control characters are flattened so user text can't break the layout.
+ */
 export function toPdfText(value: string): string {
   let out = "";
   for (const ch of value.replace(/[\r\n\t]+/g, " ")) {
     const code = ch.codePointAt(0) ?? 0;
-    const drawable =
-      (code >= 0x20 && code <= 0x7e) || (code >= 0xa0 && code <= 0xff) || CP1252_EXTRAS.has(ch);
-    out += drawable ? ch : "?";
+    out += code >= 0x20 && code !== 0x7f && BODY_FACE.hasGlyphForCodePoint(code) ? ch : "?";
   }
   return out;
 }
@@ -77,6 +94,9 @@ export function renderAuditPdf(input: AuditPdfInput): Promise<Buffer> {
       CreationDate: new Date(input.generatedAt),
     },
   });
+  doc.registerFont(FONT, FONT_FILES.body);
+  doc.registerFont(BOLD, FONT_FILES.bold);
+  doc.font(FONT);
   const chunks: Buffer[] = [];
   const done = new Promise<Buffer>((resolve, reject) => {
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -213,7 +233,7 @@ export function renderAuditPdf(input: AuditPdfInput): Promise<Buffer> {
     doc.moveDown(0.25);
   };
   resultText(status.label, BOLD, 14, TONE_COLOURS[status.tone]);
-  resultText(`Calculation: ${CALCULATION_STATUS[audit.calculationStatus].label}`, FONT, 9, MUTED);
+  resultText(`Calculation: ${calculationStatusPresentation(audit).label}`, FONT, 9, MUTED);
   resultText(periodFinding?.explanation ?? status.description, FONT, 10, INK);
   if (periodFinding !== undefined) {
     resultText(`Next step: ${periodFinding.nextStep}`, BOLD, 10, INK);

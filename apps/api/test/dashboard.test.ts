@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
+  NO_CONDITIONS,
   createEmployment,
   createPayslip,
   createShift,
@@ -56,7 +57,7 @@ describe("GET /dashboard", () => {
     await createShift(agent, employmentId, "2026-07-06T09:00", "2026-07-06T13:00"); // 4h x 34.76 = 139.04
     const matched = await createPayslip(agent, employmentId, "139.04");
     const under = await createPayslip(agent, employmentId, "100.00");
-    const fullTime = await createEmployment(agent, { employmentType: "FULL_TIME" });
+    const fullTime = await createEmployment(agent, { conditions: { ...NO_CONDITIONS, apprentice: true } });
     await createShift(agent, fullTime, "2026-07-06T09:00", "2026-07-06T13:00");
     const unsupported = await createPayslip(agent, fullTime, "100.00");
     for (const [key, employment, payslip] of [

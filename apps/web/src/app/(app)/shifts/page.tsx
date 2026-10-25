@@ -1,6 +1,7 @@
 "use client";
 
 import type { EmploymentResponse, ShiftResponse } from "@wageguard/api-contracts";
+import { CalendarClock, Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -10,6 +11,7 @@ import { NativeSelect } from "@/components/native-select";
 import { PageHeader } from "@/components/page-header";
 import { ShiftForm } from "@/components/shift-form";
 import { EmptyState, ErrorState, LoadingState } from "@/components/states";
+import { TablePanel } from "@/components/table-panel";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -37,12 +39,16 @@ export default function ShiftsPage() {
         actions={
           <>
             <Button asChild variant="outline">
-              <Link href="/shifts/import">Import CSV</Link>
+              <Link href="/shifts/import">
+                <Upload aria-hidden />
+                Import CSV
+              </Link>
             </Button>
             <Button asChild>
               <Link
                 href={employmentId === undefined ? "/shifts/new" : `/shifts/new?employmentId=${employmentId}`}
               >
+                <Plus aria-hidden />
                 Record a shift
               </Link>
             </Button>
@@ -50,8 +56,10 @@ export default function ShiftsPage() {
         }
       />
 
-      <div className="mb-4 grid max-w-xs gap-1.5">
-        <Label htmlFor="employment-filter">Employment</Label>
+      <div className="mb-4 flex max-w-sm items-center gap-3">
+        <Label htmlFor="employment-filter" className="shrink-0">
+          Employment
+        </Label>
         <NativeSelect
           id="employment-filter"
           value={employmentId ?? ""}
@@ -74,6 +82,7 @@ export default function ShiftsPage() {
         <ErrorState error={shifts.error} onRetry={() => void shifts.refetch()} />
       ) : rows.length === 0 ? (
         <EmptyState
+          icon={CalendarClock}
           title="No shifts recorded"
           description="Record shifts one at a time or import a timesheet CSV."
           action={
@@ -84,51 +93,53 @@ export default function ShiftsPage() {
         />
       ) : (
         <>
-          <Table>
-            <caption className="sr-only">Recorded shifts</caption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Shift</TableHead>
-                <TableHead className="hidden sm:table-cell">Employment</TableHead>
-                <TableHead className="hidden md:table-cell">Breaks</TableHead>
-                <TableHead className="sr-only">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((shift) => (
-                <TableRow key={shift.id}>
-                  <TableCell className="whitespace-normal sm:whitespace-nowrap">
-                    <span className="font-medium">{formatShiftSpan(shift.start, shift.end)}</span>
-                    {/* On narrow screens the employment and breaks fold in under the shift. */}
-                    <span className="text-muted-foreground block text-xs sm:hidden">
-                      {employmentById.get(shift.employmentId)?.label ?? "—"}
-                    </span>
-                    <span className="text-muted-foreground block text-xs md:hidden">
-                      Breaks: {describeBreaks(shift)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    {employmentById.get(shift.employmentId)?.label ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
-                    {describeBreaks(shift)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEditing(shift);
-                      }}
-                      aria-label={`Edit shift ${formatShiftSpan(shift.start, shift.end)}`}
-                    >
-                      Edit
-                    </Button>
-                  </TableCell>
+          <TablePanel>
+            <Table>
+              <caption className="sr-only">Recorded shifts</caption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Shift</TableHead>
+                  <TableHead className="hidden sm:table-cell">Employment</TableHead>
+                  <TableHead className="hidden md:table-cell">Breaks</TableHead>
+                  <TableHead className="sr-only">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {rows.map((shift) => (
+                  <TableRow key={shift.id}>
+                    <TableCell className="whitespace-normal sm:whitespace-nowrap">
+                      <span className="font-medium">{formatShiftSpan(shift.start, shift.end)}</span>
+                      {/* On narrow screens the employment and breaks fold in under the shift. */}
+                      <span className="text-muted-foreground block text-xs sm:hidden">
+                        {employmentById.get(shift.employmentId)?.label ?? "—"}
+                      </span>
+                      <span className="text-muted-foreground block text-xs md:hidden">
+                        Breaks: {describeBreaks(shift)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {employmentById.get(shift.employmentId)?.label ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+                      {describeBreaks(shift)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditing(shift);
+                        }}
+                        aria-label={`Edit shift ${formatShiftSpan(shift.start, shift.end)}`}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TablePanel>
           {shifts.hasNextPage ? (
             <div className="mt-4 flex justify-center">
               <Button
@@ -182,7 +193,11 @@ function EditShiftDialog({
       return;
     }
     try {
-      await update.mutateAsync({ id: shift.id, body: { version: shift.version, ...toShiftTimes(values) } });
+      const timeZone = employments.find((e) => e.id === shift.employmentId)?.timeZone;
+      await update.mutateAsync({
+        id: shift.id,
+        body: { version: shift.version, ...toShiftTimes(values, timeZone) },
+      });
       toast.success("Shift updated");
       onClose();
     } catch (error: unknown) {
@@ -214,7 +229,7 @@ function EditShiftDialog({
           <ShiftForm
             key={`${shift.id}-${shift.version}`}
             employments={employments}
-            initial={fromShiftResponse(shift)}
+            initial={fromShiftResponse(shift, employments.find((e) => e.id === shift.employmentId)?.timeZone)}
             submitLabel="Save changes"
             lockEmployment
             onSubmit={onSubmit}

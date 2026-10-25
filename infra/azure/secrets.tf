@@ -58,3 +58,34 @@ resource "azurerm_key_vault_secret" "migrate_database_url" {
 
   depends_on = [azurerm_role_assignment.deployer_writes_secrets]
 }
+
+# Encrypts two-factor secrets at rest. Generated once and kept in state: replacing it would make
+# every enrolled authenticator stop working, so it must never be rotated without re-enrolment.
+resource "random_bytes" "totp_encryption_key" {
+  length = 32
+}
+
+resource "azurerm_key_vault_secret" "totp_encryption_key" {
+  name         = "totp-encryption-key"
+  key_vault_id = azurerm_key_vault.main.id
+  value        = random_bytes.totp_encryption_key.base64
+  content_type = "text/plain"
+
+  depends_on = [azurerm_role_assignment.deployer_writes_secrets]
+}
+
+# SMTP relay URL with its credentials. A container app can only reference a secret that exists, so
+# Terraform writes an invalid placeholder and then leaves the value alone: set the real one with
+# `az keyvault secret set` (docs/deployment.md). Until then the API runs but cannot send email.
+resource "azurerm_key_vault_secret" "smtp_url" {
+  name         = "smtp-url"
+  key_vault_id = azurerm_key_vault.main.id
+  value        = "smtp://replace-me.invalid:587"
+  content_type = "text/plain"
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+
+  depends_on = [azurerm_role_assignment.deployer_writes_secrets]
+}

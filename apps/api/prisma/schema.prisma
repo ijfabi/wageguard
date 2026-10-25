@@ -6,9 +6,9 @@
 // exclusion constraint and the completed-audit immutability trigger) are in the migrations.
 
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "esm"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
   importFileExtension = "js"
 }
 
@@ -43,6 +43,30 @@ enum ShiftworkerStatus {
   NO
   YES
   UNSURE
+}
+
+enum AustralianState {
+  ACT
+  NSW
+  NT
+  QLD
+  SA
+  TAS
+  VIC
+  WA
+}
+
+/// MA000004 cl. 15.2 exceptions to the span of ordinary hours.
+enum SpanException {
+  NONE
+  NEWSAGENCY
+  VIDEO_SHOP
+  EXTENDED_TRADING
+}
+
+enum EmailTokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
 }
 
 enum BreakKind {
@@ -83,6 +107,14 @@ enum AuditEventType {
   LOGIN_SUCCEEDED
   LOGIN_FAILED
   LOGGED_OUT
+  EMAIL_VERIFIED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET
+  PASSWORD_CHANGED
+  TWO_FACTOR_ENABLED
+  TWO_FACTOR_DISABLED
+  TWO_FACTOR_FAILED
+  SESSIONS_REVOKED
   SHIFTS_IMPORTED
   AUDIT_CREATED
   REPORT_EXPORTED
@@ -90,34 +122,108 @@ enum AuditEventType {
 }
 
 model User {
-  id           String   @id @default(uuid(7)) @db.Uuid
-  email        String   @unique @db.VarChar(254)
-  passwordHash String   @map("password_hash") @db.Text
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  id              String    @id @default(uuid(7)) @db.Uuid
+  email           String    @unique @db.VarChar(254)
+  passwordHash    String    @map("password_hash") @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(3)
+  /// TOTP secret, encrypted with AES-256-GCM (see TwoFactorService). Null until two-factor is enabled.
+  totpSecret      String?   @map("totp_secret") @db.Text
+  totpEnabledAt   DateTime? @map("totp_enabled_at") @db.Timestamptz(3)
+  /// The last accepted 30-second TOTP step, so a code cannot be used twice.
+  totpLastStep    Int?      @map("totp_last_step")
 
-  sessions    Session[]
-  employments Employment[]
-  shifts      Shift[]
-  payslips    Payslip[]
-  audits      Audit[]
-  events      AuditEvent[]
+  sessions        Session[]
+  emailTokens     EmailToken[]
+  recoveryCodes   RecoveryCode[]
+  idempotencyKeys IdempotencyKey[]
+  employments     Employment[]
+  shifts          Shift[]
+  payslips        Payslip[]
+  audits          Audit[]
+  events          AuditEvent[]
 
   @@map("users")
 }
 
 /// Server-side session. Only the SHA-256 of the random token is stored.
 model Session {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  tokenHash  String   @unique @map("token_hash") @db.Char(64)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+  id                String   @id @default(uuid(7)) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  tokenHash         String   @unique @map("token_hash") @db.Char(64)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt         DateTime @map("expires_at") @db.Timestamptz(3)
+  /// False while a two-factor code is still owed: the session can only complete sign-in.
+  verified          Boolean  @default(true)
+  /// Wrong two-factor codes entered against this pending session. It is deleted at 5.
+  twoFactorAttempts Int      @default(0) @map("two_factor_attempts")
+  lastSeenAt        DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  /// Coarse description for the sessions list ("Chrome on Windows"); never the full user agent.
+  device            String?  @db.VarChar(80)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
   @@map("sessions")
+}
+
+/// Single-use links for email verification and password reset. Only the SHA-256 of the token is stored.
+model EmailToken {
+  id        String            @id @default(uuid(7)) @db.Uuid
+  userId    String            @map("user_id") @db.Uuid
+  purpose   EmailTokenPurpose
+  tokenHash String            @unique @map("token_hash") @db.Char(64)
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime          @map("expires_at") @db.Timestamptz(3)
+  usedAt    DateTime?         @map("used_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("email_tokens")
+}
+
+/// Two-factor recovery codes, hashed. Each can be used once.
+model RecoveryCode {
+  id       String    @id @default(uuid(7)) @db.Uuid
+  userId   String    @map("user_id") @db.Uuid
+  codeHash String    @map("code_hash") @db.Char(64)
+  usedAt   DateTime? @map("used_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@map("recovery_codes")
+}
+
+/// Fixed-window rate-limit counters shared by every API instance.
+model RateLimitBucket {
+  key       String   @db.VarChar(200)
+  windowEnd DateTime @map("window_end") @db.Timestamptz(3)
+  hits      Int
+
+  @@id([key])
+  @@index([windowEnd])
+  @@map("rate_limit_buckets")
+}
+
+/// Which audit an Idempotency-Key produced. Keys expire, after which they can be used again.
+model IdempotencyKey {
+  userId      String   @map("user_id") @db.Uuid
+  key         String   @db.VarChar(100)
+  requestHash String   @map("request_hash") @db.Char(64)
+  auditId     String   @map("audit_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(3)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audit Audit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+
+  @@id([userId, key])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
 }
 
 model Employment {
@@ -134,7 +240,23 @@ model Employment {
   shiftworker               ShiftworkerStatus
   /// Part-time only: { "MON": 360, ... } guaranteed minutes per weekday (cl. 10.5(a)).
   partTimeGuaranteedMinutes Json?               @map("part_time_guaranteed_minutes")
+  /// Where the work is done: decides the public holiday calendar. Null for employments made before it existed.
+  state                     AustralianState?
+  /// Junior rates depend on age on each day worked (cl. 17.2).
+  dateOfBirth               DateTime?           @map("date_of_birth") @db.Date
+  employmentStartDate       DateTime?           @map("employment_start_date") @db.Date
+  spanException             SpanException       @default(NONE) @map("span_exception")
+  schoolStudent             Boolean             @default(false) @map("school_student")
+  reducedBreakAgreed        Boolean             @default(false) @map("reduced_break_agreed")
+  averagingRoster           Boolean             @default(false) @map("averaging_roster")
+  bakingProduction          Boolean             @default(false) @map("baking_production")
+  apprentice                Boolean             @default(false)
+  laundersSpecialClothing   Boolean             @default(false) @map("launders_special_clothing")
+  appointedFirstAider       Boolean             @default(false) @map("appointed_first_aider")
+  holdsLiquorLicence        Boolean             @default(false) @map("holds_liquor_licence")
+  brokenHill                Boolean             @default(false) @map("broken_hill")
   createdAt                 DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                 DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   shifts   Shift[]
@@ -253,12 +375,14 @@ model Audit {
   calculatedAt       DateTime          @map("calculated_at") @db.Timestamptz(3)
   createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  employment Employment     @relation(fields: [employmentId, userId], references: [id, userId], onDelete: NoAction)
-  payslip    Payslip        @relation(fields: [payslipId, userId], references: [id, userId], onDelete: NoAction)
-  findings   AuditFinding[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employment      Employment       @relation(fields: [employmentId, userId], references: [id, userId], onDelete: NoAction)
+  payslip         Payslip          @relation(fields: [payslipId, userId], references: [id, userId], onDelete: NoAction)
+  findings        AuditFinding[]
+  idempotencyKeys IdempotencyKey[]
 
-  @@unique([userId, idempotencyKey])
+  /// Kept for the record. Uniqueness now lives in idempotency_keys, so keys can expire.
+  @@index([userId, idempotencyKey])
   @@index([userId, createdAt(sort: Desc), id])
   /// Also covers the dashboard sums (shift_count, difference), so they read the index alone.
   /// Prisma cannot declare INCLUDE columns, so they are trailing key columns.
