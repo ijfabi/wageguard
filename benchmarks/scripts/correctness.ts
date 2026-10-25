@@ -13,6 +13,13 @@ import { evaluateGolden } from "@wageguard/test-fixtures";
 import { REPO_ROOT, captureEnvironment } from "../lib/environment.js";
 import { environmentMarkdown, saveRecord } from "../lib/results.js";
 
+/** The revision golden scenarios resolve to: the newest one, which no other revision supersedes. */
+const RULE_SET_IN_FORCE = bundledRegistry()
+  .list()
+  .filter((r) => r.supersededBy === null)
+  .map((r) => r.version)
+  .join(", ");
+
 const environment = captureEnvironment("correctness");
 const summary = evaluateGolden({
   rules: bundledRegistry(),
@@ -80,7 +87,7 @@ const markdown = `# Benchmark D: correctness evaluation
 
 ${environmentMarkdown(environment)}
 
-Engine ${ENGINE_VERSION}, rule set MA000004/2026-07-01/r1.
+Engine ${ENGINE_VERSION}, rule set ${RULE_SET_IN_FORCE}.
 
 | Measure | Result |
 | --- | --- |
@@ -104,7 +111,7 @@ const saved = saveRecord(
     status: "COMPLETED",
     reason: null,
     environment,
-    configuration: { engineVersion: ENGINE_VERSION, ruleSet: "MA000004/2026-07-01/r1" },
+    configuration: { engineVersion: ENGINE_VERSION, ruleSet: RULE_SET_IN_FORCE },
     results,
     errorCount: summary.failed,
     exitStatus: summary.failed === 0 ? 0 : 1,
