@@ -1,6 +1,6 @@
 # Acceptance check
 
-The project was to be considered ready for a portfolio demonstration only when all fifteen of these criteria held. Each one is checked below against something you can run or read. Checked on 2026-10-25, at the commit that added this file.
+The project was to be considered ready for a portfolio demonstration only when all fifteen of these criteria held. Each one is checked below against something you can run or read. First checked on 2026-10-25, and re-checked the same day after the homepage, accessibility and Azure work.
 
 | #   | Criterion                                                      | Met? | Evidence                                                                                                                                                                                                  |
 | --- | -------------------------------------------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -10,8 +10,8 @@ The project was to be considered ready for a portfolio demonstration only when a
 | 4   | Monetary calculations use exact decimal handling               | Yes  | `Money` and `Decimal` only, with named rounding steps and lint rules banning floating-point helpers ([ADR 0004](adr/0004-decimal-money-and-rounding.md)). The web app does cents arithmetic with `BigInt` |
 | 5   | Versioned rules and audit snapshots work correctly             | Yes  | Rule-set fingerprints are checked at startup and in CI. Audit rows can't be changed (a database trigger, with tests). A test recalculates a stored snapshot and gets the identical result                 |
 | 6   | Core APIs require appropriate authentication and authorisation | Yes  | A global session guard, ownership checks on every object, and database-level ownership constraints. `security.test.ts` tries every object route as another user                                           |
-| 7   | All required test suites pass in the documented environment    | Yes  | 346 unit, property, golden and API integration tests and 10 Playwright tests pass locally (`pnpm test:evidence`, `pnpm --filter @wageguard/web e2e`)                                                      |
-| 8   | The relevant CI pipeline succeeds                              | Yes  | Six jobs on every push: quality, security, migrations, containers, Terraform and end-to-end. The run for this commit is linked from the commit on GitHub                                                  |
+| 7   | All required test suites pass in the documented environment    | Yes  | 350 unit, property, golden and API integration tests and 14 Playwright tests pass locally (`pnpm test:evidence`, `pnpm --filter @wageguard/web e2e`)                                                      |
+| 8   | The relevant CI pipeline succeeds                              | Yes  | Six jobs on every push: quality, security, migrations, containers, Terraform (AWS and Azure) and end-to-end. The run for this commit is linked from the commit on GitHub                                  |
 | 9   | The application runs locally with documented commands          | Yes  | `docker compose up --build` ([README](../README.md#running-it), [deployment](deployment.md)), re-checked on 2026-10-25                                                                                    |
 | 10  | The dashboard uses real persisted application data             | Yes  | `GET /dashboard` aggregates the signed-in user's audits in PostgreSQL. Nothing on it is mocked                                                                                                            |
 | 11  | Benchmark scripts run and retain original measurements         | Yes  | Six benchmark scripts. Every run is saved to `benchmarks/results/` and never overwritten, including outliers ([performance](performance.md))                                                              |
@@ -23,5 +23,5 @@ The project was to be considered ready for a portfolio demonstration only when a
 ## Not part of the criteria, but worth stating
 
 - **No professional review.** The award rates and golden scenarios haven't been reviewed by a payroll or legal professional. That's the biggest gap between this and a product anyone should rely on.
-- **AWS is untested.** The deployment is written and validated, but has never been applied, so it hasn't been tested against real AWS ([deployment](deployment.md)).
+- **The cloud is untested.** The AWS and Azure deployments are written and validated, but have never been applied, so neither has been tested against a real cloud ([infrastructure](infrastructure.md)).
 - **One laptop.** All performance numbers come from a single developer machine.

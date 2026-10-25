@@ -79,6 +79,61 @@ test.describe("content security policy", () => {
   });
 });
 
+test.describe("accessibility panel", () => {
+  test("applies display preferences straight away and keeps them after a reload", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Accessibility" }).click();
+    const dialog = page.getByRole("dialog", { name: "Accessibility and display" });
+    // The radios are visually hidden behind styled labels, so pick options the way a user does.
+    const choose = async (group: string, option: string) => {
+      const label = dialog
+        .getByRole("group", { name: group })
+        .locator("label")
+        .filter({ hasText: new RegExp(`^${option}$`) });
+      await label.click();
+      await expect(label.getByRole("radio")).toBeChecked();
+    };
+    await choose("Theme", "Dark");
+    await choose("Text size", "Larger");
+    await choose("Motion", "Reduce motion");
+    await choose("Contrast", "High contrast");
+
+    const html = page.locator("html");
+    await expect(html).toHaveClass(/\bdark\b/);
+    await expect(html).toHaveAttribute("data-text", "larger");
+    await expect(html).toHaveAttribute("data-motion", "reduce");
+    await expect(html).toHaveAttribute("data-contrast", "high");
+
+    // Applied before the page paints on the next load (by the nonce-carrying inline script).
+    await page.reload();
+    await expect(html).toHaveClass(/\bdark\b/);
+    await expect(html).toHaveAttribute("data-text", "larger");
+
+    await page.getByRole("button", { name: "Accessibility" }).click();
+    await page.getByRole("button", { name: "Reset to defaults" }).click();
+    await expect(html).not.toHaveAttribute("data-text", /.+/);
+    await expect(html).not.toHaveAttribute("data-contrast", /.+/);
+  });
+
+  test("moving homepage content can be paused, and stops entirely with reduced motion", async ({ page }) => {
+    await page.goto("/");
+    const pauseDemo = page.getByRole("button", { name: "Pause animation" });
+    await pauseDemo.click();
+    await expect(page.getByRole("button", { name: "Play animation" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await page.getByRole("button", { name: "Pause quotes" }).click();
+    await expect(page.getByRole("button", { name: "Play quotes" })).toBeVisible();
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    await expect(page.getByRole("button", { name: /animation|quotes/ })).toHaveCount(0);
+    // The quotes are still all there, as a static list.
+    await expect(page.locator("#award blockquote").first()).toBeVisible();
+  });
+});
+
 /** Fails on any WCAG 2.1 A/AA violation that axe rates serious or critical. */
 async function expectAccessible(page: Page) {
   // Measure what users see: wait until any toast has finished its fade-in animation.
@@ -126,6 +181,74 @@ test.describe("accessibility (axe, WCAG 2.1 AA)", () => {
       await page.goto(path);
       await expect(page.locator("main h1")).toBeVisible();
       await expectAccessible(page);
+    }
+  });
+
+  test("the homepage and app pages pass in dark, high-contrast and large-text modes", async ({ page }) => {
+    test.setTimeout(90_000);
+    for (const prefs of [
+      { theme: "dark", textSize: "standard", motion: "system", contrast: "standard" },
+      { theme: "light", textSize: "larger", motion: "reduce", contrast: "high" },
+      { theme: "dark", textSize: "large", motion: "reduce", contrast: "high" },
+    ]) {
+      await page.addInitScript((value) => {
+        localStorage.setItem("wg-display", value);
+      }, JSON.stringify(prefs));
+      await page.goto("/");
+      await expectAccessible(page);
+    }
+    await signUp(page);
+    await expectAccessible(page);
+    await page.goto("/settings");
+    await expect(page.locator("main h1")).toBeVisible();
+    await expectAccessible(page);
+  });
+
+  test("every page reflows at 320 CSS pixels with the largest text (WCAG 1.4.10)", async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        "wg-display",
+        JSON.stringify({ theme: "system", textSize: "larger", motion: "reduce", contrast: "standard" }),
+      );
+    });
+    await page.setViewportSize({ width: 320, height: 640 });
+    // Nothing may push the page sideways. Wide tables may scroll inside their own container.
+    const expectNoSidewaysScroll = async () => {
+      await expect(page.locator("main h1")).toBeVisible();
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, page.url()).toBeLessThanOrEqual(0);
+    };
+    for (const path of ["/", "/sign-in", "/sign-up"]) {
+      await page.goto(path);
+      await expectNoSidewaysScroll();
+    }
+    await signUp(page);
+    await addCasualEmployment(page, "Narrow screen store");
+    await importCsv(page, G009_CSV);
+    await expect(page).toHaveURL(/\/shifts\?/);
+    await enterPayslip(page, "800.00");
+    await page.getByRole("button", { name: "Run audit" }).click();
+    await expect(page.getByRole("heading", { name: "Potential underpayment" })).toBeVisible();
+    const audit = page.url();
+    for (const path of [
+      audit,
+      `${audit}/explanation`,
+      "/dashboard",
+      "/employments",
+      "/shifts",
+      "/shifts/new",
+      "/shifts/import",
+      "/payslips",
+      "/payslips/new",
+      "/audits",
+      "/audits/new",
+      "/settings",
+    ]) {
+      await page.goto(path);
+      await expectNoSidewaysScroll();
     }
   });
 

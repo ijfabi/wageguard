@@ -2,6 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 
+import { useDisplayPreferences } from "./use-display-preferences";
+
 const QUERY = "(prefers-reduced-motion: reduce)";
 
 function subscribe(onChange: () => void): () => void {
@@ -12,11 +14,16 @@ function subscribe(onChange: () => void): () => void {
   };
 }
 
-/** True when the user has asked the operating system for reduced motion (WCAG 2.3.3). */
+/**
+ * True when motion should be reduced (WCAG 2.3.3): either the operating system asks for it, or the
+ * person chose "Reduce motion" in WageGuard's accessibility panel.
+ */
 export function useReducedMotion(): boolean {
-  return useSyncExternalStore(
+  const preferences = useDisplayPreferences();
+  const system = useSyncExternalStore(
     subscribe,
     () => window.matchMedia(QUERY).matches,
     () => true, // server render: assume reduced motion, avoiding an animation flash on hydration
   );
+  return system || preferences.motion === "reduce";
 }

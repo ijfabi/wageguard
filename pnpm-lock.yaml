@@ -216,6 +216,9 @@ importers:
       '@wageguard/api-contracts':
         specifier: workspace:*
         version: link:../../packages/api-contracts
+      '@wageguard/award-rules':
+        specifier: workspace:*
+        version: link:../../packages/award-rules
       '@wageguard/presentation':
         specifier: workspace:*
         version: link:../../packages/presentation

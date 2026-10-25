@@ -8,6 +8,8 @@ The rules are taken from the official award text and are versioned and determini
 
 > **Status:** a finished portfolio project. Everything listed under "What works" is built and tested, and [docs/demo.md](docs/demo.md) walks through it end to end. WageGuard is informational only and is not legal advice.
 
+![WageGuard homepage](docs/screenshots/00-homepage-hero.png)
+
 ![Dashboard](docs/screenshots/02-dashboard.png)
 
 | Audit with a potential underpayment                         | How it was calculated                                                       |
@@ -18,7 +20,7 @@ The screenshots come from a seeded demo account with made-up data.
 
 ## What works
 
-The web app (`apps/web`, Next.js 16) covers the whole flow: create an account, add a job, enter shifts by hand or import them from CSV, enter a payslip, and run an audit. Each audit has a detail page, a full explanation of the calculation, and a downloadable evidence report as PDF or JSON. The dashboard shows your audit history, and you can delete your account and all of its data from settings.
+The web app (`apps/web`, Next.js 16) covers the whole flow: create an account, add a job, enter shifts by hand or import them from CSV, enter a payslip, and run an audit. Each audit has a detail page, a full explanation of the calculation, and a downloadable evidence report as PDF or JSON. The dashboard shows your audit history, and you can delete your account and all of its data from settings. The homepage explains the product with an animated sample audit and quotes taken word for word from the award, and every page has an accessibility panel for theme, text size, motion and contrast ([ACCESSIBILITY.md](ACCESSIBILITY.md)).
 
 The API (`apps/api`) is NestJS 12 with Prisma 7 and PostgreSQL 17. It uses cookie sessions with argon2id password hashing and checks ownership on every object. The database enforces ownership as well, with constraints and triggers. Audit creation is idempotent, so a retried request never creates a second audit. Completed audits can't be changed. There's an OpenAPI 3.1 document, and optional OpenTelemetry tracing that keeps pay data and identities out of the telemetry.
 
@@ -28,13 +30,13 @@ The award rules (`packages/award-rules`) are the General Retail Industry Award r
 
 ## Technology
 
-| Area        | Tools                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| Web app     | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, TanStack Query, React Hook Form, Recharts |
-| API         | NestJS 12, Prisma 7, PostgreSQL 17, Zod 4, argon2id sessions, pdfkit, OpenTelemetry                    |
-| Calculation | Plain TypeScript, decimal.js, Luxon (time-zone offsets only)                                           |
-| Testing     | Vitest, fast-check, Testcontainers, Supertest, Playwright, axe-core, k6                                |
-| Delivery    | pnpm workspaces, Docker Compose, GitHub Actions, Trivy, gitleaks, Terraform (AWS, never applied)       |
+| Area        | Tools                                                                                                      |
+| ----------- | ---------------------------------------------------------------------------------------------------------- |
+| Web app     | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, TanStack Query, React Hook Form, Recharts     |
+| API         | NestJS 12, Prisma 7, PostgreSQL 17, Zod 4, argon2id sessions, pdfkit, OpenTelemetry                        |
+| Calculation | Plain TypeScript, decimal.js, Luxon (time-zone offsets only)                                               |
+| Testing     | Vitest, fast-check, Testcontainers, Supertest, Playwright, axe-core, k6                                    |
+| Delivery    | pnpm workspaces, Docker Compose, GitHub Actions, Trivy, gitleaks, Terraform (AWS and Azure, never applied) |
 
 ## Architecture
 
@@ -78,7 +80,7 @@ Every number here comes from a saved benchmark record. They are synthetic runs o
 | API throughput at 50 concurrent clients (k6, production image)                       | 307 → 475 requests/s (+54.9%), p95 443 ms → 312 ms, 0% errors                       |
 | Audit submissions with the API killed mid-load, then with the database down for 10 s | 14,999 of 14,999 completed, no duplicates, no lost or inconsistent records          |
 | Golden scenarios                                                                     | 21 of 21: 10 hand-worked reference calculations and 11 correct refusals             |
-| Automated tests                                                                      | 346 passing, plus 10 Playwright end-to-end tests                                    |
+| Automated tests                                                                      | 350 passing, plus 14 Playwright end-to-end tests                                    |
 | Calculation engine coverage                                                          | 98.6% of lines, 93.1% of branches                                                   |
 
 The golden scenarios were worked out by hand from the award's published rates, and nobody with payroll qualifications has reviewed them yet. They show the engine agrees with those calculations on a small, defined set of cases. They don't prove legal accuracy.
@@ -127,11 +129,11 @@ pnpm resume:metrics          # docs/resume-evidence/
 
 ## Documentation
 
-[Demo](docs/demo.md) · [Architecture](docs/architecture.md) · [Rules engine](docs/rules-engine.md) · [API](docs/api.md) · [Data model](docs/data-model.md) · [Award sources](docs/award-sources.md) · [Testing](docs/testing-strategy.md) · [Performance](docs/performance.md) · [Security](docs/security.md) · [Observability](docs/observability.md) · [Deployment](docs/deployment.md) · [Known limitations](docs/known-limitations.md) · [Decision records](docs/adr/) · [Checklist](docs/implementation-checklist.md) · [Acceptance](docs/acceptance.md)
+[Demo](docs/demo.md) · [Information architecture](docs/information-architecture.md) · [Architecture](docs/architecture.md) · [Rules engine](docs/rules-engine.md) · [API](docs/api.md) · [Data model](docs/data-model.md) · [Award sources](docs/award-sources.md) · [Testing](docs/testing-strategy.md) · [Performance](docs/performance.md) · [Security](docs/security.md) · [Observability](docs/observability.md) · [Infrastructure](docs/infrastructure.md) · [Deployment](docs/deployment.md) · [Accessibility](ACCESSIBILITY.md) · [Known limitations](docs/known-limitations.md) · [Decision records](docs/adr/) · [Checklist](docs/implementation-checklist.md) · [Acceptance](docs/acceptance.md)
 
 ## Deploying
 
-`docker compose up --build` runs everything locally. `infra/aws` holds an optional AWS deployment in Terraform (load balancer, ECS Fargate, RDS PostgreSQL), which CI validates but which has never been applied. [Deployment](docs/deployment.md) covers both, along with the [backup and recovery](docs/runbooks/backup-and-recovery.md) and [incident response](docs/runbooks/incident-response.md) runbooks.
+`docker compose up --build` runs everything locally. `infra/aws` and `infra/azure` hold optional cloud deployments in Terraform (ECS Fargate and RDS on AWS, Container Apps and PostgreSQL Flexible Server on Azure). CI validates both, but neither has ever been applied. [Infrastructure](docs/infrastructure.md) has the architecture diagrams for both clouds, the Terraform commands, and a proposed production design. [Deployment](docs/deployment.md) covers both, along with the [backup and recovery](docs/runbooks/backup-and-recovery.md) and [incident response](docs/runbooks/incident-response.md) runbooks.
 
 ## What's next
 

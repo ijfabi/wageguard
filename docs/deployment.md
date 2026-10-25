@@ -95,6 +95,19 @@ The first deployment should check each of these.
 
 Running it costs money. The main costs are the load balancer, the RDS instance and the two Fargate tasks, which run around the clock. Check the AWS Pricing Calculator for the region before applying, and `terraform destroy` it when the demo is over. Deletion protection on the database has to be turned off first.
 
+## Azure (designed, validated, never deployed)
+
+`infra/azure` is the same deployment for Azure: Container Apps for the API, web app and migration job, PostgreSQL 17 Flexible Server inside a virtual network, Key Vault for the connection strings, and Log Analytics for logs. The main difference from AWS is that the web app is the only public endpoint and proxies `/api/v1/*` to an internal-only API, so the web image has to be built with `--build-arg API_ORIGIN=` set to the `api_origin` output.
+
+To deploy, once approved:
+
+1. Copy `terraform.tfvars.example` to `terraform.tfvars`, set the subscription, and configure a remote state backend.
+2. The container apps can't start until their images are in the registry, and the registry is created by this same configuration. So the first time only, create the registry on its own with `terraform apply -target=azurerm_container_registry.main`.
+3. Build the three images (the web one with `API_ORIGIN` as above), tag them with `image_tag` and push them to the `registry` output.
+4. Run the full `terraform apply`. The API won't report ready until step 5 has created the tables.
+5. Start the migration job with `az containerapp job start` using the `migrate_job` and `resource_group` outputs. On later releases, push the new images and run the job before applying the new `image_tag`.
+   `terraform fmt`, `init` and `validate` pass with Terraform 1.16.5 and azurerm 5.9.0, and CI repeats them on every push. Nothing else has been checked. The diagrams, the comparison with AWS, the Terraform command reference and a proposed production design are in [infrastructure](infrastructure.md).
+
 ## Runbooks
 
 - [Backup and recovery](runbooks/backup-and-recovery.md). The local backup and restore was tested on 2026-10-25.

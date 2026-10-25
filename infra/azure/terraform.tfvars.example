@@ -1,0 +1,5 @@
+# Copy to terraform.tfvars (which git ignores) and fill in. No secrets belong in this file.
+subscription_id = "00000000-0000-0000-0000-000000000000"
+location        = "australiaeast"
+environment     = "demo"
+image_tag       = "2026-10-25-abc1234"

@@ -71,7 +71,10 @@
 - [x] Final code review. Fixed: simultaneous sign-ups returning 500, expired sessions never cleaned up, a corrupted password hash read as a wrong password, and rate limits that would have been shared by every user behind a load balancer (`TRUST_PROXY`)
 - [x] UI polish from a page-by-page review at desktop and phone widths: tables that overflowed on phones, misaligned form fields, legends straddling borders, a clipped CSV example, raw weekday codes and shift IDs on the explanation page
 - [x] Demo account seed and a recorded end-to-end walkthrough ([demo](demo.md))
-- [x] Optional AWS deployment in Terraform, validated in CI and never applied ([deployment](deployment.md))
+- [x] Optional AWS and Azure deployments in Terraform, validated in CI and never applied ([infrastructure](infrastructure.md), [deployment](deployment.md))
 - [x] Backup and recovery runbook (local restore tested) and incident response runbook
 - [x] Acceptance check against all 15 criteria ([acceptance](acceptance.md))
 - [x] Resume evidence regenerated from saved records
+- [x] Homepage with an animated sample audit, word-for-word award quotes (tested against the retrieved award text) and measured results
+- [x] Accessibility panel (theme, text size, motion, contrast), pause controls for all motion, reflow at 320 pixels, and axe checks in every display mode ([ACCESSIBILITY.md](../ACCESSIBILITY.md))
+- [x] Documentation: information architecture, full database schema, API route map and request lifecycle, infrastructure and cloud design, Terraform commands, testing levels with UAT scenarios and a test case table

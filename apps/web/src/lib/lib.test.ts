@@ -1,6 +1,17 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
+import { homepageQuotes } from "./award-quotes";
 import { buildCsp, createNonce } from "./csp";
+import {
+  DEFAULT_DISPLAY,
+  DISPLAY_BOOTSTRAP_SCRIPT,
+  TEXT_SIZES,
+  THEMES,
+  applyDisplayPreferences,
+  parseDisplayPreferences,
+} from "./display-preferences";
 import { parseDuration, toCreateEmploymentRequest, EMPTY_EMPLOYMENT_FORM } from "./employment-form";
 import { PayslipFormSchema } from "./payslip-form";
 import { safeRedirect } from "./safe-redirect";
@@ -151,11 +162,101 @@ describe("content security policy", () => {
   });
 });
 
+describe("display preferences", () => {
+  const fakeRoot = () => {
+    const classes = new Set<string>();
+    return {
+      classes,
+      classList: {
+        toggle: (token: string, force: boolean) => (force ? classes.add(token) : classes.delete(token)),
+      },
+      dataset: {} as Record<string, string | undefined>,
+      style: { colorScheme: "" },
+    };
+  };
+
+  it("falls back to defaults for missing, unknown or corrupt values", () => {
+    expect(parseDisplayPreferences(null)).toEqual(DEFAULT_DISPLAY);
+    expect(parseDisplayPreferences("not json")).toEqual(DEFAULT_DISPLAY);
+    expect(parseDisplayPreferences('{"theme":"neon","textSize":"large"}')).toEqual({
+      ...DEFAULT_DISPLAY,
+      textSize: "large",
+    });
+  });
+
+  it("applies theme, text size, motion and contrast to the document root", () => {
+    const root = fakeRoot();
+    applyDisplayPreferences(
+      { theme: "system", textSize: "larger", motion: "reduce", contrast: "high" },
+      root,
+      true,
+    );
+    expect(root.classes.has("dark")).toBe(true);
+    expect(root.style.colorScheme).toBe("dark");
+    expect(root.dataset).toEqual({ text: "larger", motion: "reduce", contrast: "high" });
+    applyDisplayPreferences(DEFAULT_DISPLAY, root, false);
+    expect(root.classes.has("dark")).toBe(false);
+    expect(root.dataset).toEqual({});
+  });
+
+  it("has an inline bootstrap script that agrees with applyDisplayPreferences", () => {
+    for (const theme of THEMES) {
+      for (const textSize of TEXT_SIZES) {
+        for (const systemDark of [true, false]) {
+          const prefs = { theme, textSize, motion: "reduce", contrast: "high" } as const;
+          const expected = fakeRoot();
+          applyDisplayPreferences(prefs, expected, systemDark);
+          const actual = fakeRoot();
+          // eslint-disable-next-line @typescript-eslint/no-implied-eval -- runs our own constant script
+          const run = new Function("window", "document", "localStorage", DISPLAY_BOOTSTRAP_SCRIPT) as (
+            ...globals: unknown[]
+          ) => void;
+          run(
+            { matchMedia: () => ({ matches: systemDark }) },
+            { documentElement: actual },
+            { getItem: () => JSON.stringify(prefs) },
+          );
+          expect(actual.classes).toEqual(expected.classes);
+          expect(actual.dataset).toEqual(expected.dataset);
+          expect(actual.style.colorScheme).toBe(expected.style.colorScheme);
+        }
+      }
+    }
+  });
+});
+
 describe("status presentation", () => {
   it("never uses a green success tone, even for MATCHED", () => {
     expect(FINDING_STATUS.MATCHED.tone).toBe("info");
     for (const classes of Object.values(TONE_CLASSES)) {
       expect(classes).not.toMatch(/green|emerald|success/);
     }
+  });
+});
+
+describe("homepage award quotes", () => {
+  const award = readFileSync(
+    new URL(
+      "../../../../docs/award-sources/MA000004/MA000004-consolidated-retrieved-2026-10-22.txt",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  // The retrieved text wraps lines and pads clause numbers with spaces; compare on single spaces.
+  const flatten = (text: string) => text.replace(/\s+/g, " ").trim();
+
+  it("quotes the award word for word, with the clause each sentence comes from", () => {
+    const { quotes, awardTitle } = homepageQuotes();
+    expect(awardTitle).toBe("General Retail Industry Award 2020");
+    expect(quotes.length).toBeGreaterThanOrEqual(4);
+    const source = flatten(award);
+    for (const quote of quotes) {
+      const at = source.indexOf(flatten(quote.text));
+      expect(at, `clause ${quote.clause} is not word for word`).toBeGreaterThan(-1);
+      // "16.6(a)" sits under the "16.6" heading, so look for the clause number just before the text.
+      const clauseNumber = quote.clause.replace(/\(.*$/, "");
+      expect(source.slice(Math.max(0, at - 300), at).includes(`${clauseNumber} `), quote.clause).toBe(true);
+    }
+    expect(new Set(quotes.map((q) => q.clause)).size).toBe(quotes.length);
   });
 });

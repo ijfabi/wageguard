@@ -34,6 +34,69 @@ Anything owned by another user returns `404`, exactly as if it didn't exist, so 
 | GET       | `/health`, `/ready`                | Public. Whether the process is alive, and whether it can reach the database.                                                                                                                                             |
 | GET       | `/openapi.json`                    | Public.                                                                                                                                                                                                                  |
 
+## Route map
+
+Every route grouped by resource, with the public ones on the left. Everything inside the box needs a session.
+
+```mermaid
+flowchart LR
+  root(["/api/v1"])
+
+  subgraph public ["Public"]
+    health["GET /health<br/>GET /ready"]
+    openapi["GET /openapi.json"]
+    rules["GET /rules/versions"]
+    register["POST /auth/register"]
+    login["POST /auth/login"]
+  end
+
+  subgraph session ["Session cookie required"]
+    direction TB
+    auth["POST /auth/logout<br/>GET /auth/me<br/>DELETE /auth/me"]
+    employments["POST /employments<br/>GET /employments<br/>GET /employments/:id"]
+    shifts["POST /shifts<br/>POST /shifts/import<br/>GET /shifts<br/>GET /shifts/:id<br/>PATCH /shifts/:id"]
+    payslips["POST /payslips<br/>GET /payslips<br/>GET /payslips/:id"]
+    audits["POST /audits (Idempotency-Key)<br/>GET /audits<br/>GET /audits/:id<br/>GET /audits/:id/lines<br/>GET /audits/:id/report<br/>GET /audits/:id/report/pdf"]
+    dashboard["GET /dashboard"]
+  end
+
+  root --> public
+  root --> session
+```
+
+## What happens to a request
+
+Each request passes through the same layers, in this order. A request stops at the first layer that rejects it, and the error filter turns the rejection into the standard error shape.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant B as Browser
+  participant H as Express middleware
+  participant G as Guards
+  participant P as Zod pipe
+  participant C as Controller and service
+  participant D as PostgreSQL
+  participant F as Error filter
+
+  B->>H: request + session cookie
+  Note over H: correlation ID, structured log (no bodies),<br/>helmet headers, CORS, cookie parsing
+  H->>G: request
+  Note over G: 1. rate limit (ThrottlerGuard)<br/>2. same-site origin (OriginGuard)<br/>3. session lookup by token hash (AuthGuard)
+  G->>P: allowed
+  Note over P: body and query parsed with the<br/>shared schemas from api-contracts
+  P->>C: typed input
+  C->>D: queries scoped to the signed-in user
+  D-->>C: rows (or a constraint error)
+  C-->>B: JSON with x-correlation-id
+  G--xF: 401, 403 or 429
+  P--xF: 422 VALIDATION_FAILED
+  D--xF: constraint error or unreachable
+  F-->>B: { error: { code, message, correlationId } }
+```
+
+Database constraint errors are mapped to meaningful responses rather than a 500: an overlapping shift becomes `409 SHIFT_OVERLAP`, a duplicate email `409`, and an unreachable database `503 SERVICE_UNAVAILABLE` with `Retry-After` ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
+
 ## Pagination
 
 List endpoints take `?limit=` from 1 to 100 (25 by default) and an opaque `?cursor=`. They return `{ "items": [...], "nextCursor": "..." }`, with `nextCursor` set to `null` on the last page. The cursor holds the sort key and ID of the last item, so pages stay stable when new rows arrive. A malformed cursor gets `422 INVALID_CURSOR`.

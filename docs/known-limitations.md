@@ -22,6 +22,7 @@ The rates were copied from the official award and checked against the award's ow
 ## Product
 
 - Shifts that start or end in the repeated hour when daylight saving ends need an explicit UTC offset. The API accepts one, but the shift form in the web app doesn't ask for it yet.
+- The homepage animations and accessibility panel have only been tested in Chromium, and no screen reader or keyboard-only pass of the whole app has been recorded ([ACCESSIBILITY.md](../ACCESSIBILITY.md)).
 - The PDF report uses the standard PDF font, so characters outside the Western European set show up as "?". The PDF isn't tagged for screen readers either. The audit and explanation pages in the web app are the accessible version ([ADR 0014](adr/0014-pdf-evidence-report.md)).
 - There's no email verification, password reset or two-factor sign-in. Registration also reveals whether an email address is already in use. See [security](security.md).
 
@@ -33,6 +34,7 @@ The rates were copied from the official award and checked against the award's ow
 - **OpenTelemetry versions.** The OpenTelemetry packages are pinned one release line behind the latest, which is why `pnpm install` warns about some renamed packages ([ADR 0013](adr/0013-opt-in-opentelemetry.md)).
 - **Dashboard cost.** The dashboard still adds up all of a user's audits on every request. It's index-only now, so it grows slowly, but it does grow ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
 - **Index rollout.** The Phase 5 index migration uses a plain `CREATE INDEX`. On a large existing database, build the indexes concurrently first ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
-- **AWS deployment.** The Terraform in `infra/aws` is validated but has never been applied, so nothing about it is tested against real AWS ([deployment](deployment.md)).
+- **Cloud deployments.** The Terraform in `infra/aws` and `infra/azure` is validated but has never been applied, so nothing about it is tested against a real cloud ([infrastructure](infrastructure.md)).
+- **Rate limits on Azure.** In the Azure design, API traffic arrives through the platform ingress and the web app's proxy. `TRUST_PROXY` is left at its default until the number of hops can be measured on a real deployment, so until then every visitor would share one rate-limit budget.
 - **Not built yet.** Monitoring dashboards and alerts, tracing in the web app, and backups copied to another region.
 - **Benchmark scope.** All benchmarks are synthetic and ran on one laptop ([performance](performance.md)). The earliest engine records predate the git repository and are identified by a source-tree hash instead of a commit.

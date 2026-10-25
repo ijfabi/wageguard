@@ -74,6 +74,165 @@
   --neutral-soft: oklch(0.3 0.02 257);
 }
 
+/*
+ * Accessibility panel preferences, set as attributes on <html> (see lib/display-preferences.ts).
+ * Everything is sized in rem, so changing the root font size scales the whole interface.
+ */
+html[data-text="large"] {
+  font-size: 112.5%;
+}
+html[data-text="larger"] {
+  font-size: 125%;
+}
+
+/* High contrast: near-black/white text, darker borders, stronger focus and underlined links. */
+html[data-contrast="high"] {
+  --foreground: oklch(0.13 0.02 265);
+  --card-foreground: oklch(0.13 0.02 265);
+  --muted-foreground: oklch(0.27 0.03 257);
+  --border: oklch(0.45 0.02 257);
+  --input: oklch(0.35 0.02 257);
+  --primary: oklch(0.32 0.14 262);
+  --ring: oklch(0.32 0.14 262);
+}
+html[data-contrast="high"].dark {
+  --foreground: oklch(1 0 0);
+  --card-foreground: oklch(1 0 0);
+  --muted-foreground: oklch(0.92 0.015 257);
+  --border: oklch(1 0 0 / 60%);
+  --input: oklch(1 0 0 / 70%);
+  --primary: oklch(0.88 0.08 262);
+  --ring: oklch(0.88 0.08 262);
+}
+html[data-contrast="high"] a {
+  text-decoration-line: underline;
+  text-underline-offset: 3px;
+}
+html[data-contrast="high"] :focus-visible {
+  outline-width: 3px;
+}
+
+/* Reduced motion, from the panel or the operating system (WCAG 2.3.3). */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Windows High Contrast and other forced-colour modes: keep edges and focus visible. */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 2px solid CanvasText;
+  }
+  [data-slot="card"],
+  [data-slot="badge"],
+  [data-slot="button"] {
+    border: 1px solid CanvasText;
+  }
+}
+
+/*
+ * Homepage motion. Every animation here is decorative and stops under reduced motion (the rules
+ * above shorten it to a single instant frame, which leaves each element in its resting state).
+ */
+@keyframes wg-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes wg-counter-orbit {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes wg-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes wg-aurora {
+  0%,
+  100% {
+    transform: translate3d(-6%, -4%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6%, 4%, 0) scale(1.12);
+  }
+}
+@keyframes wg-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes wg-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes wg-shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+@keyframes wg-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Scroll reveal: only applied after hydration, so content is always visible without JavaScript. */
+[data-reveal="hidden"] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+[data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.wg-gradient-text {
+  background: linear-gradient(100deg, #c7d2fe 0%, #67e8f9 35%, #f0abfc 70%, #c7d2fe 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: #dbe4ff; /* fallback when background-clip text is unsupported */
+  -webkit-text-fill-color: transparent;
+  animation: wg-shimmer 8s linear infinite;
+}
+@media (forced-colors: active) {
+  .wg-gradient-text {
+    -webkit-text-fill-color: CanvasText;
+    background: none;
+  }
+}
+
 @theme inline {
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

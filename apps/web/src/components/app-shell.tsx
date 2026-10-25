@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { AccessibilityMenu } from "@/components/accessibility-menu";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/endpoints";
 import { cn } from "@/lib/utils";
@@ -69,7 +70,8 @@ export function AppShell({ email, children }: { email: string; children: ReactNo
             </ul>
           </nav>
           <div className="ml-auto flex items-center gap-3">
-            <span className="text-muted-foreground hidden text-sm md:inline">{email}</span>
+            <span className="text-muted-foreground hidden text-sm lg:inline">{email}</span>
+            <AccessibilityMenu />
             <Button variant="ghost" size="sm" onClick={() => void signOut()}>
               <LogOut className="size-4" aria-hidden />
               Sign out

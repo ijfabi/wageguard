@@ -38,6 +38,17 @@ const page = await browser.newPage({
 await page.goto(`${BASE_URL}/`);
 await shot(page, "01-landing");
 
+// The homepage's first screen, and the accessibility panel open over it.
+await page.setViewportSize({ width: 1440, height: 900 });
+await page.screenshot({ path: path.join(OUT, "00-homepage-hero.png") });
+console.log("saved 00-homepage-hero.png");
+await page.getByRole("button", { name: "Accessibility" }).click();
+await page.getByRole("dialog", { name: "Accessibility and display" }).waitFor();
+await page.screenshot({ path: path.join(OUT, "07-accessibility-panel.png") });
+console.log("saved 07-accessibility-panel.png");
+await page.keyboard.press("Escape");
+await page.setViewportSize({ width: 1280, height: 800 });
+
 await page.goto(`${BASE_URL}/sign-in`);
 await page.getByLabel("Email").fill(EMAIL);
 await page.getByLabel("Password").fill(PASSWORD);

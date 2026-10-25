@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { connection } from "next/server";
 import type { ReactNode } from "react";
 
 import { Providers } from "@/components/providers";
+import { DISPLAY_BOOTSTRAP_SCRIPT } from "@/lib/display-preferences";
 
 import "./globals.css";
 
@@ -18,8 +20,14 @@ export const metadata: Metadata = {
  */
 export default async function RootLayout({ children }: { children: ReactNode }) {
   await connection();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
-    <html lang="en-AU">
+    // The display script sets classes and data attributes on <html> before hydration.
+    <html lang="en-AU" suppressHydrationWarning>
+      <head>
+        {/* A constant string from our own code, allowed by the per-request CSP nonce. */}
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: DISPLAY_BOOTSTRAP_SCRIPT }} />
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>

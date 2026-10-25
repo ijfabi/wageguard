@@ -24,9 +24,12 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.redirect(signIn);
   }
 
-  const csp = buildCsp(createNonce(), process.env.NODE_ENV === "development");
+  const nonce = createNonce();
+  const csp = buildCsp(nonce, process.env.NODE_ENV === "development");
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("Content-Security-Policy", csp);
+  // For our own inline script (the display preferences bootstrap in app/layout.tsx).
+  requestHeaders.set("x-nonce", nonce);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
   return response;

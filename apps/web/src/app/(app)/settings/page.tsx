@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, type SyntheticEvent } from "react";
 import { toast } from "sonner";
 
+import { DisplayPreferencesForm } from "@/components/accessibility-menu";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,19 @@ export default function SettingsPage() {
     <>
       <PageHeader title="Settings" />
       <div className="grid gap-6 md:grid-cols-2">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>
+              <h2>Accessibility and display</h2>
+            </CardTitle>
+            <CardDescription>
+              Saved on this device. Also available from the Accessibility button on every page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DisplayPreferencesForm />
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>
@@ -45,7 +59,7 @@ export default function SettingsPage() {
             <dl className="grid gap-2 text-sm">
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">Email</dt>
-                <dd>{me.data?.email}</dd>
+                <dd className="[overflow-wrap:anywhere]">{me.data?.email}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">Created</dt>
