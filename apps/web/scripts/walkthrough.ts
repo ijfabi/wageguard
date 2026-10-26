@@ -5,6 +5,9 @@
  *   docker compose up --build        # in another terminal
  *   pnpm --filter @wageguard/web walkthrough
  *
+ * The confirmation email is read from the stack's Mailpit inbox (MAILPIT_URL, default
+ * http://127.0.0.1:8025), exactly as a person would open it.
+ *
  * The account is created on the spot with a random password that is never written down. The same
  * flow runs as an automated Playwright test in CI (e2e/journey.spec.ts).
  */
@@ -18,6 +21,29 @@ const BASE_URL = process.env["WEB_URL"] ?? "http://localhost:3000";
 const OUT = path.resolve(import.meta.dirname, "..", "..", "..", "docs", "walkthrough");
 const EMAIL = `walkthrough-${randomUUID().slice(0, 8)}@example.test`;
 const PASSWORD = randomBytes(18).toString("base64url");
+const MAILPIT_URL = process.env["MAILPIT_URL"] ?? "http://127.0.0.1:8025";
+
+/** The confirmation link from the newest email to `to` in Mailpit. */
+async function confirmationLink(to: string): Promise<string> {
+  for (let attempt = 0; attempt < 75; attempt += 1) {
+    const search = await fetch(
+      `${MAILPIT_URL}/api/v1/search?limit=1&query=${encodeURIComponent(`to:"${to}"`)}`,
+    );
+    const { messages } = (await search.json()) as { messages: { ID: string }[] };
+    const id = messages[0]?.ID;
+    if (id !== undefined) {
+      const { Text } = (await (await fetch(`${MAILPIT_URL}/api/v1/message/${id}`)).json()) as {
+        Text: string;
+      };
+      const link = /https?:\/\/\S+\/verify-email#token=[A-Za-z0-9_-]{43}/.exec(Text)?.[0];
+      if (link !== undefined) {
+        return link;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  throw new Error(`No confirmation email for ${to} in ${MAILPIT_URL}`);
+}
 
 /** A fortnight of casual shifts (golden scenario G009: the award minimum is $862.15). */
 const TIMESHEET = [
@@ -54,17 +80,18 @@ await page.getByLabel("Email").fill(EMAIL);
 await page.getByLabel("Password").fill(PASSWORD);
 await shot(page, "01-sign-up");
 await page.getByRole("button", { name: "Create account" }).click();
+await page.getByRole("heading", { name: "Check your inbox" }).waitFor();
+await page.goto(await confirmationLink(EMAIL));
 await page.waitForURL(/\/dashboard$/);
 await page.getByText("No audits yet").waitFor();
 await shot(page, "02-empty-dashboard");
 
 // 2. Describe the job.
-await page.goto(`${BASE_URL}/employments`);
-await page.getByRole("button", { name: "Add employment" }).first().click();
+await page.goto(`${BASE_URL}/employments/new`);
 await page.getByLabel("Name").fill("Corner store (casual)");
 await shot(page, "03-add-employment");
 await page.getByRole("button", { name: "Save employment" }).click();
-await page.getByRole("link", { name: "Corner store (casual)" }).waitFor();
+await page.getByRole("heading", { name: "Corner store (casual)", level: 1 }).waitFor();
 
 // 3. Import the timesheet.
 await page.goto(`${BASE_URL}/shifts/import`);

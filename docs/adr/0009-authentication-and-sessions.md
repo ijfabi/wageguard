@@ -27,4 +27,4 @@ Deleting an account requires the password and removes everything the person owns
 
 JSON Web Tokens were considered and rejected. They can't be revoked on the server without a denylist, and a denylist rebuilds sessions anyway. A third-party identity provider would add an outside dependency and a cost that an informational demo doesn't need.
 
-Two weaknesses remain. Registration returns `409 EMAIL_TAKEN` for an address that's already registered, so anyone can check whether an email has an account. The rate limit slows that down, and email verification is out of scope for now. The rate-limit counters also live in process memory, so they're only correct with a single API instance.
+Two weaknesses remained when this was written: registration revealed whether an address already had an account, and the rate-limit counters lived in process memory. [ADR 0017](0017-account-security.md) fixes the first, along with adding password reset and two-step sign-in, and [ADR 0018](0018-shared-rate-limits-and-expiring-idempotency-keys.md) moves the counters into PostgreSQL.

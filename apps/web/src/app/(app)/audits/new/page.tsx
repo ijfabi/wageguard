@@ -394,7 +394,9 @@ export default function NewAuditPage() {
                               id={`variation-date-${i}`}
                               type="date"
                               value={v.date}
-                              onChange={(e) => { update({ ...v, date: e.target.value }); }}
+                              onChange={(e) => {
+                                update({ ...v, date: e.target.value });
+                              }}
                             />
                           </Field>
                           <Field label="Agreed hours" id={`variation-hours-${i}`}>
@@ -403,7 +405,9 @@ export default function NewAuditPage() {
                               inputMode="numeric"
                               placeholder="7:30"
                               value={v.hours}
-                              onChange={(e) => { update({ ...v, hours: e.target.value }); }}
+                              onChange={(e) => {
+                                update({ ...v, hours: e.target.value });
+                              }}
                             />
                           </Field>
                         </>
@@ -430,7 +434,9 @@ export default function NewAuditPage() {
                           inputMode="numeric"
                           placeholder="0:00"
                           value={coldWork}
-                          onChange={(e) => { setColdWork(e.target.value); }}
+                          onChange={(e) => {
+                            setColdWork(e.target.value);
+                          }}
                         />
                       </Field>
                       <Field label="Of which below 0°C" id="below-zero">
@@ -439,7 +445,9 @@ export default function NewAuditPage() {
                           inputMode="numeric"
                           placeholder="0:00"
                           value={belowZero}
-                          onChange={(e) => { setBelowZero(e.target.value); }}
+                          onChange={(e) => {
+                            setBelowZero(e.target.value);
+                          }}
                         />
                       </Field>
                       <Field
@@ -452,7 +460,9 @@ export default function NewAuditPage() {
                           inputMode="decimal"
                           placeholder="0"
                           value={kilometres}
-                          onChange={(e) => { setKilometres(e.target.value); }}
+                          onChange={(e) => {
+                            setKilometres(e.target.value);
+                          }}
                         />
                       </Field>
                     </div>
@@ -469,7 +479,9 @@ export default function NewAuditPage() {
                             id={`meal-${i}`}
                             type="date"
                             value={d}
-                            onChange={(e) => { update(e.target.value); }}
+                            onChange={(e) => {
+                              update(e.target.value);
+                            }}
                           />
                         </Field>
                       )}
@@ -489,7 +501,9 @@ export default function NewAuditPage() {
                           <NativeSelect
                             id={`leave-kind-${i}`}
                             value={l.kind}
-                            onChange={(e) => { update({ ...l, kind: e.target.value as LeaveEntry["kind"] }); }}
+                            onChange={(e) => {
+                              update({ ...l, kind: e.target.value as LeaveEntry["kind"] });
+                            }}
                           >
                             {LEAVE_KINDS.map((k) => (
                               <option key={k.id} value={k.id}>
@@ -504,7 +518,9 @@ export default function NewAuditPage() {
                             inputMode="numeric"
                             placeholder="7:36"
                             value={l.hours}
-                            onChange={(e) => { update({ ...l, hours: e.target.value }); }}
+                            onChange={(e) => {
+                              update({ ...l, hours: e.target.value });
+                            }}
                           />
                         </Field>
                       </>

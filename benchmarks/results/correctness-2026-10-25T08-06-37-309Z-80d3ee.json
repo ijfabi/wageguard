@@ -1,0 +1,922 @@
+{
+  "benchmark": "D-correctness",
+  "status": "COMPLETED",
+  "reason": null,
+  "environment": {
+    "runId": "correctness-2026-10-25T08-06-37-309Z-80d3ee",
+    "timestampUtc": "2026-10-25T08:06:37.309Z",
+    "git": {
+      "commitSha": "f3d0dccfa81e17a5e38c2ac2fb0441c86919579e",
+      "dirty": false,
+      "note": null
+    },
+    "sourceTreeSha256": "a3854eb250ea570e15281a3f350fb7a26a25b36a41393d8277f3150b958b9e80",
+    "environment": "local-developer-workstation",
+    "os": {
+      "platform": "win32",
+      "release": "10.0.26200",
+      "arch": "x64"
+    },
+    "cpu": {
+      "model": "13th Gen Intel(R) Core(TM) i7-13650HX",
+      "logicalCores": 20
+    },
+    "memory": {
+      "totalBytes": 16849256448,
+      "freeBytesAtStart": 5810581504
+    },
+    "node": "v24.22.1",
+    "dockerVersion": "Docker version 29.9.1, build dfc520d",
+    "postgresVersion": null
+  },
+  "configuration": {
+    "engineVersion": "0.2.0",
+    "ruleSet": "MA000004/2026-07-01/r2"
+  },
+  "results": {
+    "goldenScenarios": {
+      "total": 29,
+      "passed": 29,
+      "failed": 0,
+      "passRatePercent": 100,
+      "reference": {
+        "total": 23,
+        "passed": 23
+      },
+      "correctlyRejectedUnsupportedOrReview": {
+        "total": 6,
+        "passed": 6
+      },
+      "humanReviewed": 0
+    },
+    "calculationEngineCoverage": {
+      "state": "CURRENT",
+      "lines": {
+        "total": 893,
+        "covered": 877,
+        "skipped": 0,
+        "pct": 98.2
+      },
+      "branches": {
+        "total": 748,
+        "covered": 686,
+        "skipped": 0,
+        "pct": 91.71
+      },
+      "source": "packages\\calculation-engine\\coverage\\coverage-summary.json"
+    },
+    "regressionFailures": [],
+    "scenarios": [
+      {
+        "id": "G001",
+        "kind": "REFERENCE",
+        "title": "Casual, Monday ordinary hours with unpaid meal break",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "260.70",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "260.70"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "260.70",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "260.70"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "8h - 0.5h unpaid meal = 7.5h x $34.76 (B.2.1 ordinary hours) = $260.70",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 15.1 Table 2",
+          "cl. 16.2 Table 3"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G002",
+        "kind": "REFERENCE",
+        "title": "Casual, Tuesday 6 pm to 9 pm",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "125.16",
+          "lines": {
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "125.16"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "125.16",
+          "lines": {
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "125.16"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "3h x $41.72 (B.2.1 Monday to Friday after 6.00 pm) = $125.16",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 22.1 Table 12"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G003",
+        "kind": "REFERENCE",
+        "title": "Casual, Saturday with unpaid meal break",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "333.76",
+          "lines": {
+            "MA000004.PEN.SATURDAY": "333.76"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "333.76",
+          "lines": {
+            "MA000004.PEN.SATURDAY": "333.76"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "8.5h - 0.5h = 8h x $41.72 (B.2.1 Saturday) = $333.76",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 22.1 Table 12"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G004",
+        "kind": "REFERENCE",
+        "title": "Casual, Sunday with half-cent rounding",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "267.69",
+          "lines": {
+            "MA000004.PEN.SUNDAY": "267.69"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "267.69",
+          "lines": {
+            "MA000004.PEN.SUNDAY": "267.69"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "6h - 0.5h = 5.5h x $48.67 (B.2.1 Sunday) = $267.685, rounded half-up to $267.69",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 22.1 Table 12"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G005",
+        "kind": "REFERENCE",
+        "title": "Part-time, Monday shift crossing 6 pm",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "166.86",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "97.34",
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "69.52"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "166.86",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "97.34",
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "69.52"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "Before 6 pm: 3.5h x $27.81 (B.1.1 ordinary) = $97.335 -> $97.34; after 6 pm: 2h x $34.76 (B.1.1 Mon-Fri after 6 pm) = $69.52; total $166.86",
+        "sources": [
+          "Schedule B.1.1 (full-time/part-time adult, Level 1)",
+          "cl. 22.1 Table 12",
+          "cl. 10.5"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G006",
+        "kind": "REFERENCE",
+        "title": "Part-time, Saturday",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "191.18",
+          "lines": {
+            "MA000004.PEN.SATURDAY": "191.18"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "191.18",
+          "lines": {
+            "MA000004.PEN.SATURDAY": "191.18"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "5.5h x $34.76 (B.1.1 Saturday) = $191.18",
+        "sources": [
+          "Schedule B.1.1 (full-time/part-time adult, Level 1)",
+          "cl. 22.1 Table 12"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G007",
+        "kind": "REFERENCE",
+        "title": "Part-time, Sunday",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "166.88",
+          "lines": {
+            "MA000004.PEN.SUNDAY": "166.88"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "166.88",
+          "lines": {
+            "MA000004.PEN.SUNDAY": "166.88"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "4h x $41.72 (B.1.1 Sunday) = $166.88",
+        "sources": [
+          "Schedule B.1.1 (full-time/part-time adult, Level 1)",
+          "cl. 22.1 Table 12"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G008",
+        "kind": "REFERENCE",
+        "title": "Part-time, Wednesday from the 7 am start of the span with a 60-minute meal break",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "222.48",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "222.48"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "222.48",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "222.48"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "9h - 1h unpaid meal = 8h x $27.81 (B.1.1 ordinary) = $222.48",
+        "sources": [
+          "Schedule B.1.1 (full-time/part-time adult, Level 1)",
+          "cl. 15.1 Table 2",
+          "cl. 16.2 Table 3"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G009",
+        "kind": "REFERENCE",
+        "title": "Casual fortnight: weekday, Saturday and Sunday shifts aggregated per rule",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "862.15",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "260.70",
+            "MA000004.PEN.SATURDAY": "333.76",
+            "MA000004.PEN.SUNDAY": "267.69"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "862.15",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "260.70",
+            "MA000004.PEN.SATURDAY": "333.76",
+            "MA000004.PEN.SUNDAY": "267.69"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "G001 $260.70 + G003 $333.76 + G004 $267.69 = $862.15",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G010",
+        "kind": "REFERENCE",
+        "title": "Casual, Friday 4 pm to 9 pm crossing the 6 pm boundary",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "194.68",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "69.52",
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "125.16"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "194.68",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "69.52",
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "125.16"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "2h x $34.76 = $69.52 plus 3h x $41.72 = $125.16; total $194.68",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 22.1 Table 12"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G011",
+        "kind": "REFERENCE",
+        "title": "Casual, weekday work after 9 pm is overtime outside the span",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "132.11",
+          "lines": {
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "83.44",
+            "MA000004.OT.MON_SAT_FIRST_3H": "48.67"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "132.11",
+          "lines": {
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "83.44",
+            "MA000004.OT.MON_SAT_FIRST_3H": "48.67"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "19:00-21:00 2h x $41.72 (B.2.1 after 6 pm) = $83.44; 21:00-22:00 is outside the span (Table 2), so overtime, first 3 hours Monday to Saturday: 1h x $48.67 (casual 175%, Table 11) = $48.67",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 15.1 Table 2",
+          "cl. 21.2 Table 10 and Table 11"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G012",
+        "kind": "REFERENCE",
+        "title": "Casual, Sunday before 9 am is overtime",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "271.15",
+          "lines": {
+            "MA000004.PEN.SUNDAY": "146.01",
+            "MA000004.OT.SUNDAY": "125.14"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "271.15",
+          "lines": {
+            "MA000004.PEN.SUNDAY": "146.01",
+            "MA000004.OT.SUNDAY": "125.14"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "07:00-09:00 is before the Sunday span: Sunday overtime 2h x $62.57 (casual 225%) = $125.14; 09:00-12:00 3h x $48.67 = $146.01",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 15.1 Table 2",
+          "cl. 21.2 Table 11"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G013",
+        "kind": "REFERENCE",
+        "title": "Full-time Level 3, 40 hours in a week",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "1184.50",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "1097.82",
+            "MA000004.OT.MON_SAT_FIRST_3H": "86.68"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "1184.50",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "1097.82",
+            "MA000004.OT.MON_SAT_FIRST_3H": "86.68"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "8h a day, Mon-Fri = 40h. The hours beyond 38 are the last 2h on Friday, first-tier overtime at $43.34 (B.1.3 Level 3) = $86.68; 38h x $28.89 (B.1.1 Level 3) = $1,097.82",
+        "sources": [
+          "Schedule B.1.1 (full-time/part-time adult, Level 1)",
+          "B.1.3",
+          "cl. 21.2 Table 10"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G014",
+        "kind": "REFERENCE",
+        "title": "Casual, declared public holiday",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "278.12",
+          "lines": {
+            "MA000004.PH.ALL_ORDINARY": "278.12"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "278.12",
+          "lines": {
+            "MA000004.PH.ALL_ORDINARY": "278.12"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "4h x $69.53 (B.2.1 public holiday, casual 250%) = $278.12",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 22.1 Table 12",
+          "cl. 33.3"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G015",
+        "kind": "REFERENCE",
+        "title": "Casual, short shift topped up to the 3-hour minimum engagement",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "104.28",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "69.52",
+            "MA000004.TOPUP.MINIMUM_ENGAGEMENT": "34.76"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "104.28",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "69.52",
+            "MA000004.TOPUP.MINIMUM_ENGAGEMENT": "34.76"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "2h worked x $34.76 = $69.52, plus 1h to reach the 3-hour minimum engagement at the same rate = $34.76",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 11.2"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G016",
+        "kind": "REFERENCE",
+        "title": "Casual junior, 17 years old",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "83.44",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "83.44"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "83.44",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "83.44"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "17-year-old Level 1 junior rate $16.69 (B.3.1); casual 125% = $20.86 (B.3.4); 4h = $83.44",
+        "sources": [
+          "B.3.1",
+          "B.3.4",
+          "cl. 17.2 Table 5"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G017",
+        "kind": "REFERENCE",
+        "title": "Casual shiftworker, night shift",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "344.88",
+          "lines": {
+            "MA000004.SHIFT.MON_FRI": "344.88"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "344.88",
+          "lines": {
+            "MA000004.SHIFT.MON_FRI": "344.88"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "Starts after 6 pm, so shiftwork (cl. 24.1). 8h x $43.11 (B.2.2 Monday to Friday, casual 155%) = $344.88",
+        "sources": [
+          "B.2.2",
+          "cl. 24.1",
+          "cl. 25.1"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G018",
+        "kind": "REFERENCE",
+        "title": "Part-time, hours above the guaranteed hours are overtime",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "173.82",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "111.24",
+            "MA000004.OT.MON_SAT_FIRST_3H": "62.58"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "173.82",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "111.24",
+            "MA000004.OT.MON_SAT_FIRST_3H": "62.58"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "330 paid minutes against 240 guaranteed: 4h x $27.81 = $111.24; the last 1.5h are overtime (cl. 10.8) at $41.72 (B.1.3 first 3 hours) = $62.58",
+        "sources": [
+          "Schedule B.1.1 (full-time/part-time adult, Level 1)",
+          "B.1.3",
+          "cl. 10.8"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G019",
+        "kind": "REFERENCE",
+        "title": "Casual, a 10-hour day is the week's one longer day (cl. 15.5)",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "347.60",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "347.60"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "347.60",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "347.60"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "10h paid, within the 11 ordinary hours allowed on one day a week: 10h x $34.76 = $347.60",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 15.5",
+          "cl. 21.2 Table 10"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G020",
+        "kind": "REFERENCE",
+        "title": "Casual, two long days in one week",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "750.83",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "677.82",
+            "MA000004.OT.MON_SAT_FIRST_3H": "73.01"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "750.83",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "677.82",
+            "MA000004.OT.MON_SAT_FIRST_3H": "73.01"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "10.5h each day. Tuesday is the week's 11-hour day; Wednesday's last 1.5h are beyond 9 hours: 1.5h x $48.67 = $73.005 -> $73.01. Ordinary 19.5h x $34.76 = $677.82",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 15.4",
+          "cl. 15.5",
+          "cl. 21.2"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G021",
+        "kind": "REFERENCE",
+        "title": "Casual, less than 12 hours between work days",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "629.19",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "191.18",
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "125.16",
+            "MA000004.BREAK.LESS_THAN_12_HOURS": "312.85"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "629.19",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "191.18",
+            "MA000004.PEN.WEEKDAY_AFTER_6PM": "125.16",
+            "MA000004.BREAK.LESS_THAN_12_HOURS": "312.85"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "Monday 5.5h x $34.76 = $191.18 + 3h x $41.72 = $125.16. Tuesday starts 10h later: 5h at 225% ($62.57: cl. 16.6(b) 200% plus the cl. 11.1 casual loading) = $312.85",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 16.6",
+          "cl. 11.1"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G022",
+        "kind": "REFERENCE",
+        "title": "Part-time, annual leave with the 17.5% loading",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "359.61",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "111.24",
+            "MA000004.LEAVE.ANNUAL": "211.36",
+            "MA000004.LEAVE.ANNUAL_LOADING": "37.01"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "359.61",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "111.24",
+            "MA000004.LEAVE.ANNUAL": "211.36",
+            "MA000004.LEAVE.ANNUAL_LOADING": "37.01"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "4h x $27.81 = $111.24; 7.6h leave x $27.81 = $211.356 -> $211.36; loading $27.81 x 17.5% = $4.87 x 7.6h = $37.012 -> $37.01",
+        "sources": [
+          "Schedule B.1.1 (full-time/part-time adult, Level 1)",
+          "cl. 28.3"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "G023",
+        "kind": "REFERENCE",
+        "title": "Casual, laundry and first aid allowances",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "CALCULATED",
+          "totalAmount": "309.74",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "278.08",
+            "MA000004.ALW.LAUNDRY_PER_SHIFT": "2.56",
+            "MA000004.ALW.FIRST_AID": "29.10"
+          }
+        },
+        "actual": {
+          "status": "CALCULATED",
+          "totalAmount": "309.74",
+          "lines": {
+            "MA000004.ORD.WEEKDAY": "278.08",
+            "MA000004.ALW.LAUNDRY_PER_SHIFT": "2.56",
+            "MA000004.ALW.FIRST_AID": "29.10"
+          },
+          "blockingIssueCodes": []
+        },
+        "derivation": "8h x $34.76 = $278.08; laundry 2 shifts x $1.28 = $2.56 (cl. 19.3(c)); first aid 2 weeks x $14.55 = $29.10 (cl. 19.10)",
+        "sources": [
+          "Schedule B.2.1 (casual adult, Level 1)",
+          "cl. 19.3",
+          "cl. 19.10"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "R004",
+        "kind": "REJECTION",
+        "title": "Pay period before the verified rule set",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "UNSUPPORTED_SCENARIO",
+          "issueCodes": [
+            "NO_RULE_SET_FOR_PERIOD"
+          ]
+        },
+        "actual": {
+          "status": "UNSUPPORTED_SCENARIO",
+          "totalAmount": "0.00",
+          "lines": {},
+          "blockingIssueCodes": [
+            "NO_RULE_SET_FOR_PERIOD"
+          ]
+        },
+        "derivation": "Rates apply from the first full pay period starting on or after 1 July 2026; this period started on 29 June 2026.",
+        "sources": [
+          "cl. 17.1 (ppc 01Jul26)"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "R008",
+        "kind": "REJECTION",
+        "title": "Enterprise agreement applies",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "UNSUPPORTED_SCENARIO",
+          "issueCodes": [
+            "ENTERPRISE_AGREEMENT_APPLIES"
+          ]
+        },
+        "actual": {
+          "status": "UNSUPPORTED_SCENARIO",
+          "totalAmount": "0.00",
+          "lines": {},
+          "blockingIssueCodes": [
+            "ENTERPRISE_AGREEMENT_APPLIES"
+          ]
+        },
+        "derivation": "An enterprise agreement is not equivalent to the award.",
+        "sources": [
+          "Fair Work Act 2009"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "R012",
+        "kind": "REJECTION",
+        "title": "Baking production shiftworker is unsupported",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "UNSUPPORTED_SCENARIO",
+          "issueCodes": [
+            "BAKING_PRODUCTION_NOT_SUPPORTED"
+          ]
+        },
+        "actual": {
+          "status": "UNSUPPORTED_SCENARIO",
+          "totalAmount": "0.00",
+          "lines": {},
+          "blockingIssueCodes": [
+            "BAKING_PRODUCTION_NOT_SUPPORTED"
+          ]
+        },
+        "derivation": "Baking production shift rates (cl. 24.2, 25.2) are not modelled.",
+        "sources": [
+          "cl. 24.2",
+          "cl. 25.2"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "R013",
+        "kind": "REJECTION",
+        "title": "Week over 38 hours under an averaging roster",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "REVIEW_REQUIRED",
+          "issueCodes": [
+            "AVERAGING_ROSTER_WEEKLY_HOURS"
+          ]
+        },
+        "actual": {
+          "status": "REVIEW_REQUIRED",
+          "totalAmount": "0.00",
+          "lines": {},
+          "blockingIssueCodes": [
+            "AVERAGING_ROSTER_WEEKLY_HOURS"
+          ]
+        },
+        "derivation": "40 hours in one week may be ordinary hours if the roster averages 38 over its cycle (cl. 15.6(g)); the cycle isn't known.",
+        "sources": [
+          "cl. 15.6(g)",
+          "cl. 21.2 Table 10"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "R014",
+        "kind": "REJECTION",
+        "title": "Junior without a date of birth",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "INCOMPLETE_DATA",
+          "issueCodes": [
+            "DATE_OF_BIRTH_MISSING"
+          ]
+        },
+        "actual": {
+          "status": "INCOMPLETE_DATA",
+          "totalAmount": "0.00",
+          "lines": {},
+          "blockingIssueCodes": [
+            "DATE_OF_BIRTH_MISSING"
+          ]
+        },
+        "derivation": "Junior rates depend on age on each day worked (cl. 17.2), so a date of birth is needed.",
+        "sources": [
+          "cl. 17.2"
+        ],
+        "humanReview": "PENDING"
+      },
+      {
+        "id": "R015",
+        "kind": "REJECTION",
+        "title": "Classification the award doesn't have",
+        "passed": true,
+        "mismatches": [],
+        "expected": {
+          "status": "UNSUPPORTED_SCENARIO",
+          "issueCodes": [
+            "CLASSIFICATION_NOT_SUPPORTED"
+          ]
+        },
+        "actual": {
+          "status": "UNSUPPORTED_SCENARIO",
+          "totalAmount": "0.00",
+          "lines": {},
+          "blockingIssueCodes": [
+            "CLASSIFICATION_NOT_SUPPORTED"
+          ]
+        },
+        "derivation": "Table 4 has Retail Employee Levels 1 to 8 only.",
+        "sources": [
+          "cl. 17.1 Table 4"
+        ],
+        "humanReview": "PENDING"
+      }
+    ]
+  },
+  "errorCount": 0,
+  "exitStatus": 0
+}

@@ -28,6 +28,10 @@ The diagram shows every table and column. `PK` is the primary key, `FK` a foreig
 ```mermaid
 erDiagram
   users ||--o{ sessions : "has (CASCADE)"
+  users ||--o{ email_tokens : "has (CASCADE)"
+  users ||--o{ recovery_codes : "has (CASCADE)"
+  users ||--o{ idempotency_keys : "has (CASCADE)"
+  audits ||--o{ idempotency_keys : "produced (CASCADE)"
   users ||--o{ employments : "owns (CASCADE)"
   employments ||--o{ shifts : "(id, user_id) CASCADE"
   shifts ||--o{ shift_breaks : "has (CASCADE)"
@@ -43,6 +47,10 @@ erDiagram
     varchar_254 email UK "lower-cased"
     text password_hash "Argon2id"
     timestamptz created_at
+    timestamptz email_verified_at "null until confirmed"
+    text totp_secret "AES-256-GCM, null unless set up"
+    timestamptz totp_enabled_at
+    int totp_last_step "stops code replay"
   }
   sessions {
     uuid id PK
@@ -50,6 +58,38 @@ erDiagram
     char_64 token_hash UK "SHA-256 of the token"
     timestamptz created_at
     timestamptz expires_at
+    boolean verified "false while a two-step code is owed"
+    int two_factor_attempts
+    timestamptz last_seen_at
+    varchar_80 device "browser and platform only"
+  }
+  email_tokens {
+    uuid id PK
+    uuid user_id FK
+    EmailTokenPurpose purpose
+    char_64 token_hash UK "SHA-256 of the link token"
+    timestamptz created_at
+    timestamptz expires_at
+    timestamptz used_at
+  }
+  recovery_codes {
+    uuid id PK
+    uuid user_id FK "UK with code_hash"
+    char_64 code_hash "HMAC-SHA-256"
+    timestamptz used_at
+  }
+  idempotency_keys {
+    uuid user_id PK
+    varchar_100 key PK
+    char_64 request_hash
+    uuid audit_id FK
+    timestamptz created_at
+    timestamptz expires_at "24 hours"
+  }
+  rate_limit_buckets {
+    varchar_200 key PK "throttler hash, never an address"
+    timestamptz window_end
+    int hits
   }
   employments {
     uuid id PK
@@ -64,7 +104,21 @@ erDiagram
     AgeBand age_band
     ShiftworkerStatus shiftworker
     jsonb part_time_guaranteed_minutes "part-time only"
+    AustralianState state "public holiday calendar"
+    date date_of_birth "junior rates"
+    date employment_start_date "age-20 rule"
+    SpanException span_exception
+    boolean school_student
+    boolean reduced_break_agreed
+    boolean averaging_roster
+    boolean baking_production
+    boolean apprentice
+    boolean launders_special_clothing
+    boolean appointed_first_aider
+    boolean holds_liquor_licence
+    boolean broken_hill
     timestamptz created_at
+    timestamptz updated_at
   }
   shifts {
     uuid id PK
@@ -160,19 +214,22 @@ erDiagram
   }
 ```
 
-| Enum                  | Values                                                                                                                                  |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `EmploymentType`      | `CASUAL`, `PART_TIME`, `FULL_TIME`                                                                                                      |
-| `AwardCoverage`       | `CONFIRMED`, `UNSURE`                                                                                                                   |
-| `EnterpriseAgreement` | `NONE`, `APPLIES`, `UNSURE`                                                                                                             |
-| `AgeBand`             | `ADULT_21_PLUS`, `UNDER_21`, `UNSURE`                                                                                                   |
-| `ShiftworkerStatus`   | `NO`, `YES`, `UNSURE`                                                                                                                   |
-| `BreakKind`           | `UNPAID_MEAL`, `PAID_REST`                                                                                                              |
-| `PayslipLineCategory` | `HOURS_WORKED`, `OVERTIME`, `ALLOWANCE`, `LEAVE`, `OTHER`                                                                               |
-| `AuditStatus`         | `COMPLETED`                                                                                                                             |
-| `FindingStatus`       | `MATCHED`, `POTENTIAL_UNDERPAYMENT`, `POTENTIAL_OVERPAYMENT`, `INCOMPLETE_DATA`, `UNSUPPORTED_SCENARIO`, `REVIEW_REQUIRED`              |
-| `CalculationStatus`   | `CALCULATED`, `REVIEW_REQUIRED`, `UNSUPPORTED_SCENARIO`, `INCOMPLETE_DATA`                                                              |
-| `AuditEventType`      | `REGISTERED`, `LOGIN_SUCCEEDED`, `LOGIN_FAILED`, `LOGGED_OUT`, `SHIFTS_IMPORTED`, `AUDIT_CREATED`, `REPORT_EXPORTED`, `ACCOUNT_DELETED` |
+| Enum                  | Values                                                                                                                                                                                                                                                                                                            |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EmploymentType`      | `CASUAL`, `PART_TIME`, `FULL_TIME`                                                                                                                                                                                                                                                                                |
+| `AwardCoverage`       | `CONFIRMED`, `UNSURE`                                                                                                                                                                                                                                                                                             |
+| `EnterpriseAgreement` | `NONE`, `APPLIES`, `UNSURE`                                                                                                                                                                                                                                                                                       |
+| `AgeBand`             | `ADULT_21_PLUS`, `UNDER_21`, `UNSURE`                                                                                                                                                                                                                                                                             |
+| `ShiftworkerStatus`   | `NO`, `YES`, `UNSURE`                                                                                                                                                                                                                                                                                             |
+| `AustralianState`     | `ACT`, `NSW`, `NT`, `QLD`, `SA`, `TAS`, `VIC`, `WA`                                                                                                                                                                                                                                                               |
+| `SpanException`       | `NONE`, `NEWSAGENCY`, `VIDEO_SHOP`, `EXTENDED_TRADING`                                                                                                                                                                                                                                                            |
+| `EmailTokenPurpose`   | `VERIFY_EMAIL`, `RESET_PASSWORD`                                                                                                                                                                                                                                                                                  |
+| `BreakKind`           | `UNPAID_MEAL`, `PAID_REST`                                                                                                                                                                                                                                                                                        |
+| `PayslipLineCategory` | `HOURS_WORKED`, `OVERTIME`, `ALLOWANCE`, `LEAVE`, `OTHER`                                                                                                                                                                                                                                                         |
+| `AuditStatus`         | `COMPLETED`                                                                                                                                                                                                                                                                                                       |
+| `FindingStatus`       | `MATCHED`, `POTENTIAL_UNDERPAYMENT`, `POTENTIAL_OVERPAYMENT`, `INCOMPLETE_DATA`, `UNSUPPORTED_SCENARIO`, `REVIEW_REQUIRED`                                                                                                                                                                                        |
+| `CalculationStatus`   | `CALCULATED`, `REVIEW_REQUIRED`, `UNSUPPORTED_SCENARIO`, `INCOMPLETE_DATA`                                                                                                                                                                                                                                        |
+| `AuditEventType`      | `REGISTERED`, `EMAIL_VERIFIED`, `LOGIN_SUCCEEDED`, `LOGIN_FAILED`, `TWO_FACTOR_FAILED`, `LOGGED_OUT`, `PASSWORD_RESET_REQUESTED`, `PASSWORD_RESET`, `PASSWORD_CHANGED`, `TWO_FACTOR_ENABLED`, `TWO_FACTOR_DISABLED`, `SESSIONS_REVOKED`, `SHIFTS_IMPORTED`, `AUDIT_CREATED`, `REPORT_EXPORTED`, `ACCOUNT_DELETED` |
 
 Mermaid can't show types with commas or brackets, so `varchar_254` means `varchar(254)`, `numeric_14_2` means `numeric(14,2)` and `text_array` means `text[]`.
 
@@ -189,14 +246,17 @@ These are written by hand in the migrations, because Prisma can't express them:
 | `CHECK (period_end >= period_start)`                                   | `audits`                            | A backwards audit period                                                                                                                      |
 | Immutability trigger (blocks UPDATE and DELETE)                        | `audits`, `audit_findings`          | Any change to a completed audit. The only exception is account deletion, which sets the transaction-local `wageguard.allow_audit_delete` flag |
 | Owner-change trigger                                                   | `employments`, `shifts`, `payslips` | Moving a row to a different `user_id`                                                                                                         |
+| `CHECK (date_of_birth < employment_start_date)`                        | `employments`                       | A job that starts before the person was born                                                                                                  |
 
 Child rows point at their parent with a composite key that includes `user_id`. That way the database itself refuses a shift, payslip or audit that belongs to a different user from its employment. Triggers stop the owner of a row from ever changing.
 
-**`users`** have a unique, lower-cased `email`.
+**`users`** have a unique, lower-cased `email`. Accounts that existed before email confirmation were marked confirmed by the migration.
 
-**`sessions`** store only a SHA-256 hash of each token (unique), with indexes on `user_id` and `expires_at`.
+**`sessions`** store only a SHA-256 hash of each token (unique), with indexes on `user_id` and `expires_at`. A session with `verified = false` is waiting for a two-step code and can only be used to enter it.
 
-**`employments`** have a unique `(id, user_id)` pair for the composite keys above, and an index on `(user_id, created_at)`.
+**`email_tokens`**, **`recovery_codes`** and **`rate_limit_buckets`** hold only hashes, never a token, code or client address ([ADR 0017](adr/0017-account-security.md), [ADR 0018](adr/0018-shared-rate-limits-and-expiring-idempotency-keys.md)).
+
+**`employments`** have a unique `(id, user_id)` pair for the composite keys above, and an index on `(user_id, created_at)`. They can be edited; audits keep a copy of the terms they were calculated with. `state` is null for employments created before it was recorded.
 
 **`shifts`** keep the times exactly as entered, the local `start_date` that decides which pay period they belong to, and the resolved UTC `start_at` and `end_at`. A `version` column supports safe concurrent edits. An exclusion constraint stops two shifts for the same job from overlapping, and a CHECK makes sure each one ends after it starts. They're indexed on `(employment_id, start_date)` and `(user_id, start_at)`.
 
@@ -206,7 +266,7 @@ Child rows point at their parent with a composite key that includes `user_id`. T
 
 **`payslip_lines`** are unique per `(payslip_id, position)`, with non-negative amounts.
 
-**`audits`** are unique per `(user_id, idempotency_key)`, which is what makes retries safe. Each one stores a snapshot of everything used: the input, the payslip, the result, the reconciliation, the rule-set fingerprint, the input hash and the engine version. A trigger blocks UPDATE and DELETE. They're indexed on `(user_id, created_at DESC, id)` for history, and on `(user_id, finding_status, created_at DESC, shift_count, difference)`. That second index serves both the filtered history and the dashboard's totals, which can be read from it without touching the table ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
+**`audits`** keep the `idempotency_key` they were created with. **`idempotency_keys`** decides whether a key is in use: one row per user and key, expiring 24 hours after its audit, which is what makes retries safe. Each one stores a snapshot of everything used: the input, the payslip, the result, the reconciliation, the rule-set fingerprint, the input hash and the engine version. A trigger blocks UPDATE and DELETE. They're indexed on `(user_id, created_at DESC, id)` for history, and on `(user_id, finding_status, created_at DESC, shift_count, difference)`. That second index serves both the filtered history and the dashboard's totals, which can be read from it without touching the table ([ADR 0015](adr/0015-query-shape-indexes-and-fail-fast.md)).
 
 **`audit_findings`** are unique per `(audit_id, position)` and protected by the same trigger.
 

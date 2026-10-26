@@ -24,7 +24,8 @@ The settings are ordinary radio buttons in labelled groups, so they work with a 
 **Structure and navigation**
 
 - A "Skip to main content" link is the first thing on every page.
-- Each page has one `h1`, headings in order, and landmarks (`header`, `nav`, `main`, `footer`). The current section is marked with `aria-current="page"`.
+- Each page has one `h1`, headings in order, and landmarks (`header`, `nav`, `main`, `aside`). The current section is marked with `aria-current="page"` in the sidebar, and pages below a list have breadcrumbs back to it.
+- On narrow screens the sidebar becomes a menu drawer, a labelled dialog that traps focus and closes with Escape.
 - The page language is declared as Australian English (`en-AU`).
 - Dialogs trap focus while open, close with Escape, and return focus to the button that opened them.
 
@@ -32,11 +33,13 @@ The settings are ordinary radio buttons in labelled groups, so they work with a 
 
 - Every field has a visible label. Hints and errors are linked to their field with `aria-describedby`, and invalid fields are marked with `aria-invalid`.
 - Errors are announced through a live region as well as shown, and a failed CSV import names the exact line.
-- Related choices (such as the declarations about the job) are grouped in fieldsets with legends.
+- Related choices (such as the declarations about the job) are grouped in fieldsets with legends, so each section's title is read with every field in it.
+- Two-step sign-in codes use `autocomplete="one-time-code"`, so phones and password managers can fill them, and every QR code has the same key printed as text beside it.
+- Links that arrive by email work without any typing: the page reads the token from the link and says clearly when a link has expired, with a way to get a new one.
 
 **Results and data**
 
-- Statuses never rely on colour. Each one has a written label and an icon. "Matched" is deliberately not shown as a green tick, since WageGuard can't certify a payslip as correct.
+- Statuses never rely on colour. Each one is a written label beside a coloured dot. "Matched" is deliberately not shown as a green tick, since WageGuard can't certify a payslip as correct.
 - The dashboard chart has a "View as table" button that shows the same numbers as a data table, and the chart itself has a text summary.
 - Tables have proper headers, and on narrow screens they scroll inside their own container rather than the whole page scrolling sideways.
 - Money is shown with its sign and currency, and times are shown as they appear on the timesheet, without converting time zones.
@@ -67,7 +70,7 @@ The homepage has decorative animation: a drifting background, an orbiting graphi
 | Keyboard                         | The skip link is tested from the keyboard. A full keyboard-only run through the main journey hasn't been recorded                         | Every push        |
 | Display settings                 | A test changes every setting, checks it takes effect, reloads, and resets                                                                 | Every push        |
 | Motion                           | A test pauses both animations, then turns on reduced motion and checks that the pause buttons disappear and the quotes are still readable | Every push        |
-| Reflow (WCAG 1.4.10)             | A test visits all 15 pages at 320 pixels wide with the largest text and fails on any sideways scroll                                      | Every push        |
+| Reflow (WCAG 1.4.10)             | A test visits 21 pages at 320 pixels wide with the largest text and fails on any sideways scroll                                          | Every push        |
 
 The tests are in `apps/web/e2e/access.spec.ts`. Automated tools find roughly a third to a half of real accessibility problems, so passing them is a floor, not proof.
 

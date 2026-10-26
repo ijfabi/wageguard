@@ -73,10 +73,26 @@ function metric(
 }
 
 // --- Benchmark A -----------------------------------------------------------------------------
-const engine = latest(
+const shiftsPerSecond10k = (r: LoadedRecord): number =>
+  (r.results as EngineSizeResult[]).find((s) => s.shifts === 10_000)?.shiftsPerSecond.median ?? 0;
+const newestEngine = latest(
   records,
   (r) => r.benchmark === "A-engine-throughput" && r.status === "COMPLETED" && engineLabel(r) !== "baseline",
 );
+// Every run with the newest run's label at the same commit; quote the middle one, never the best.
+const engineRuns =
+  newestEngine === null
+    ? []
+    : records
+        .filter(
+          (r) =>
+            r.benchmark === "A-engine-throughput" &&
+            r.status === "COMPLETED" &&
+            engineLabel(r) === engineLabel(newestEngine) &&
+            r.environment.git.commitSha === newestEngine.environment.git.commitSha,
+        )
+        .sort((a, b) => shiftsPerSecond10k(a) - shiftsPerSecond10k(b));
+const engine = engineRuns[Math.floor((engineRuns.length - 1) / 2)] ?? null;
 const engine10k =
   engine === null ? null : ((engine.results as EngineSizeResult[]).find((s) => s.shifts === 10_000) ?? null);
 
@@ -154,8 +170,7 @@ const metrics: Metric[] = [
       unit: "synthetic shifts/second",
       workload:
         "10,000 deterministic synthetic shifts in 1,000 fortnightly pay periods (seed 20260706, generator v1)",
-      methodology:
-        "Benchmark A: 3 warm-up + 10 measured repetitions, single process, forced GC before each repetition; isolated engine only (no HTTP/DB).",
+      methodology: `Benchmark A: 3 warm-up + 10 measured repetitions, single process, forced GC before each repetition; isolated engine only (no HTTP/DB). The middle of ${engineRuns.length} run(s) at the same commit.`,
       resumeSuitability: "Suitable with the qualifier 'synthetic, isolated engine benchmark'.",
     },
     provenanceOf(engine),
@@ -192,7 +207,8 @@ const metrics: Metric[] = [
       id: "golden-scenarios",
       name: "Golden payroll scenarios passing",
       unit: "scenarios passed / total",
-      workload: "Supported MA000004 Level 1 casual/part-time scenarios plus unsupported/review cases",
+      workload:
+        "Supported MA000004 scenarios for the rule set in force (Levels 1 to 8, full-time, part-time and casual, adult and junior) plus unsupported/review cases",
       methodology:
         "Benchmark D: expected values hand-derived from award Schedule B rates; NOT reviewed by a qualified professional.",
       resumeSuitability:
@@ -208,7 +224,7 @@ const metrics: Metric[] = [
       id: "golden-reference",
       name: "Reference calculations matching hand-derived award values",
       unit: "scenarios / total",
-      workload: "Golden REFERENCE scenarios (supported casual/part-time Level 1 cases)",
+      workload: "Golden REFERENCE scenarios (supported cases for the rule set in force)",
       methodology:
         "Benchmark D: status, per-rule pay lines and total must equal values hand-derived from Schedule B; NOT reviewed by a qualified professional.",
       resumeSuitability:

@@ -56,7 +56,8 @@
 - [x] Nonce-based content security policy for the web app, with end-to-end violation checks
 - [x] Sign-in and account-deletion forms use POST, so credentials never land in a URL even before JavaScript loads
 - [x] Container, dependency and secret scanning in CI
-- [ ] A Unicode font and a tagged, accessible PDF; monitoring dashboards and alerts; tracing in the web app
+- [x] An embedded PDF font covering Latin, Greek, Cyrillic, Hebrew and more (DejaVu Sans)
+- [ ] A tagged, accessible PDF; monitoring dashboards and alerts; tracing in the web app
 
 ## Phase 5: benchmarking
 
@@ -78,3 +79,17 @@
 - [x] Homepage with an animated sample audit, word-for-word award quotes (tested against the retrieved award text) and measured results
 - [x] Accessibility panel (theme, text size, motion, contrast), pause controls for all motion, reflow at 320 pixels, and axe checks in every display mode ([ACCESSIBILITY.md](../ACCESSIBILITY.md))
 - [x] Documentation: information architecture, full database schema, API route map and request lifecycle, infrastructure and cloud design, Terraform commands, testing levels with UAT scenarios and a test case table
+
+## After delivery: the known limitations
+
+- [x] Rule set r2 ([ADR 0016](adr/0016-rule-set-revisions.md)): overtime, public holidays, minimum engagement, short breaks between work days, the cl. 15.2 span exceptions, Levels 1 to 8, full-time and junior rates, shiftwork, allowances and leave, with every Schedule B rate reproduced by a test
+- [x] State and territory public holiday calendar for 2026 and 2027, from the Fair Work Ombudsman's lists
+- [x] Shifts from the 13 days before a pay period count towards its weekly limits, and part-time hours can be varied in writing per day
+- [x] Email verification without revealing who has an account, password reset, password change, signed-in devices and two-step sign-in ([ADR 0017](adr/0017-account-security.md))
+- [x] Rate limits shared across API instances, and idempotency keys that expire after 24 hours ([ADR 0018](adr/0018-shared-rate-limits-and-expiring-idempotency-keys.md))
+- [x] Editable employments; the ownership trigger fixed so updates work
+- [x] Daylight-saving choice for shifts in the repeated hour, in the web form
+- [x] Redesigned web app: sidebar layout, self-hosted Inter, new auth pages, sectioned forms, consistent tables, stat tiles and status pills
+- [x] Mailpit in Docker Compose; SMTP and two-step key settings in both Terraform stacks
+- [ ] A golden set reviewed by a payroll professional, and a cross-check against the Fair Work Pay Calculator
+- [ ] Repeat the API, database and reliability benchmarks on the current code

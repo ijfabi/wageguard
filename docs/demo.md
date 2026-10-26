@@ -2,7 +2,7 @@
 
 This is one complete run through WageGuard. A new person signs up, describes their job, imports a fortnight of shifts, enters a payslip that's $62.15 short, and gets an audit that explains the shortfall and can be downloaded as a PDF. Everything here is synthetic.
 
-The screenshots were taken by `pnpm --filter @wageguard/web walkthrough` against the stack started with `docker compose up --build`. The script creates its own throwaway account, so you can re-run it at any time and get the same pictures. The same journey runs as an automated test in CI on every push (`apps/web/e2e/journey.spec.ts`), so this isn't a one-off.
+The screenshots were taken by `pnpm --filter @wageguard/web walkthrough`, which runs against the stack from `docker compose up --build`. The current set was recorded on 26 October 2026 against the same production builds run directly on the host, with the Compose Mailpit catching the email, because Docker couldn't reach the npm registry to rebuild the images that day. The script creates its own throwaway account, so you can re-run it at any time and get the same pictures. The same journey runs as an automated test in CI on every push (`apps/web/e2e/journey.spec.ts`), so this isn't a one-off.
 
 ## 1. Sign up
 
@@ -10,13 +10,13 @@ An email address and a password of at least 12 characters. The page asks for a m
 
 ![Sign up](walkthrough/01-sign-up.png)
 
-A new account starts with an empty dashboard that points to the next step.
+WageGuard then emails a confirmation link. Locally it lands in Mailpit (http://localhost:8025), and the script opens it from there. Opening the link confirms the address and signs the person in. A new account starts with an empty dashboard and a four-step checklist that points to the next step.
 
 ![Empty dashboard](walkthrough/02-empty-dashboard.png)
 
 ## 2. Describe the job
 
-WageGuard never guesses award coverage from a job title, so the person says what applies: the award, their classification, casual or part-time, their time zone, and a few yes-or-no questions about their situation. Anything outside the supported scope is refused here, before any numbers are calculated.
+WageGuard never guesses award coverage from a job title, so the person says what applies: their classification, full-time, part-time or casual, the state they work in (which decides the public holidays), and a few questions about their age, working arrangements and allowances. "Not sure" is always an answer, and it makes the audit ask for review instead of assuming.
 
 ![Add employment](walkthrough/03-add-employment.png)
 
@@ -36,7 +36,7 @@ The payslip says $800.00 gross for the fortnight of 6 to 19 July 2026. It can be
 
 ![Payslip](walkthrough/06-payslip.png)
 
-Saving the payslip leads straight to running the audit. Public holidays can be declared here, because WageGuard doesn't know each state's holiday calendar.
+Saving the payslip leads straight to running the audit. The form lists the public holidays in the pay period for the job's state, from the Fair Work Ombudsman's lists, and takes any local ones, leave, allowance claims and written changes to part-time hours.
 
 ![Run audit](walkthrough/07-run-audit.png)
 

@@ -23,6 +23,6 @@ Printing the web page with headless Chromium would put a whole browser in the im
 
 ## Consequences
 
-The standard PDF font (Helvetica) only covers the Western European character set. Other characters in user-entered text are shown as "?" instead of the wrong glyph. Embedding a font that covers everything is a follow-up.
+The report first used the standard PDF font (Helvetica), which only covers the Western European character set. It now embeds DejaVu Sans (subsetted by pdfkit), which also covers Latin Extended, Greek, Cyrillic, Hebrew and several other scripts. Text is checked against the font's own glyph table, so a character it can't draw, such as Chinese or an emoji, prints as "?" rather than an empty box. Right-to-left text isn't reordered.
 
 The PDF isn't tagged for screen readers. The accessible version of the same content is the audit and explanation pages in the web app.

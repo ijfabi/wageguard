@@ -9,7 +9,7 @@ All of it was measured on one laptop: Intel i7-13650HX (20 logical cores), 16 GB
 | A         | Calculation engine throughput                         | Done                                     |
 | B         | The audit API under load (k6)                         | Done, before and after the Phase 5 fixes |
 | C         | Database queries                                      | Done, before and after the Phase 5 fixes |
-| D         | Correctness against golden scenarios                  | Done: 21 of 21                           |
+| D         | Correctness against golden scenarios                  | Done: 29 of 29 (rule set r2)             |
 | E         | Reliability under injected failures                   | Done                                     |
 | F         | Engine before and after the offset-table optimisation | Done                                     |
 
@@ -32,6 +32,18 @@ Output was identical with and without the change: the 10,000-shift result digest
 All runs are kept, outliers included. One optimised run came in at 12,651 shifts/s against roughly 32,000–34,000 for the others. It was the first run after Docker Desktop had started its virtual machine, and the spread between its repetitions was five times the usual, so it looks like machine load rather than a code change. Leaving it out, the optimised runs ranged from 32,358 to 34,453 shifts/s.
 
 The baseline was recorded before the repository existed, so it's identified by a hash of the source tree (`3502f394…`) rather than a commit.
+
+### Rule set r2
+
+Rule set r2 prices what r1 only flagged: overtime, public holidays, minimum engagement, short breaks between work days, junior rates and the rest ([ADR 0016](adr/0016-rule-set-revisions.md)). That means more work per shift: a second classification pass for daily, guaranteed and weekly limits, and top-ups. With the same seed, sizes and repetitions at commit `f3d0dcc`, three runs gave these results for 10,000 shifts:
+
+| Run | Median shifts/s | Median total (ms) | p95 total (ms) |
+| --- | --------------- | ----------------- | -------------- |
+| 1   | 15,530          | 622.91            | 736.13         |
+| 2   | 19,515          | 484.20            | 586.90         |
+| 3   | 20,266          | 470.71            | 604.03         |
+
+That's roughly 40% fewer shifts a second than r1's 32,588, for work that is now fully priced: every synthetic pay period comes out as "calculated", where under r1 about 85% needed review. The output digests differ from r1's because the results differ, so Benchmark F's equivalence check doesn't apply across rule sets. Run 1 came first after a full build and shows a wider spread between repetitions; all three are kept.
 
 ## C: database queries
 

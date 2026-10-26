@@ -49,11 +49,11 @@ The engine doesn't import the rules directly. It asks for them through a small i
 
 1. **Validate the input.** First the shape, then the meaning: real dates, a real time zone, times that exist on the day daylight saving changes, breaks inside their shifts, no overlapping shifts, no duplicate IDs, and nothing outside the pay period. Every problem is reported at once, not just the first.
 2. **Find the rule set** in force for the award and pay period. A new rate applies from the first full pay period after it takes effect.
-3. **Check the scope:** the award, classification, employment type and time zone, what the person has told us about their situation, and part-time guaranteed hours.
-4. **Split each shift** into segments. Paid time (the shift minus unpaid meal breaks) is cut at midnight and at every point where a different rate starts. Each segment gets a rule, or is marked as outside the span of ordinary hours or on a public holiday.
-5. **Look for entitlements** that might change the pay but aren't calculated, such as overtime or a short break between shifts ([ADR 0008](adr/0008-review-required-over-partial-guesses.md)).
+3. **Check the scope:** the award, classification, employment type and time zone, what the person has told us about their situation, their age on each day for junior rates, and part-time guaranteed hours.
+4. **Split each shift** into segments. Paid time (the shift minus unpaid meal breaks) is cut at midnight and at every point where a different rate starts. Each segment gets a rule. Time outside the span of ordinary hours is overtime, and time on a public holiday gets the public holiday rule.
+5. **Apply the limits.** Hours beyond the daily, guaranteed or weekly limits become overtime (last hours first), short shifts are topped up to the minimum engagement, and work before a short break between days gets the break rate. Rule sets without those rules, such as r1, flag the same situations for review instead ([ADR 0008](adr/0008-review-required-over-partial-guesses.md), [ADR 0016](adr/0016-rule-set-revisions.md)).
 6. **Price the shifts** that have no blocking issue, rounding rates and lines as the rule set specifies ([ADR 0004](adr/0004-decimal-money-and-rounding.md)).
-7. **Combine** the priced time into one pay line per rule for the whole period.
+7. **Combine** the priced time into one pay line per rule for the whole period, then add allowances and leave.
 8. **Decide the overall status.** The result records the rule-set version and fingerprint, the source, a hash of the input, the engine version, the rounding policy and the time of calculation. It also carries the assumptions made, every issue with its award clause and a suggested next step, and a trace of the eight steps.
 
 `reconcile(result, payslip)` then compares the calculated minimum with the payslip. The outcome is one of: matches, possible underpayment, possible overpayment, needs review, not supported, or missing information. Each finding points back to the parts of the calculation that support it.

@@ -152,19 +152,27 @@ async function expectAccessible(page: Page) {
 
 test.describe("accessibility (axe, WCAG 2.1 AA)", () => {
   test("public pages", async ({ page }) => {
-    for (const path of ["/", "/sign-in", "/sign-up"]) {
+    for (const path of [
+      "/",
+      "/sign-in",
+      "/sign-up",
+      "/forgot-password",
+      "/reset-password",
+      "/verify-email",
+    ]) {
       await page.goto(path);
       await expectAccessible(page);
     }
   });
 
   test("signed-in pages, including an audit", async ({ page }) => {
-    // Eleven server-rendered page states with a full axe scan each (about 33 s measured locally).
+    // Fourteen page states with a full axe scan each.
     test.setTimeout(90_000);
     await signUp(page);
     await expectAccessible(page);
     await addCasualEmployment(page, "Accessible store");
     await expectAccessible(page);
+    const employment = page.url();
     await importCsv(page, G009_CSV);
     await expect(page).toHaveURL(/\/shifts\?/);
     await expectAccessible(page);
@@ -176,7 +184,16 @@ test.describe("accessibility (axe, WCAG 2.1 AA)", () => {
     await page.getByRole("link", { name: "How this was calculated" }).click();
     await expect(page.getByRole("heading", { name: "Calculation steps" })).toBeVisible();
     await expectAccessible(page);
-    for (const path of ["/dashboard", "/payslips", "/audits", "/settings", "/shifts/new"]) {
+    for (const path of [
+      "/dashboard",
+      "/employments",
+      "/employments/new",
+      `${employment}/edit`,
+      "/payslips",
+      "/audits",
+      "/settings",
+      "/shifts/new",
+    ]) {
       await page.goto(path);
       await expect(page.locator("main h1")).toBeVisible();
       await expectAccessible(page);
@@ -220,12 +237,20 @@ test.describe("accessibility (axe, WCAG 2.1 AA)", () => {
       );
       expect(overflow, page.url()).toBeLessThanOrEqual(0);
     };
-    for (const path of ["/", "/sign-in", "/sign-up"]) {
+    for (const path of [
+      "/",
+      "/sign-in",
+      "/sign-up",
+      "/forgot-password",
+      "/reset-password",
+      "/verify-email",
+    ]) {
       await page.goto(path);
       await expectNoSidewaysScroll();
     }
     await signUp(page);
     await addCasualEmployment(page, "Narrow screen store");
+    const employment = page.url();
     await importCsv(page, G009_CSV);
     await expect(page).toHaveURL(/\/shifts\?/);
     await enterPayslip(page, "800.00");
@@ -237,6 +262,9 @@ test.describe("accessibility (axe, WCAG 2.1 AA)", () => {
       `${audit}/explanation`,
       "/dashboard",
       "/employments",
+      "/employments/new",
+      employment,
+      `${employment}/edit`,
       "/shifts",
       "/shifts/new",
       "/shifts/import",

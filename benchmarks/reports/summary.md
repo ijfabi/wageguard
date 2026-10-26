@@ -1,24 +1,24 @@
 # Benchmark summary
 
-Generated from 21 raw result file(s) in `benchmarks/results/`. Every number below is copied from a saved record.
+Generated from 25 raw result file(s) in `benchmarks/results/`. Every number below is copied from a saved record.
 
 ## Status
 
 | ID  | Benchmark                     | Status    | Latest run / reason      | Evidence                                                              |
 | --- | ----------------------------- | --------- | ------------------------ | --------------------------------------------------------------------- |
-| A   | Calculation engine throughput | COMPLETED | 2026-10-22T12:01:59.466Z | `benchmarks/results/engine-2026-10-22T12-01-59-466Z-3bf2ea.json`      |
+| A   | Calculation engine throughput | COMPLETED | 2026-10-25T08:07:09.335Z | `benchmarks/results/engine-2026-10-25T08-07-09-335Z-c2b456.json`      |
 | B   | Audit API performance         | COMPLETED | 2026-10-24T15:23:43.912Z | `benchmarks/results/api-2026-10-24T15-23-43-912Z-8815c8.json`         |
 | C   | Database query performance    | COMPLETED | 2026-10-24T15:15:53.196Z | `benchmarks/results/database-2026-10-24T15-15-53-196Z-48304d.json`    |
-| D   | Correctness evaluation        | COMPLETED | 2026-10-22T12:59:18.696Z | `benchmarks/results/correctness-2026-10-22T12-59-18-696Z-463d67.json` |
+| D   | Correctness evaluation        | COMPLETED | 2026-10-25T08:06:37.309Z | `benchmarks/results/correctness-2026-10-25T08-06-37-309Z-80d3ee.json` |
 | E   | Reliability and recovery      | COMPLETED | 2026-10-24T15:49:32.351Z | `benchmarks/results/reliability-2026-10-24T15-49-32-351Z-b942b0.json` |
 
 ## A: Calculation engine throughput (latest optimised run)
 
 | Shifts | Shifts/s (median) | Total ms (median) | Total ms (p95 of repetitions) | Per pay period ms (p95) | Peak RSS MiB |
 | ------ | ----------------- | ----------------- | ----------------------------- | ----------------------- | ------------ |
-| 100    | 16209             | 6.01              | 6.78                          | 0.859                   | 85.7         |
-| 1000   | 22508             | 42.93             | 50.14                         | 0.742                   | 103.3        |
-| 10000  | 32588             | 306.71            | 366.42                        | 0.544                   | 145.7        |
+| 100    | 11925             | 8.28              | 10.02                         | 1.209                   | 87.9         |
+| 1000   | 16593             | 59.98             | 65.74                         | 0.955                   | 108.1        |
+| 10000  | 20266             | 470.71            | 604.03                        | 1.011                   | 150.9        |
 
 ## F: Baseline comparison (offset-table optimisation)
 

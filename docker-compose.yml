@@ -42,6 +42,8 @@ services:
     image: axllent/mailpit:v1.31.4
     ports:
       - "127.0.0.1:8025:8025"
+      # SMTP, for an API run outside Docker (see .env.example).
+      - "127.0.0.1:1025:1025"
     healthcheck:
       test: ["CMD", "/mailpit", "readyz"]
       interval: 5s
