@@ -363,26 +363,26 @@ const AWARD_TEXT = new URL(
   import.meta.url,
 );
 
-describe.skipIf(!existsSync(AWARD_TEXT))(
-  "homepage award quotes (against the locally retrieved award)",
-  () => {
-    const award = readFileSync(AWARD_TEXT, "utf8");
-    // The retrieved text wraps lines and pads clause numbers with spaces; compare on single spaces.
-    const flatten = (text: string) => text.replace(/\s+/g, " ").trim();
+const awardAvailable = existsSync(AWARD_TEXT);
 
-    it("quotes the award word for word, with the clause each sentence comes from", () => {
-      const { quotes, awardTitle } = homepageQuotes();
-      expect(awardTitle).toBe("General Retail Industry Award 2020");
-      expect(quotes.length).toBeGreaterThanOrEqual(4);
-      const source = flatten(award);
-      for (const quote of quotes) {
-        const at = source.indexOf(flatten(quote.text));
-        expect(at, `clause ${quote.clause} is not word for word`).toBeGreaterThan(-1);
-        // "16.6(a)" sits under the "16.6" heading, so look for the clause number just before the text.
-        const clauseNumber = quote.clause.replace(/\(.*$/, "");
-        expect(source.slice(Math.max(0, at - 300), at).includes(`${clauseNumber} `), quote.clause).toBe(true);
-      }
-      expect(new Set(quotes.map((q) => q.clause)).size).toBe(quotes.length);
-    });
-  },
-);
+describe.skipIf(!awardAvailable)("homepage award quotes (against the locally retrieved award)", () => {
+  // The body still runs while tests are collected, even when skipped, so only read the file if it's there.
+  const award = awardAvailable ? readFileSync(AWARD_TEXT, "utf8") : "";
+  // The retrieved text wraps lines and pads clause numbers with spaces; compare on single spaces.
+  const flatten = (text: string) => text.replace(/\s+/g, " ").trim();
+
+  it("quotes the award word for word, with the clause each sentence comes from", () => {
+    const { quotes, awardTitle } = homepageQuotes();
+    expect(awardTitle).toBe("General Retail Industry Award 2020");
+    expect(quotes.length).toBeGreaterThanOrEqual(4);
+    const source = flatten(award);
+    for (const quote of quotes) {
+      const at = source.indexOf(flatten(quote.text));
+      expect(at, `clause ${quote.clause} is not word for word`).toBeGreaterThan(-1);
+      // "16.6(a)" sits under the "16.6" heading, so look for the clause number just before the text.
+      const clauseNumber = quote.clause.replace(/\(.*$/, "");
+      expect(source.slice(Math.max(0, at - 300), at).includes(`${clauseNumber} `), quote.clause).toBe(true);
+    }
+    expect(new Set(quotes.map((q) => q.clause)).size).toBe(quotes.length);
+  });
+});
