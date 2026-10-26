@@ -81,7 +81,7 @@ Every number here comes from a saved benchmark record. They are synthetic runs o
 | API throughput at 50 concurrent clients (k6, before shared rate limits)              | 307 → 475 requests/s (+54.9%), p95 443 ms → 312 ms, 0% errors                              |
 | Audit submissions with the API killed mid-load, then with the database down for 10 s | 14,999 of 14,999 completed, no duplicates, no lost or inconsistent records                 |
 | Golden scenarios (rule set r2)                                                       | 29 of 29: 23 hand-worked reference calculations and 6 correct refusals                     |
-| Automated tests                                                                      | 455 passing, plus 17 Playwright end-to-end tests                                           |
+| Automated tests                                                                      | 457 passing, plus 17 Playwright end-to-end tests                                           |
 | Calculation engine coverage                                                          | 98.2% of lines, 91.7% of branches                                                          |
 
 The golden scenarios were worked out by hand from the award's published rates, and nobody with payroll qualifications has reviewed them yet. They show the engine agrees with those calculations on a small, defined set of cases. They don't prove legal accuracy.

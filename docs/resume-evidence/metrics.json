@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T08:38:31.669Z",
+  "generatedAt": "2026-10-26T09:57:13.353Z",
   "metrics": [
     {
       "id": "engine-throughput-10k",
@@ -113,12 +113,12 @@
       "workload": "Unit, property-based, golden and API integration tests (real PostgreSQL via Testcontainers) across workspace packages",
       "methodology": "Vitest JSON reports in benchmarks/test-reports/ (pnpm test:evidence).",
       "resumeSuitability": "Suitable as a count; mention property-based testing explicitly.",
-      "value": "455/455",
+      "value": "457/457",
       "verification": "MEASURED",
       "sourceFile": "benchmarks/test-reports/api-contracts.json, benchmarks/test-reports/api.json, benchmarks/test-reports/award-rules.json, benchmarks/test-reports/calculation-engine.json, benchmarks/test-reports/domain.json, benchmarks/test-reports/presentation.json, benchmarks/test-reports/test-fixtures.json, benchmarks/test-reports/web.json",
       "commitSha": null,
       "sourceTreeSha256": null,
-      "date": "2026-10-26T08:38:08.348Z",
+      "date": "2026-10-26T09:56:58.053Z",
       "environment": "local test run (see vitest reports)"
     },
     {

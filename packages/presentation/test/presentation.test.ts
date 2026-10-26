@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CALCULATION_STATUS,
   FINDING_STATUS,
   auditAmounts,
+  calculationStatusPresentation,
   formatAud,
   formatDate,
   formatDifference,
@@ -15,6 +17,7 @@ import {
   humaniseShiftIds,
   isMoneyString,
   issueTitle,
+  nothingPriced,
   shortHash,
   sumMoney,
   toCents,
@@ -97,6 +100,46 @@ describe("status wording", () => {
   it("labels known issue codes and humanises unknown ones", () => {
     expect(issueTitle("OUTSIDE_SPAN_OF_ORDINARY_HOURS")).toBe("Work outside ordinary hours");
     expect(issueTitle("SOMETHING_NEW")).toBe("Something new");
+  });
+});
+
+describe("audits where nothing could be priced", () => {
+  const unpriced = {
+    calculationStatus: "REVIEW_REQUIRED",
+    comparisonBasis: "PAYSLIP_LINES",
+    reportedAmount: "150.00",
+    expectedAmount: "0.00",
+    difference: "150.00",
+    roundingTolerance: "0.00",
+  } as const;
+
+  it("shows no minimum or difference instead of $0.00 and the whole payslip", () => {
+    expect(nothingPriced(unpriced)).toBe(true);
+    expect(auditAmounts(unpriced)).toEqual([
+      { label: "Reported pay", value: "$150.00", detail: "Payslip lines for time worked" },
+      {
+        label: "Calculated award minimum",
+        value: "Not calculated",
+        detail: "No shifts could be checked yet",
+      },
+      { label: "Difference", value: "—", detail: "No comparison was possible" },
+    ]);
+    expect(auditAmounts({ ...unpriced, comparisonBasis: "GROSS_PAY" })[0].detail).toBe(
+      "Gross pay from your payslip",
+    );
+  });
+
+  it("says not calculated yet, and leaves other statuses alone", () => {
+    expect(calculationStatusPresentation(unpriced)).toMatchObject({
+      label: "Not calculated yet",
+      tone: "warning",
+    });
+    const partial = { calculationStatus: "REVIEW_REQUIRED", expectedAmount: "139.04" } as const;
+    expect(nothingPriced(partial)).toBe(false);
+    expect(calculationStatusPresentation(partial)).toBe(CALCULATION_STATUS.REVIEW_REQUIRED);
+    expect(calculationStatusPresentation({ calculationStatus: "CALCULATED", expectedAmount: "0.00" })).toBe(
+      CALCULATION_STATUS.CALCULATED,
+    );
   });
 });
 

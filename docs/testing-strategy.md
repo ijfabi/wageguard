@@ -8,13 +8,13 @@ flowchart TB
   sys["System and end to end<br/>17 Playwright tests (with axe), 6 benchmarks, Docker Compose"]
   int["Integration<br/>128 API tests on real PostgreSQL"]
   con["Contract<br/>9 schema tests + generated OpenAPI checked against the live routes"]
-  unit["Unit, property-based and golden<br/>318 tests across 6 packages and the web app"]
+  unit["Unit, property-based and golden<br/>320 tests across 6 packages and the web app"]
   uat --- sys --- int --- con --- unit
 ```
 
 | Level                       | Count                                       | Where                                                                                                                         | What it proves                                                                |
 | --------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Unit                        | 318 in total with property and golden tests | `packages/*/test`, `apps/web/src/lib/lib.test.ts`                                                                             | Each function does what it says, including edge cases                         |
+| Unit                        | 320 in total with property and golden tests | `packages/*/test`, `apps/web/src/lib/lib.test.ts`                                                                             | Each function does what it says, including edge cases                         |
 | Property-based (fast-check) | included above                              | `packages/domain/test/{money,interval,canonical,offset-table}.test.ts`, `packages/calculation-engine/test/properties.test.ts` | Rules that must hold for thousands of random inputs                           |
 | Golden scenarios            | included above                              | `packages/test-fixtures/test/golden.test.ts`, `pnpm benchmark:correctness`                                                    | Hand-worked award examples give the expected dollars, or are refused          |
 | Contract                    | 9                                           | `packages/api-contracts/test`, plus the route check in `apps/api/test/platform.test.ts`                                       | Requests are validated by the same schemas the docs are generated from        |
@@ -23,7 +23,7 @@ flowchart TB
 | Non-functional system tests | 6 benchmarks                                | `benchmarks/`                                                                                                                 | Speed, correctness at scale, database query plans, behaviour under failure    |
 | User acceptance             | 15 criteria, 8 scenarios                    | [acceptance](acceptance.md), [demo](demo.md), below                                                                           | The product meets the brief from the user's side                              |
 
-The unit, contract and integration tests add up to 455, and all of them run with `pnpm test`. The 17 browser tests run separately.
+The unit, contract and integration tests add up to 457, and all of them run with `pnpm test`. The 17 browser tests run separately.
 
 ## Unit testing
 
